@@ -1,23 +1,37 @@
-# Dockerfile simples para desenvolvimento
-FROM node:18-alpine
+# Escolhe uma imagem Node para build
+FROM node:20-alpine AS builder
 
-# Instalar dependências do sistema
-RUN apk add --no-cache git
-
-# Definir diretório de trabalho
 WORKDIR /app
 
-# Copiar arquivos de dependências
-COPY package*.json ./
+# Copia os arquivos de dependência e instala
+COPY package.json package-lock.json* pnpm-lock.yaml* yarn.lock* ./
+RUN \
+  if [ -f package-lock.json ]; then npm ci; \
+  elif [ -f pnpm-lock.yaml ]; then npm install -g pnpm && pnpm install; \
+  elif [ -f yarn.lock ]; then yarn install; \
+  else npm install; fi
 
-# Instalar dependências
-RUN npm install
-
-# Copiar código fonte
+# Copia o restante do código
 COPY . .
 
-# Expor porta
-EXPOSE 8080
+COPY .env .env
 
-# Comando para iniciar em modo desenvolvimento
-CMD ["npm", "run", "dev"]
+# Builda o projeto para produção
+RUN npm run build
+
+# Usa uma imagem Nginx leve para servir os arquivos estáticos
+FROM nginx:alpine
+WORKDIR /usr/share/nginx/html
+
+# Remove arquivos default do nginx
+RUN rm -rf ./*
+
+# Copia o build do React para o Nginx
+COPY --from=builder /app/dist .
+
+# Copia um nginx.conf customizado (opcional)
+# COPY nginx.conf /etc/nginx/nginx.conf
+
+EXPOSE 80
+
+CMD ["nginx", "-g", "daemon off;"]

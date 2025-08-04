@@ -1,17 +1,12 @@
-version: "3.8"
-
 services:
-  nexus-leads:
+  frontend:
     build: .
-    container_name: nexus-leads
+    container_name: nexus_leads
     ports:
-      - "3005:8080"
-    volumes:
-      - .:/app
-      - /app/node_modules
-      - /app/dist
-    env_file:
-      - .env
-    restart: unless-stopped
-    stdin_open: true
-    tty: true
+      - "3005:80"
+    networks:
+      - nexusnet
+
+networks:
+  nexusnet:
+    external: true
