@@ -5,7 +5,7 @@ services:
     build: .
     container_name: nexus-leads
     ports:
-      - "3000:8080"
+      - "3005:8080"
     volumes:
       - .:/app
       - /app/node_modules
