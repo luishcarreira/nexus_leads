@@ -1,0 +1,14 @@
+version: "3.8"
+
+services:
+  nexus-leads:
+    build: .
+    container_name: nexus-leads
+    ports:
+      - "3000:8080"
+    volumes:
+      - .:/app
+      - /app/node_modules
+    env_file:
+      - .env
+    restart: unless-stopped
