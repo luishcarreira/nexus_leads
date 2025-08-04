@@ -1,6 +1,9 @@
 # Dockerfile simples para desenvolvimento
 FROM node:18-alpine
 
+# Instalar dependências do sistema
+RUN apk add --no-cache git
+
 # Definir diretório de trabalho
 WORKDIR /app
 
@@ -17,4 +20,4 @@ COPY . .
 EXPOSE 8080
 
 # Comando para iniciar em modo desenvolvimento
-CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "8080"]
+CMD ["npm", "run", "dev"]
