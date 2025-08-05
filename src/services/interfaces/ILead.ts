@@ -41,6 +41,7 @@ export interface ILeadsFilters {
   situacao?: string;
   origem?: string;
   tipo_procura?: string;
+  uf?: string; // filtro por UF
   etapa?: string;
   id_consultor?: number;
   id_vendedor?: number;
@@ -69,9 +70,66 @@ export interface ILeadsTotais {
   total_nao_transferidos: number;
 }
 
+// Interfaces para totais detalhados com leads
+export interface ITotalPorOrigemDetalhado {
+  origem: string;
+  total: number;
+  leads: {
+    total: number;
+    pagina: number;
+    limite: number;
+    total_paginas: number;
+    dados: ILeadTotal[];
+  };
+}
+
+export interface ITotalPorTipoProcuraDetalhado {
+  tipo_procura: string;
+  total: number;
+  leads: {
+    total: number;
+    pagina: number;
+    limite: number;
+    total_paginas: number;
+    dados: ILeadTotal[];
+  };
+}
+
+export interface ILeadsTotaisDetalhados {
+  total_leads: number;
+  totais_por_origem: ITotalPorOrigemDetalhado[];
+  total_por_tipo_procura: ITotalPorTipoProcuraDetalhado[];
+  transferidos: {
+    total: number;
+    leads: {
+      total: number;
+      pagina: number;
+      limite: number;
+      total_paginas: number;
+      dados: ILeadTotal[];
+    };
+  };
+  nao_transferidos: {
+    total: number;
+    leads: {
+      total: number;
+      pagina: number;
+      limite: number;
+      total_paginas: number;
+      dados: ILeadTotal[];
+    };
+  };
+}
+
 export interface ILeadsTotaisFilters {
   data_criacao_inicio?: string;
   data_criacao_fim?: string;
+  pagina?: number;
+  limite?: number;
+  origem?: string;
+  tipo_procura?: string;
+  transferidos?: boolean;
+  nao_transferidos?: boolean;
 }
 
 // Interfaces para os dropdowns
@@ -89,6 +147,22 @@ export interface ISituacaoLead {
 export interface IConsultor {
   codigo: number;
   nome: string;
+}
+
+// Interface para leads dos totais (estrutura diferente da API)
+export interface ILeadTotal {
+  id: number;
+  nome: string;
+  telefone: string;
+  email: string | null;
+  cidade: string | null;
+  uf: string | null;
+  data_criacao: string;
+  vendedor: string | null;
+  consultor: string | null;
+  situacao: string;
+  origem: string;
+  procura_para: string | null;
 }
 
 // Interface para atividades do lead

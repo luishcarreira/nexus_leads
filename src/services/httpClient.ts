@@ -1,110 +1,165 @@
 import {
   ILead,
-  ILeadsResponse,
-  ILeadsFilters,
-  ILeadsTotais,
   ILeadsTotaisFilters,
+  ILeadsFilters,
+  ILeadsResponse,
+  ILeadsTotais,
   IEtapaLead,
   ISituacaoLead,
   IConsultor,
   ILeadAtividade,
 } from "./interfaces/ILead";
 
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "https://api.nexusvitally.com.br";
+interface PaginacaoLeads {
+  total: number;
+  pagina: number;
+  limite: number;
+  total_paginas: number;
+  dados: ILead[];
+}
 
-class HttpClient {
+interface TotalPorOrigem {
+  origem: string;
+  total: number;
+  leads: PaginacaoLeads;
+}
+
+interface TotaisPorOrigem {
+  total_leads: number;
+  totais_por_origem: TotalPorOrigem[];
+}
+
+interface TotalPorTipoProcura {
+  tipo_procura: string;
+  total: number;
+  leads: PaginacaoLeads;
+}
+
+interface TotaisPorTipoProcura {
+  total_leads: number;
+  total_por_tipo_procura: TotalPorTipoProcura[];
+}
+
+interface TotaisTransferidos {
+  total_leads: number;
+  transferidos: {
+    total: number;
+    leads: {
+      total: number;
+      pagina: number;
+      limite: number;
+      total_paginas: number;
+      dados: ILead[];
+    };
+  };
+  nao_transferidos: {
+    total: number;
+    leads: {
+      total: number;
+      pagina: number;
+      limite: number;
+      total_paginas: number;
+      dados: ILead[];
+    };
+  };
+}
+
+export class HttpClient {
   private baseURL: string;
+  private defaultParams: string;
 
   constructor(baseURL: string) {
     this.baseURL = baseURL;
+    this.defaultParams = "";
   }
 
   private async request<T>(
     endpoint: string,
     options: RequestInit = {}
   ): Promise<T> {
-    const url = `${this.baseURL}${endpoint}`;
+    const url = `${this.baseURL}${endpoint}${
+      endpoint.includes("?") ? "&" : "?"
+    }${this.defaultParams}`;
 
-    const config: RequestInit = {
-      headers: {
-        "Content-Type": "application/json",
-        ...options.headers,
-      },
-      ...options,
+    const headers = {
+      "Content-Type": "application/json",
+      ...options.headers,
     };
 
-    try {
-      const response = await fetch(url, config);
-
-      if (!response.ok) {
-        const errorMessage = `HTTP error! status: ${response.status} - ${response.statusText}`;
-        console.error(`Request failed for ${url}:`, errorMessage);
-        throw new Error(errorMessage);
-      }
-
-      return await response.json();
-    } catch (error) {
-      if (error instanceof TypeError && error.message.includes("fetch")) {
-        console.error(`Network error - API não disponível em ${url}:`, error);
-        throw new Error(
-          `API não disponível em ${this.baseURL}. Verifique se o servidor está rodando.`
-        );
-      }
-      console.error(`Request failed for ${url}:`, error);
-      throw error;
-    }
-  }
-
-  // Métodos para leads
-  async getLeads(filters: ILeadsFilters = {}): Promise<ILeadsResponse> {
-    const params = new URLSearchParams();
-
-    Object.entries(filters).forEach(([key, value]) => {
-      if (value !== undefined && value !== null && value !== "") {
-        params.append(key, value.toString());
-      }
+    const response = await fetch(url, {
+      ...options,
+      headers,
     });
 
-    const queryString = params.toString();
-    const endpoint = queryString ? `/leads?${queryString}` : "/leads";
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
 
-    return this.request<ILeadsResponse>(endpoint);
+    return response.json();
+  }
+
+  // Método para buscar leads com filtros
+  async getLeads(filters: ILeadsFilters = {}): Promise<ILeadsResponse> {
+    try {
+      const queryParams = new URLSearchParams();
+
+      // Adicionar todos os filtros aos parâmetros da query
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== "") {
+          queryParams.append(key, value.toString());
+        }
+      });
+
+      const response = await this.request<ILeadsResponse>(
+        `/leads?${queryParams.toString()}`
+      );
+      return response;
+    } catch (error) {
+      console.error("Erro ao buscar leads:", error);
+      throw error;
+    }
   }
 
   // Método para buscar totais de leads
   async getLeadsTotais(
     filters: ILeadsTotaisFilters = {}
   ): Promise<ILeadsTotais> {
-    const params = new URLSearchParams();
+    try {
+      const queryParams = new URLSearchParams();
 
-    Object.entries(filters).forEach(([key, value]) => {
-      if (value !== undefined && value !== null && value !== "") {
-        params.append(key, value.toString());
+      if (filters.data_criacao_inicio) {
+        queryParams.append("data_criacao_inicio", filters.data_criacao_inicio);
       }
-    });
+      if (filters.data_criacao_fim) {
+        queryParams.append("data_criacao_fim", filters.data_criacao_fim);
+      }
 
-    const queryString = params.toString();
-    const endpoint = queryString
-      ? `/leads/totais?${queryString}`
-      : "/leads/totais";
-
-    return this.request<ILeadsTotais>(endpoint);
+      const response = await this.request<ILeadsTotais>(
+        `/leads/totais?${queryParams.toString()}`
+      );
+      return response;
+    } catch (error) {
+      console.error("Erro ao buscar totais de leads:", error);
+      throw error;
+    }
   }
 
-  // Métodos para dropdowns
+  // Método para buscar etapas do lead
   async getEtapasLead(): Promise<IEtapaLead[]> {
     return this.request<IEtapaLead[]>("/etapas-lead/dropdown");
   }
 
+  // Método para buscar situações do lead
   async getSituacaoLead(): Promise<ISituacaoLead[]> {
     return this.request<ISituacaoLead[]>("/situacao-lead/dropdown");
   }
 
+  // Método para buscar consultores
   async getConsultores(): Promise<IConsultor[]> {
     return this.request<IConsultor[]>("/pessoa/representante/dropdown");
   }
 
+  // Método para vincular consultor ao lead
   async vincularConsultorAoLead(
     idLead: number,
     idConsultor: number
@@ -154,6 +209,163 @@ class HttpClient {
       throw error;
     }
   }
+
+  // Método para buscar ramos de atividade
+  async getRamosAtividade(): Promise<{ codigo: string; descricao: string }[]> {
+    return this.request<{ codigo: string; descricao: string }[]>(
+      "/ramo-atividade/dropdown"
+    );
+  }
+
+  // Método para converter lead em cliente
+  async converterLeadParaCliente(payload: {
+    id_lead: number;
+    nome: string;
+    cpf?: string;
+    cnpj?: string;
+    email: string;
+    telefone: string;
+    fisica_juridica: "F" | "J";
+    instagram?: string;
+    facebook?: string;
+    id_vendedor: number;
+    id_ramo_atividade: string;
+    id_usuario?: string;
+  }): Promise<boolean> {
+    const bodyWithUser = {
+      ...payload,
+      id_usuario:
+        payload.id_usuario || localStorage.getItem("usrcod") || "admin",
+    };
+
+    return this.request<boolean>("/leads/converter-cliente", {
+      method: "POST",
+      body: JSON.stringify(bodyWithUser),
+    });
+  }
+
+  // Método para criar lead rápido
+  async criarLeadRapido(leadData: {
+    nome: string;
+    telefone: string;
+    cidade: string;
+    uf: string;
+    valor_investimento: number;
+    tem_ponto: boolean;
+  }): Promise<boolean> {
+    try {
+      const response = await this.request<boolean>("/leads/criar-rapido", {
+        method: "POST",
+        body: JSON.stringify(leadData),
+      });
+      return response;
+    } catch (error) {
+      console.error("Erro ao criar lead rápido:", error);
+      throw error;
+    }
+  }
+
+  // Método para buscar totais por origem
+  async getLeadsTotaisPorOrigem(
+    filters: ILeadsTotaisFilters = {}
+  ): Promise<TotaisPorOrigem> {
+    try {
+      const queryParams = new URLSearchParams();
+
+      if (filters.data_criacao_inicio) {
+        queryParams.append("data_criacao_inicio", filters.data_criacao_inicio);
+      }
+      if (filters.data_criacao_fim) {
+        queryParams.append("data_criacao_fim", filters.data_criacao_fim);
+      }
+      if (filters.pagina) {
+        queryParams.append("pagina", filters.pagina.toString());
+      }
+      if (filters.limite) {
+        queryParams.append("limite", filters.limite.toString());
+      }
+      if (filters.origem) {
+        queryParams.append("origem", filters.origem);
+      }
+
+      const response = await this.request<TotaisPorOrigem>(
+        `/leads/totais/por-origem?${queryParams.toString()}`
+      );
+      return response;
+    } catch (err) {
+      console.error("Erro ao buscar totais por origem:", err);
+      throw err;
+    }
+  }
+
+  // Método para buscar totais por tipo de procura
+  async getLeadsTotaisPorTipoProcura(
+    filters: ILeadsTotaisFilters = {}
+  ): Promise<TotaisPorTipoProcura> {
+    try {
+      const queryParams = new URLSearchParams();
+
+      if (filters.data_criacao_inicio) {
+        queryParams.append("data_criacao_inicio", filters.data_criacao_inicio);
+      }
+      if (filters.data_criacao_fim) {
+        queryParams.append("data_criacao_fim", filters.data_criacao_fim);
+      }
+      if (filters.pagina) {
+        queryParams.append("pagina", filters.pagina.toString());
+      }
+      if (filters.limite) {
+        queryParams.append("limite", filters.limite.toString());
+      }
+      if (filters.tipo_procura) {
+        queryParams.append("tipo_procura", filters.tipo_procura);
+      }
+
+      const response = await this.request<TotaisPorTipoProcura>(
+        `/leads/totais/por-tipo-procura?${queryParams.toString()}`
+      );
+      return response;
+    } catch (err) {
+      console.error("Erro ao buscar totais por tipo de procura:", err);
+      throw err;
+    }
+  }
+
+  // Método para buscar totais de transferidos
+  async getLeadsTotaisTransferidos(
+    filters: ILeadsTotaisFilters = {}
+  ): Promise<TotaisTransferidos> {
+    try {
+      const queryParams = new URLSearchParams();
+
+      if (filters.data_criacao_inicio) {
+        queryParams.append("data_criacao_inicio", filters.data_criacao_inicio);
+      }
+      if (filters.data_criacao_fim) {
+        queryParams.append("data_criacao_fim", filters.data_criacao_fim);
+      }
+      if (filters.pagina) {
+        queryParams.append("pagina", filters.pagina.toString());
+      }
+      if (filters.limite) {
+        queryParams.append("limite", filters.limite.toString());
+      }
+      if (filters.transferidos) {
+        queryParams.append("transferidos", "true");
+      }
+      if (filters.nao_transferidos) {
+        queryParams.append("nao_transferidos", "true");
+      }
+
+      const response = await this.request<TotaisTransferidos>(
+        `/leads/totais/transferidos?${queryParams.toString()}`
+      );
+      return response;
+    } catch (err) {
+      console.error("Erro ao buscar totais de transferidos:", err);
+      throw err;
+    }
+  }
 }
 
-export const httpClient = new HttpClient(API_BASE_URL);
+export const httpClient = new HttpClient(import.meta.env.VITE_API_URL);

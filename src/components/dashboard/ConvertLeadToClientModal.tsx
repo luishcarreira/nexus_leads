@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -29,6 +29,7 @@ interface ConvertLeadToClientData {
   email: string;
   instagram: string;
   facebook: string;
+  id_ramo_atividade: string;
   id_vendedor: number;
 }
 
@@ -52,22 +53,30 @@ export const ConvertLeadToClientModal: React.FC<
     email: "",
     instagram: "",
     facebook: "",
+    id_ramo_atividade: "",
     id_vendedor: 0,
   });
 
-  const { consultores, loading: dropdownsLoading } = useDropdowns();
+  const {
+    consultores,
+    ramosAtividade,
+    loading: dropdownsLoading,
+  } = useDropdowns();
 
-  // Lista de vendedores (pode vir da API no futuro)
-  const vendedores = [
-    { id: 1, nome: "Pedro Souza" },
-    { id: 2, nome: "Juliana Alves" },
-    { id: 3, nome: "Ricardo Martins" },
-    { id: 4, nome: "Fernanda Cruz" },
-    { id: 5, nome: "Lucas Pereira" },
-    { id: 6, nome: "Camila Santos" },
-    { id: 7, nome: "Diego Pereira" },
-    { id: 8, nome: "Beatriz Costa" },
-  ];
+  // Prefill form with lead data when modal opens
+  useEffect(() => {
+    if (lead && isOpen) {
+      const phoneDigits = (lead.telefone || "").replace(/\D/g, "");
+      setFormData((prev) => ({
+        ...prev,
+        uf: prev.uf || lead.uf || "",
+        ddd: prev.ddd || phoneDigits.slice(0, 2),
+        telefone:
+          prev.telefone || (phoneDigits ? formatPhone(phoneDigits) : ""),
+        email: prev.email || lead.email || "",
+      }));
+    }
+  }, [lead, isOpen]);
 
   // Lista de UFs brasileiras
   const ufs = [
@@ -112,8 +121,8 @@ export const ConvertLeadToClientModal: React.FC<
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (formData.id_vendedor === 0) {
-      alert("Por favor, selecione um vendedor");
+    if (formData.id_vendedor === 0 || !formData.id_ramo_atividade) {
+      alert("Por favor, selecione vendedor e ramo de atividade");
       return;
     }
     await onSubmit(formData);
@@ -154,36 +163,12 @@ export const ConvertLeadToClientModal: React.FC<
           </p>
         </DialogHeader>
 
-        {lead && (
-          <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl">
-            <h4 className="font-semibold text-sm text-blue-800 mb-3 flex items-center gap-2">
-              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-              Dados do Lead Original
-            </h4>
-            <div className="grid grid-cols-2 gap-3 text-sm">
-              <div className="bg-white/60 p-2 rounded-lg">
-                <span className="font-medium text-blue-700">Nome:</span>
-                <span className="ml-1 text-gray-700">{lead.nome}</span>
-              </div>
-              <div className="bg-white/60 p-2 rounded-lg">
-                <span className="font-medium text-blue-700">Email:</span>
-                <span className="ml-1 text-gray-700">{lead.email}</span>
-              </div>
-              <div className="bg-white/60 p-2 rounded-lg">
-                <span className="font-medium text-blue-700">Telefone:</span>
-                <span className="ml-1 text-gray-700">{lead.telefone}</span>
-              </div>
-              <div className="bg-white/60 p-2 rounded-lg">
-                <span className="font-medium text-blue-700">UF:</span>
-                <span className="ml-1 text-gray-700">{lead.uf}</span>
-              </div>
-            </div>
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form
+          onSubmit={handleSubmit}
+          className="grid grid-cols-1 md:grid-cols-2 gap-6"
+        >
           {/* Tipo de Pessoa */}
-          <div className="space-y-3">
+          <div className="space-y-3 md:col-span-2">
             <Label className="text-sm font-semibold text-blue-800">
               Tipo de Pessoa *
             </Label>
@@ -228,7 +213,7 @@ export const ConvertLeadToClientModal: React.FC<
           {/* CPF/CNPJ */}
           <div className="space-y-3">
             <Label className="text-sm font-semibold text-blue-800">
-              {formData.tipo === "fisica" ? "CPF" : "CNPJ"} *
+              {formData.tipo === "fisica" ? "CPF" : "CNPJ"}
             </Label>
             <Input
               placeholder={
@@ -242,7 +227,6 @@ export const ConvertLeadToClientModal: React.FC<
                 handleInputChange("documento", formatted);
               }}
               maxLength={formData.tipo === "fisica" ? 14 : 18}
-              required
               className="border-blue-200 focus:border-blue-500 focus:ring-blue-500"
             />
           </div>
@@ -268,7 +252,7 @@ export const ConvertLeadToClientModal: React.FC<
           </div>
 
           {/* DDD e Telefone */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-4 md:col-span-2">
             <div className="space-y-3">
               <Label className="text-sm font-semibold text-blue-800">
                 DDD *
@@ -319,7 +303,7 @@ export const ConvertLeadToClientModal: React.FC<
           </div>
 
           {/* Redes Sociais */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-4 md:col-span-2">
             <div className="space-y-3">
               <Label className="text-sm font-semibold text-blue-800">
                 Instagram
@@ -344,6 +328,33 @@ export const ConvertLeadToClientModal: React.FC<
             </div>
           </div>
 
+          {/* Ramo de Atividade */}
+          <div className="space-y-3">
+            <Label className="text-sm font-semibold text-blue-800">
+              Ramo de Atividade *
+            </Label>
+            <Select
+              defaultValue={
+                ramosAtividade.find((ramo) => ramo.codigo === "01")?.codigo
+              }
+              value={formData.id_ramo_atividade}
+              onValueChange={(value) =>
+                handleInputChange("id_ramo_atividade", value)
+              }
+            >
+              <SelectTrigger className="border-blue-200 focus:border-blue-500 focus:ring-blue-500">
+                <SelectValue placeholder="Selecione o ramo de atividade" />
+              </SelectTrigger>
+              <SelectContent>
+                {ramosAtividade.map((ramo) => (
+                  <SelectItem key={ramo.codigo} value={ramo.codigo}>
+                    {ramo.descricao}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
           {/* Vendedor */}
           <div className="space-y-3">
             <Label className="text-sm font-semibold text-blue-800">
@@ -359,8 +370,11 @@ export const ConvertLeadToClientModal: React.FC<
                 <SelectValue placeholder="Selecione um vendedor" />
               </SelectTrigger>
               <SelectContent>
-                {vendedores.map((vendedor) => (
-                  <SelectItem key={vendedor.id} value={vendedor.id.toString()}>
+                {consultores.map((vendedor) => (
+                  <SelectItem
+                    key={vendedor.codigo}
+                    value={vendedor.codigo.toString()}
+                  >
                     {vendedor.nome}
                   </SelectItem>
                 ))}
@@ -369,7 +383,7 @@ export const ConvertLeadToClientModal: React.FC<
           </div>
 
           {/* Botões */}
-          <div className="flex justify-end gap-3 pt-6 border-t border-blue-100">
+          <div className="flex justify-end gap-3 pt-6 border-t border-blue-100 md:col-span-2">
             <Button
               type="button"
               variant="outline"

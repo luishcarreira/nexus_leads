@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Calendar, Filter, Search, X, Loader2 } from "lucide-react";
+import { Filter, Search, X, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,14 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Calendar as CalendarComponent } from "@/components/ui/calendar";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { DateRangePicker } from "@/components/ui/date-range-picker";
 import { cn } from "@/lib/utils";
 import { useDropdowns } from "@/hooks/use-dropdowns";
 
@@ -33,12 +26,21 @@ interface FilterProps {
   currentFilters?: any;
 }
 
+const getDefaultDateRange = () => {
+  const end = new Date();
+  const start = new Date();
+  start.setDate(start.getDate() - 3);
+  return { from: start, to: end };
+};
+
 export const FilterSection: React.FC<FilterProps> = ({
   onFiltersChange,
   currentFilters,
 }) => {
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
-  const [creationDateRange, setCreationDateRange] = useState<DateRange>({});
+  const [creationDateRange, setCreationDateRange] = useState<DateRange>(
+    getDefaultDateRange()
+  );
   const [nextAgendaDateRange, setNextAgendaDateRange] = useState<DateRange>({});
   const [selectedSituacoes, setSelectedSituacoes] = useState<string[]>([]);
   const [selectedEtapas, setSelectedEtapas] = useState<string[]>([]);
@@ -57,6 +59,8 @@ export const FilterSection: React.FC<FilterProps> = ({
   const {
     etapas,
     situacoes,
+    consultores,
+    vendedores,
     loading: dropdownsLoading,
     error: dropdownsError,
   } = useDropdowns();
@@ -71,20 +75,6 @@ export const FilterSection: React.FC<FilterProps> = ({
     "Telefone",
   ];
   const tiposProcura = ["Produto A", "Produto B", "Produto C"];
-  const consultores = [
-    "Ana Silva",
-    "Carlos Santos",
-    "Maria Oliveira",
-    "João Costa",
-    "Paula Lima",
-  ];
-  const vendedores = [
-    "Pedro Souza",
-    "Juliana Alves",
-    "Ricardo Martins",
-    "Fernanda Cruz",
-    "Lucas Pereira",
-  ];
   const ufs = ["SP", "RJ", "MG", "RS", "PR", "SC", "BA", "GO", "PE", "CE"];
 
   const handleMultiSelectChange = (
@@ -111,6 +101,11 @@ export const FilterSection: React.FC<FilterProps> = ({
       ufs: selectedUFs,
       ...filters,
     };
+    console.log("Filtros a serem aplicados:", allFilters);
+    console.log(
+      "creationDateRange nos filtros finais:",
+      allFilters.creationDateRange
+    );
     onFiltersChange(allFilters);
   }, [
     creationDateRange,
@@ -124,103 +119,42 @@ export const FilterSection: React.FC<FilterProps> = ({
     onFiltersChange,
   ]);
 
-  // Sincronizar com os filtros atuais do componente pai
+  // Sincronizar com os filtros atuais do componente pai apenas na inicialização
+  // Sincronizar filtros APENAS na montagem
   useEffect(() => {
-    if (currentFilters) {
-      if (currentFilters.creationDateRange) {
-        setCreationDateRange(currentFilters.creationDateRange);
-      }
-      if (currentFilters.nextAgendaDateRange) {
-        setNextAgendaDateRange(currentFilters.nextAgendaDateRange);
-      }
-      if (currentFilters.situacoes) {
-        setSelectedSituacoes(currentFilters.situacoes);
-      }
-      if (currentFilters.etapas) {
-        setSelectedEtapas(currentFilters.etapas);
-      }
-      if (currentFilters.consultores) {
-        setSelectedConsultores(currentFilters.consultores);
-      }
-      if (currentFilters.vendedores) {
-        setSelectedVendedores(currentFilters.vendedores);
-      }
-      if (currentFilters.ufs) {
-        setSelectedUFs(currentFilters.ufs);
-      }
-      setFilters({
-        origem: currentFilters.origem || "",
-        tipoProcura: currentFilters.tipoProcura || "",
-        nome: currentFilters.nome || "",
-        email: currentFilters.email || "",
-        apenasSemConsultor: currentFilters.apenasSemConsultor || false,
-      });
-    }
-  }, [currentFilters]);
+    if (!currentFilters) return;
 
-  // Não aplicar filtros automaticamente - apenas quando o usuário clicar no botão
-
-  const DateRangePicker = ({
-    value,
-    onChange,
-    placeholder,
-  }: {
-    value: DateRange;
-    onChange: (range: DateRange) => void;
-    placeholder: string;
-  }) => {
-    const [isOpen, setIsOpen] = useState(false);
-
-    const handleSelect = (range: any) => {
-      if (range) {
-        onChange(range);
-        // Fechar o popover apenas quando ambas as datas estiverem selecionadas
-        if (range.from && range.to) {
-          setIsOpen(false);
-        }
-      }
-    };
-
-    return (
-      <Popover open={isOpen} onOpenChange={setIsOpen}>
-        <PopoverTrigger asChild>
-          <Button
-            variant="outline"
-            className={cn(
-              "w-full justify-start text-left font-normal border-blue-200 focus:border-blue-500 focus:ring-blue-500",
-              !value.from && "text-muted-foreground"
-            )}
-          >
-            <Calendar className="mr-2 h-4 w-4" />
-            {value.from ? (
-              value.to ? (
-                <>
-                  {format(value.from, "dd/MM/yyyy", { locale: ptBR })} -{" "}
-                  {format(value.to, "dd/MM/yyyy", { locale: ptBR })}
-                </>
-              ) : (
-                format(value.from, "dd/MM/yyyy", { locale: ptBR })
-              )
-            ) : (
-              <span>{placeholder}</span>
-            )}
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-auto p-0" align="start">
-          <CalendarComponent
-            initialFocus
-            mode="range"
-            defaultMonth={value.from}
-            selected={{ from: value.from, to: value.to }}
-            onSelect={handleSelect}
-            numberOfMonths={2}
-            locale={ptBR}
-            className="pointer-events-auto"
-          />
-        </PopoverContent>
-      </Popover>
+    console.log(
+      "Sincronizando estado local com currentFilters:",
+      currentFilters
     );
-  };
+
+    if (currentFilters.creationDateRange) {
+      setCreationDateRange(currentFilters.creationDateRange);
+    }
+    if (currentFilters.nextAgendaDateRange) {
+      setNextAgendaDateRange(currentFilters.nextAgendaDateRange);
+    }
+    setSelectedSituacoes(currentFilters.situacoes ?? []);
+    setSelectedEtapas(currentFilters.etapas ?? []);
+    setSelectedConsultores(currentFilters.consultores ?? []);
+    setSelectedVendedores(currentFilters.vendedores ?? []);
+    setSelectedUFs(currentFilters.ufs ?? []);
+
+    setFilters({
+      origem: currentFilters.origem || "",
+      tipoProcura: currentFilters.tipoProcura || "",
+      nome: currentFilters.nome || "",
+      email: currentFilters.email || "",
+      apenasSemConsultor: currentFilters.apenasSemConsultor || false,
+    });
+    // DICA: se precisar refletir filtros externos novamente, remova []
+  }, []);
+
+  // Aplicar filtros iniciais automaticamente
+  useEffect(() => {
+    applyFilters();
+  }, []); // Executar apenas uma vez na montagem
 
   const MultiSelect = ({
     options,
@@ -375,9 +309,15 @@ export const FilterSection: React.FC<FilterProps> = ({
               Período de Criação
             </Label>
             <DateRangePicker
-              value={creationDateRange}
-              onChange={setCreationDateRange}
+              onUpdate={(values) => {
+                console.log("DateRangePicker onUpdate chamado com:", values);
+                console.log("Range recebido:", values.range);
+                setCreationDateRange(values.range);
+              }}
+              initialDateFrom={creationDateRange.from}
+              initialDateTo={creationDateRange.to}
               placeholder="Selecionar período"
+              showCompare={false}
             />
           </div>
 
@@ -504,7 +444,7 @@ export const FilterSection: React.FC<FilterProps> = ({
               variant="outline"
               onClick={() => {
                 const emptyFilters = {
-                  creationDateRange: {},
+                  creationDateRange: getDefaultDateRange(), // Usar o período default ao limpar
                   nextAgendaDateRange: {},
                   situacoes: [],
                   etapas: [],
@@ -519,7 +459,7 @@ export const FilterSection: React.FC<FilterProps> = ({
                 };
 
                 // Limpar estado local
-                setCreationDateRange({});
+                setCreationDateRange(getDefaultDateRange()); // Usar o período default
                 setNextAgendaDateRange({});
                 setSelectedSituacoes([]);
                 setSelectedEtapas([]);
@@ -576,42 +516,70 @@ export const FilterSection: React.FC<FilterProps> = ({
                 Período da Próxima Agenda
               </Label>
               <DateRangePicker
-                value={nextAgendaDateRange}
-                onChange={setNextAgendaDateRange}
+                onUpdate={(values) => setNextAgendaDateRange(values.range)}
+                initialDateFrom={nextAgendaDateRange.from}
+                initialDateTo={nextAgendaDateRange.to}
                 placeholder="Selecionar período"
+                showCompare={false}
               />
             </div>
 
             <div className="space-y-2">
               <Label className="text-blue-800 font-medium">Consultor</Label>
-              <MultiSelect
-                options={consultores}
-                selected={selectedConsultores}
-                onChange={(value) =>
-                  handleMultiSelectChange(
-                    value,
-                    selectedConsultores,
-                    setSelectedConsultores
-                  )
-                }
-                placeholder="Selecionar consultores"
-              />
+              {dropdownsLoading ? (
+                <div className="flex items-center justify-center h-10 border rounded-md">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span className="ml-2 text-sm text-muted-foreground">
+                    Carregando...
+                  </span>
+                </div>
+              ) : dropdownsError ? (
+                <div className="h-10 border rounded-md flex items-center justify-center">
+                  <span className="text-sm text-red-500">Erro ao carregar</span>
+                </div>
+              ) : (
+                <MultiSelect
+                  options={consultores.map((c) => c.nome)}
+                  selected={selectedConsultores}
+                  onChange={(value) =>
+                    handleMultiSelectChange(
+                      value,
+                      selectedConsultores,
+                      setSelectedConsultores
+                    )
+                  }
+                  placeholder="Selecionar consultores"
+                />
+              )}
             </div>
 
             <div className="space-y-2">
               <Label className="text-blue-800 font-medium">Vendedor</Label>
-              <MultiSelect
-                options={vendedores}
-                selected={selectedVendedores}
-                onChange={(value) =>
-                  handleMultiSelectChange(
-                    value,
-                    selectedVendedores,
-                    setSelectedVendedores
-                  )
-                }
-                placeholder="Selecionar vendedores"
-              />
+              {dropdownsLoading ? (
+                <div className="flex items-center justify-center h-10 border rounded-md">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span className="ml-2 text-sm text-muted-foreground">
+                    Carregando...
+                  </span>
+                </div>
+              ) : dropdownsError ? (
+                <div className="h-10 border rounded-md flex items-center justify-center">
+                  <span className="text-sm text-red-500">Erro ao carregar</span>
+                </div>
+              ) : (
+                <MultiSelect
+                  options={vendedores.map((v) => v.nome)}
+                  selected={selectedVendedores}
+                  onChange={(value) =>
+                    handleMultiSelectChange(
+                      value,
+                      selectedVendedores,
+                      setSelectedVendedores
+                    )
+                  }
+                  placeholder="Selecionar vendedores"
+                />
+              )}
             </div>
 
             <div className="space-y-2">

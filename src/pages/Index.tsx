@@ -9,6 +9,8 @@ import {
   ILeadsTotaisFilters,
 } from "@/services/interfaces/ILead";
 import { format } from "date-fns";
+import { ChevronDown, ChevronUp, BarChart3 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 // Interface para os filtros da interface
 interface UIFilters {
@@ -26,17 +28,22 @@ interface UIFilters {
 
 const Index = () => {
   const [currentFilters, setCurrentFilters] = useState<UIFilters>({});
+  const [showTotais, setShowTotais] = useState(true);
   const { leads, total, loading, error, fetchLeads } = useLeads();
   const {
     totais,
     loading: totaisLoading,
     error: totaisError,
     fetchTotais,
+    fetchDetalhesTransferidos,
+    fetchDetalhesNaoTransferidos,
   } = useLeadsTotais();
 
   // Função para formatar data para o formato da API (YYYY-MM-DD)
   const formatDateForAPI = (date: Date): string => {
-    return format(date, "yyyy-MM-dd");
+    const formatted = format(date, "yyyy-MM-dd");
+    console.log("Formatando data:", date, "para:", formatted);
+    return formatted;
   };
 
   // Converter filtros da interface para o formato da API
@@ -90,6 +97,11 @@ const Index = () => {
       apiFilters.id_vendedor = parseInt(filters.vendedores[0]);
     }
 
+    // Filtro por UFs
+    if (filters.ufs?.length > 0) {
+      apiFilters.uf = filters.ufs.join(",");
+    }
+
     return apiFilters;
   };
 
@@ -97,59 +109,70 @@ const Index = () => {
   const convertFiltersToTotais = (filters: UIFilters): ILeadsTotaisFilters => {
     const totaisFilters: ILeadsTotaisFilters = {};
 
+    console.log(
+      "Convertendo filtros para totais - filtros recebidos:",
+      filters
+    );
+    console.log("creationDateRange:", filters.creationDateRange);
+
     // Filtro por período de criação
     if (filters.creationDateRange?.from) {
-      totaisFilters.data_criacao_inicio = formatDateForAPI(
-        filters.creationDateRange.from
-      );
+      const dataInicio = formatDateForAPI(filters.creationDateRange.from);
+      totaisFilters.data_criacao_inicio = dataInicio;
+      console.log("Data início formatada:", dataInicio);
     }
     if (filters.creationDateRange?.to) {
-      totaisFilters.data_criacao_fim = formatDateForAPI(
-        filters.creationDateRange.to
-      );
+      const dataFim = formatDateForAPI(filters.creationDateRange.to);
+      totaisFilters.data_criacao_fim = dataFim;
+      console.log("Data fim formatada:", dataFim);
     }
+
+    // Log para debug
+    console.log("Filtros convertidos para totais:", totaisFilters);
 
     return totaisFilters;
   };
 
   const handleFiltersChange = useCallback(
     (newFilters: UIFilters) => {
-      // Salvar os filtros no estado para manter na interface
-      setCurrentFilters(newFilters);
+      console.log("Novos filtros aplicados:", newFilters);
 
       // Buscar leads com os novos filtros
       const leadsFilters = convertFiltersToAPI(newFilters);
+      console.log("Filtros para leads:", leadsFilters);
       fetchLeads(leadsFilters);
 
       // Buscar totais com os novos filtros
       const totaisFilters = convertFiltersToTotais(newFilters);
+      console.log("Filtros para totais:", totaisFilters);
       fetchTotais(totaisFilters);
+
+      // Salvar os filtros no estado para manter na interface
+      setCurrentFilters(newFilters);
     },
     [fetchLeads, fetchTotais]
   );
 
-  if (loading) {
+  // Carregar dados iniciais
+  React.useEffect(() => {
+    fetchLeads();
+    fetchTotais();
+  }, [fetchLeads, fetchTotais]);
+
+  // Exibir tela de loading APENAS na primeira carga
+  const [initialLoading, setInitialLoading] = React.useState(true);
+  React.useEffect(() => {
+    if (!loading) {
+      setInitialLoading(false);
+    }
+  }, [loading]);
+
+  if (initialLoading) {
     return (
       <div className="min-h-screen bg-dashboard-bg flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Carregando leads...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen bg-dashboard-bg flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-red-600 mb-4">Erro ao carregar leads: {error}</p>
-          <button
-            onClick={() => fetchLeads()}
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-          >
-            Tentar novamente
-          </button>
+          <p className="mt-4 text-gray-600">Carregando dados...</p>
         </div>
       </div>
     );
@@ -164,11 +187,45 @@ const Index = () => {
           currentFilters={currentFilters}
         />
 
-        {/* Cards de Resumo */}
-        <SummaryCards data={totais} loading={totaisLoading} />
+        {/* Botão para colapsar/expandir totais */}
+        <div className="flex items-center justify-between mb-4">
+          <Button
+            variant="ghost"
+            onClick={() => setShowTotais(!showTotais)}
+            className="flex items-center gap-2 text-blue-700 hover:text-blue-800 hover:bg-blue-50 px-4 py-2 rounded-lg transition-colors"
+          >
+            <BarChart3 className="h-5 w-5" />
+            <span className="font-medium">
+              {showTotais ? "Ocultar" : "Mostrar"} Resumo de Totais
+            </span>
+            {showTotais ? (
+              <ChevronUp className="h-4 w-4" />
+            ) : (
+              <ChevronDown className="h-4 w-4" />
+            )}
+          </Button>
+
+          {showTotais && totaisError && (
+            <div className="text-sm text-red-600 bg-red-50 px-3 py-1 rounded-md">
+              Erro ao carregar totais: {totaisError}
+            </div>
+          )}
+        </div>
+
+        {/* Cards de Resumo - Agora colapsáveis */}
+        {showTotais && (
+          <SummaryCards
+            data={totais}
+            loading={totaisLoading}
+            onPageChange={{
+              transferidos: fetchDetalhesTransferidos,
+              naoTransferidos: fetchDetalhesNaoTransferidos,
+            }}
+          />
+        )}
 
         {/* Tabela de Leads */}
-        <LeadsTable leads={leads} loading={loading} />
+        <LeadsTable leads={leads} total={total} loading={loading} />
       </div>
     </div>
   );

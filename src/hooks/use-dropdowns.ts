@@ -10,6 +10,8 @@ interface UseDropdownsReturn {
   etapas: IEtapaLead[];
   situacoes: ISituacaoLead[];
   consultores: IConsultor[];
+  vendedores: IConsultor[];
+  ramosAtividade: { codigo: string; descricao: string }[];
   loading: boolean;
   error: string | null;
   refetch: () => void;
@@ -19,6 +21,10 @@ export const useDropdowns = (): UseDropdownsReturn => {
   const [etapas, setEtapas] = useState<IEtapaLead[]>([]);
   const [situacoes, setSituacoes] = useState<ISituacaoLead[]>([]);
   const [consultores, setConsultores] = useState<IConsultor[]>([]);
+  const [vendedores, setVendedores] = useState<IConsultor[]>([]);
+  const [ramosAtividade, setRamosAtividade] = useState<
+    { codigo: string; descricao: string }[]
+  >([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -27,15 +33,19 @@ export const useDropdowns = (): UseDropdownsReturn => {
       setLoading(true);
       setError(null);
 
-      const [etapasData, situacoesData, consultoresData] = await Promise.all([
-        httpClient.getEtapasLead(),
-        httpClient.getSituacaoLead(),
-        httpClient.getConsultores(),
-      ]);
+      const [etapasData, situacoesData, consultoresData, ramosData] =
+        await Promise.all([
+          httpClient.getEtapasLead(),
+          httpClient.getSituacaoLead(),
+          httpClient.getConsultores(),
+          httpClient.getRamosAtividade(),
+        ]);
 
       setEtapas(etapasData);
       setSituacoes(situacoesData);
       setConsultores(consultoresData);
+      setVendedores(consultoresData); // Usar os mesmos dados dos consultores
+      setRamosAtividade(ramosData);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao carregar dados");
       console.error("Erro ao carregar dropdowns:", err);
@@ -43,6 +53,7 @@ export const useDropdowns = (): UseDropdownsReturn => {
       setEtapas([]);
       setSituacoes([]);
       setConsultores([]);
+      setVendedores([]);
     } finally {
       setLoading(false);
     }
@@ -55,21 +66,26 @@ export const useDropdowns = (): UseDropdownsReturn => {
         setLoading(true);
         setError(null);
 
-        const [etapasData, situacoesData, consultoresData] = await Promise.all([
-          httpClient.getEtapasLead(),
-          httpClient.getSituacaoLead(),
-          httpClient.getConsultores(),
-        ]);
+        const [etapasData, situacoesData, consultoresData, ramosData] =
+          await Promise.all([
+            httpClient.getEtapasLead(),
+            httpClient.getSituacaoLead(),
+            httpClient.getConsultores(),
+            httpClient.getRamosAtividade(),
+          ]);
 
         setEtapas(etapasData);
         setSituacoes(situacoesData);
         setConsultores(consultoresData);
+        setVendedores(consultoresData); // Usar os mesmos dados dos consultores
+        setRamosAtividade(ramosData);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Erro ao carregar dados");
         console.error("Erro ao carregar dropdowns:", err);
         setEtapas([]);
         setSituacoes([]);
         setConsultores([]);
+        setVendedores([]);
       } finally {
         setLoading(false);
       }
@@ -86,6 +102,8 @@ export const useDropdowns = (): UseDropdownsReturn => {
     etapas,
     situacoes,
     consultores,
+    vendedores,
+    ramosAtividade,
     loading,
     error,
     refetch,

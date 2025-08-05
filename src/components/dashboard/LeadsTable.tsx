@@ -54,7 +54,7 @@ import {
 import { Card } from "@/components/ui/card";
 import { ILead } from "@/services/interfaces/ILead";
 import { LeadDetailsModal } from "./LeadDetailsModal";
-import { CreateLeadModal, CreateLeadData } from "./CreateLeadModal";
+import { CreateLeadModal, CriarLeadRapidoData } from "./CreateLeadModal";
 import { UpdateLeadStatusModal } from "./UpdateLeadStatusModal";
 import { LeadAtividadesModal } from "./LeadAtividadesModal";
 import { ConvertLeadToClientModal } from "./ConvertLeadToClientModal";
@@ -63,6 +63,7 @@ import { useDropdowns } from "@/hooks/use-dropdowns";
 
 interface LeadsTableProps {
   leads: ILead[];
+  total?: number; // total retornado pela API
   loading?: boolean;
 }
 
@@ -70,6 +71,7 @@ type SortDirection = "asc" | "desc" | null;
 
 export const LeadsTable: React.FC<LeadsTableProps> = ({
   leads,
+  total,
   loading = false,
 }) => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -247,10 +249,6 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
         setSelectedLeadForConversion(lead);
         setIsConvertToClientModalOpen(true);
         break;
-      case "transfer":
-        console.log(`Transferir lead ${lead.id}`);
-        // Implementar transferência
-        break;
       default:
         console.log(`Ação ${action} para o lead ${lead.id}`);
     }
@@ -337,26 +335,26 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
     setSelectedVendedor(null);
   };
 
-  const handleCreateLead = async (leadData: CreateLeadData) => {
+  const handleCreateLead = async (leadData: CriarLeadRapidoData) => {
     setIsCreatingLead(true);
     try {
       console.log("Criando novo lead:", leadData);
-      // Implementar API call para criar lead
-      // Exemplo: await createLead(leadData);
 
-      // Simular delay da API
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // Chamar o endpoint de criação rápida
+      const response = await httpClient.criarLeadRapido(leadData);
+
+      console.log("Lead criado com sucesso:", response);
 
       // Fechar modal e limpar estado
       setIsCreateModalOpen(false);
       setIsCreatingLead(false);
 
-      // Aqui você pode adicionar um toast de sucesso
-      console.log("Lead criado com sucesso!");
+      // TODO: Recarregar a lista de leads após criar
+      // TODO: Adicionar toast de sucesso
     } catch (error) {
       console.error("Erro ao criar lead:", error);
       setIsCreatingLead(false);
-      // Aqui você pode adicionar um toast de erro
+      // TODO: Adicionar toast de erro
     }
   };
 
@@ -397,16 +395,28 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
 
     setIsConvertingToClient(true);
     try {
-      console.log("Convertendo lead em cliente:", {
-        leadId: selectedLeadForConversion.id,
-        clientData,
-      });
+      const fisicaJuridica = clientData.tipo === "fisica" ? "F" : "J";
 
-      // TODO: Implementar API call para converter lead em cliente
-      // Exemplo: await httpClient.converterLeadEmCliente(selectedLeadForConversion.id, clientData);
+      const payload: any = {
+        id_lead: selectedLeadForConversion.id,
+        nome: selectedLeadForConversion.nome,
+        email: clientData.email,
+        telefone: clientData.telefone,
+        fisica_juridica: fisicaJuridica,
+        instagram: clientData.instagram,
+        facebook: clientData.facebook,
+        id_vendedor: clientData.id_vendedor,
+        id_ramo_atividade: clientData.id_ramo_atividade,
+      };
 
-      // Simular delay da API
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      if (fisicaJuridica === "F") {
+        payload.cpf = clientData.documento.replace(/\D/g, "");
+      } else {
+        payload.cnpj = clientData.documento.replace(/\D/g, "");
+      }
+
+      console.log("Enviando payload de conversão:", payload);
+      await httpClient.converterLeadParaCliente(payload);
 
       console.log(
         `Lead ${selectedLeadForConversion.id} convertido em cliente com sucesso!`
@@ -417,12 +427,11 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
       setSelectedLeadForConversion(null);
       setIsConvertingToClient(false);
 
-      // Aqui você pode adicionar um toast de sucesso
-      // Aqui você pode recarregar a lista de leads
+      // TODO: Recarregar lista de leads e mostrar toast de sucesso
     } catch (error) {
       console.error("Erro ao converter lead em cliente:", error);
       setIsConvertingToClient(false);
-      // Aqui você pode adicionar um toast de erro
+      // TODO: Mostrar toast de erro
     }
   };
 
@@ -451,7 +460,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
               Leads Cadastrados
             </h3>
             <p className="text-sm text-blue-600">
-              {filteredLeads.length} leads encontrados
+              {total ?? filteredLeads.length} leads encontrados
               {selectedLeads.size > 0 && (
                 <span className="ml-2 text-blue-800 font-semibold bg-blue-100 px-2 py-1 rounded-full">
                   {selectedLeads.size} selecionado(s)
@@ -538,6 +547,9 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                     className="text-white border-white"
                   />
                 </TableHead>
+                <TableHead className="text-white font-semibold">
+                  Ações
+                </TableHead>
                 <TableHead className="text-white">
                   <Button
                     variant="ghost"
@@ -590,6 +602,16 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                 <TableHead className="text-white">
                   <Button
                     variant="ghost"
+                    onClick={() => handleSort("vendedor")}
+                    className="h-auto p-0 font-semibold text-white hover:bg-blue-600"
+                  >
+                    Vendedor
+                    {getSortIcon("vendedor")}
+                  </Button>
+                </TableHead>
+                <TableHead className="text-white">
+                  <Button
+                    variant="ghost"
                     onClick={() => handleSort("data_criacao")}
                     className="h-auto p-0 font-semibold text-white hover:bg-blue-600"
                   >
@@ -598,9 +620,6 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                   </Button>
                 </TableHead>
                 <TableHead className="text-white font-semibold">UF</TableHead>
-                <TableHead className="text-white font-semibold">
-                  Ações
-                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -617,32 +636,6 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                       onCheckedChange={() => handleSelectLead(lead.id)}
                       aria-label={`Selecionar ${lead.nome}`}
                     />
-                  </TableCell>
-                  <TableCell className="font-medium">{lead.nome}</TableCell>
-                  <TableCell>{lead.email}</TableCell>
-                  <TableCell>{lead.telefone}</TableCell>
-                  <TableCell>{lead.origem}</TableCell>
-                  <TableCell>{getSituacaoBadge(lead.situacao)}</TableCell>
-                  <TableCell>
-                    <Badge
-                      variant="outline"
-                      className="border-blue-300 text-blue-700 bg-blue-50 font-medium"
-                    >
-                      {lead.procura_para}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    {lead.consultor ? (
-                      <span className="text-sm">{lead.consultor}</span>
-                    ) : (
-                      <span className="text-sm text-muted-foreground">
-                        Não atribuído
-                      </span>
-                    )}
-                  </TableCell>
-                  <TableCell>{formatDate(lead.data_criacao)}</TableCell>
-                  <TableCell>
-                    <span className="text-sm">{lead.uf}</span>
                   </TableCell>
                   <TableCell>
                     <DropdownMenu>
@@ -688,19 +681,48 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                             handleAction("convert_to_client", lead)
                           }
                           className="cursor-pointer"
+                          disabled={lead.vendedor !== null}
                         >
                           <UserCheck className="mr-2 h-4 w-4" />
                           Converter em Cliente
                         </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => handleAction("transfer", lead)}
-                          className="cursor-pointer"
-                        >
-                          <Share2 className="mr-2 h-4 w-4" />
-                          Transferir
-                        </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
+                  </TableCell>
+                  <TableCell className="font-medium">{lead.nome}</TableCell>
+                  <TableCell>{lead.email}</TableCell>
+                  <TableCell>{lead.telefone}</TableCell>
+                  <TableCell>{lead.origem}</TableCell>
+                  <TableCell>{getSituacaoBadge(lead.situacao)}</TableCell>
+                  <TableCell>
+                    <Badge
+                      variant="outline"
+                      className="border-blue-300 text-blue-700 bg-blue-50 font-medium"
+                    >
+                      {lead.procura_para}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    {lead.consultor ? (
+                      <span className="text-sm">{lead.consultor}</span>
+                    ) : (
+                      <span className="text-sm text-muted-foreground">
+                        Não atribuído
+                      </span>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {lead.vendedor ? (
+                      <span className="text-sm">{lead.vendedor}</span>
+                    ) : (
+                      <span className="text-sm text-muted-foreground">
+                        Não atribuído
+                      </span>
+                    )}
+                  </TableCell>
+                  <TableCell>{formatDate(lead.data_criacao)}</TableCell>
+                  <TableCell>
+                    <span className="text-sm">{lead.uf}</span>
                   </TableCell>
                 </TableRow>
               ))}
@@ -714,7 +736,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
             <div className="text-sm text-blue-600 font-medium">
               Mostrando {startIndex + 1} a{" "}
               {Math.min(endIndex, filteredLeads.length)} de{" "}
-              {filteredLeads.length} leads
+              {total ?? filteredLeads.length} leads
             </div>
 
             <div className="flex items-center space-x-2">

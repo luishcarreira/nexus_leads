@@ -22,15 +22,17 @@ export const useLeads = (): UseLeadsReturn => {
 
   const fetchLeads = useCallback(async (filters: ILeadsFilters = {}) => {
     try {
+      console.log("Buscando leads com filtros:", filters);
       setLoading(true);
       setError(null);
 
       const response: ILeadsResponse = await httpClient.getLeads(filters);
+      console.log("Resposta dos leads:", response);
       setLeads(response.data);
       setTotal(response.total);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao carregar leads");
       console.error("Erro ao carregar leads:", err);
+      setError(err instanceof Error ? err.message : "Erro ao carregar leads");
       setLeads([]);
       setTotal(0);
     } finally {

@@ -87,7 +87,7 @@ export const LeadDetailsModal: React.FC<LeadDetailsModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-xl">
             <User className="h-6 w-6" />
@@ -102,7 +102,7 @@ export const LeadDetailsModal: React.FC<LeadDetailsModalProps> = ({
               <User className="h-5 w-5" />
               Informações Principais
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               <InfoRow label="Email" value={lead.email} />
               <InfoRow label="Telefone" value={lead.telefone} />
               <InfoRow label="Telefone Tratado" value={lead.telefone_tratado} />
@@ -123,7 +123,7 @@ export const LeadDetailsModal: React.FC<LeadDetailsModalProps> = ({
               <MapPin className="h-5 w-5" />
               Localização
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               <InfoRow label="UF" value={lead.uf} />
               <InfoRow label="Cidade" value={lead.cidade} />
             </div>
@@ -137,7 +137,7 @@ export const LeadDetailsModal: React.FC<LeadDetailsModalProps> = ({
               <Target className="h-5 w-5" />
               Informações de Negócio
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               <InfoRow label="Procura Para" value={lead.procura_para} />
               <InfoRow
                 label="Data Prevista de Aquisição"
@@ -161,7 +161,7 @@ export const LeadDetailsModal: React.FC<LeadDetailsModalProps> = ({
               <Globe className="h-5 w-5" />
               Campanha e Marketing
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               <InfoRow label="Plataforma" value={lead.plataforma} />
               <InfoRow label="Formulário" value={lead.formulario} />
               <InfoRow label="Campanha" value={lead.campanha} />
@@ -181,7 +181,7 @@ export const LeadDetailsModal: React.FC<LeadDetailsModalProps> = ({
               <User className="h-5 w-5" />
               Status e Responsáveis
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               <InfoRow label="Consultor" value={lead.consultor} />
               <InfoRow label="Vendedor" value={lead.vendedor} />
               <InfoRow label="ID Cliente" value={lead.id_cliente.toString()} />
@@ -200,7 +200,7 @@ export const LeadDetailsModal: React.FC<LeadDetailsModalProps> = ({
               <Calendar className="h-5 w-5" />
               Datas
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               <InfoRow
                 label="Data de Criação"
                 value={formatDate(lead.data_criacao)}
@@ -220,7 +220,7 @@ export const LeadDetailsModal: React.FC<LeadDetailsModalProps> = ({
               <Tag className="h-5 w-5" />
               Informações Técnicas
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               <InfoRow label="ID" value={lead.id.toString()} />
               <InfoRow label="ID Integração" value={lead.id_integracao} />
             </div>

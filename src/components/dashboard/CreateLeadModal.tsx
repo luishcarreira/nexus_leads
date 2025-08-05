@@ -7,6 +7,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -20,7 +21,7 @@ import { User, Loader2 } from "lucide-react";
 interface CreateLeadModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (leadData: CreateLeadData) => void;
+  onSubmit: (leadData: CriarLeadRapidoData) => void;
   loading?: boolean;
 }
 
@@ -28,9 +29,22 @@ export interface CreateLeadData {
   nome: string;
   telefone: string;
   email: string;
+  cidade: string;
   uf: string;
+  valor_investimento_previsto: string;
+  tem_ponto: boolean;
   situacao: number;
   etapa: number;
+}
+
+// Interface para o endpoint de criação rápida
+export interface CriarLeadRapidoData {
+  nome: string;
+  telefone: string;
+  cidade: string;
+  uf: string;
+  valor_investimento: number;
+  tem_ponto: boolean;
 }
 
 export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({
@@ -43,7 +57,10 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({
     nome: "",
     telefone: "",
     email: "",
+    cidade: "",
     uf: "",
+    valor_investimento_previsto: "",
+    tem_ponto: false,
     situacao: 1, // Novo Lead
     etapa: 1, // Triagem
   });
@@ -82,7 +99,7 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({
 
   const handleInputChange = (
     field: keyof CreateLeadData,
-    value: string | number
+    value: string | number | boolean
   ) => {
     setFormData((prev) => ({
       ...prev,
@@ -111,14 +128,37 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({
       newErrors.telefone = "Telefone deve estar no formato (11) 99999-9999";
     }
 
-    if (!formData.email.trim()) {
-      newErrors.email = "Email é obrigatório";
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+    // Email é opcional; se preenchido, valida formato
+    if (
+      formData.email.trim() &&
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)
+    ) {
       newErrors.email = "Email inválido";
+    }
+
+    if (!formData.cidade.trim()) {
+      newErrors.cidade = "Cidade é obrigatória";
     }
 
     if (!formData.uf) {
       newErrors.uf = "UF é obrigatória";
+    }
+
+    if (!formData.valor_investimento_previsto.trim()) {
+      newErrors.valor_investimento_previsto =
+        "Valor de investimento previsto é obrigatório";
+    } else {
+      // Validar se é um valor monetário válido
+      const valorNumerico = parseFloat(
+        formData.valor_investimento_previsto
+          .replace(/[R$\s]/g, "")
+          .replace(/\./g, "")
+          .replace(",", ".")
+      );
+      if (isNaN(valorNumerico) || valorNumerico <= 0) {
+        newErrors.valor_investimento_previsto =
+          "Digite um valor monetário válido (ex: R$ 50.000,00)";
+      }
     }
 
     setErrors(newErrors);
@@ -129,7 +169,9 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({
     e.preventDefault();
 
     if (validateForm()) {
-      onSubmit(formData);
+      // Converter dados para o formato da API
+      const apiData = convertToApiFormat(formData);
+      onSubmit(apiData);
     }
   };
 
@@ -139,7 +181,10 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({
       nome: "",
       telefone: "",
       email: "",
+      cidade: "",
       uf: "",
+      valor_investimento_previsto: "",
+      tem_ponto: false,
       situacao: 1,
       etapa: 1,
     });
@@ -168,9 +213,51 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({
     }
   };
 
+  // Função para formatar valores monetários
+  const formatCurrency = (value: string) => {
+    // Remove tudo que não é dígito
+    const numbers = value.replace(/\D/g, "");
+
+    if (numbers.length === 0) return "";
+
+    // Converte para número e formata
+    const number = parseInt(numbers);
+    return new Intl.NumberFormat("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+      minimumFractionDigits: 2,
+    }).format(number / 100);
+  };
+
+  // Converter dados do formulário para o formato do endpoint
+  const convertToApiFormat = (
+    formData: CreateLeadData
+  ): CriarLeadRapidoData => {
+    // Converter valor de investimento de string para number
+    const valorNumerico =
+      parseFloat(
+        formData.valor_investimento_previsto
+          .replace(/[R$\s]/g, "")
+          .replace(/\./g, "")
+          .replace(",", ".")
+      ) || 0;
+
+    // Converter tem_ponto para formato da API (S/N)
+    const temPontoApi = formData.tem_ponto ? "S" : "N";
+
+    return {
+      nome: formData.nome,
+      telefone: formData.telefone,
+      cidade: formData.cidade,
+      uf: formData.uf,
+      valor_investimento: valorNumerico,
+      tem_ponto: temPontoApi === "S" ? true : false,
+    };
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-3xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <User className="h-5 w-5" />
@@ -178,7 +265,7 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({
           </DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="grid md:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="nome">Nome *</Label>
             <Input
@@ -210,7 +297,7 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="email">Email *</Label>
+            <Label htmlFor="email">Email (opcional)</Label>
             <Input
               id="email"
               type="email"
@@ -221,6 +308,20 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({
             />
             {errors.email && (
               <p className="text-sm text-red-500">{errors.email}</p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="cidade">Cidade *</Label>
+            <Input
+              id="cidade"
+              value={formData.cidade}
+              onChange={(e) => handleInputChange("cidade", e.target.value)}
+              placeholder="Nome da cidade"
+              className={errors.cidade ? "border-red-500" : ""}
+            />
+            {errors.cidade && (
+              <p className="text-sm text-red-500">{errors.cidade}</p>
             )}
           </div>
 
@@ -244,7 +345,45 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({
             {errors.uf && <p className="text-sm text-red-500">{errors.uf}</p>}
           </div>
 
-          <div className="pt-4 space-y-2">
+          <div className="space-y-2">
+            <Label htmlFor="valor_investimento_previsto">
+              Valor de Investimento Previsto *
+            </Label>
+            <Input
+              id="valor_investimento_previsto"
+              value={formData.valor_investimento_previsto}
+              onChange={(e) =>
+                handleInputChange(
+                  "valor_investimento_previsto",
+                  formatCurrency(e.target.value)
+                )
+              }
+              placeholder="Ex: R$ 50.000,00"
+              className={
+                errors.valor_investimento_previsto ? "border-red-500" : ""
+              }
+            />
+            {errors.valor_investimento_previsto && (
+              <p className="text-sm text-red-500">
+                {errors.valor_investimento_previsto}
+              </p>
+            )}
+          </div>
+
+          <div className="flex items-center gap-3 md:col-span-2">
+            <Checkbox
+              id="tem_ponto"
+              checked={formData.tem_ponto}
+              onCheckedChange={(checked) =>
+                handleInputChange("tem_ponto", checked)
+              }
+            />
+            <Label htmlFor="tem_ponto" className="text-sm font-medium">
+              Tem Ponto?
+            </Label>
+          </div>
+
+          <div className="pt-4 space-y-2 md:col-span-2">
             <p className="text-sm text-muted-foreground">
               <strong>Valores padrão:</strong>
             </p>
@@ -254,7 +393,7 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({
             </div>
           </div>
 
-          <div className="flex justify-end gap-2 pt-4">
+          <div className="flex justify-end gap-2 pt-4 md:col-span-2">
             <Button type="button" variant="outline" onClick={handleClose}>
               Cancelar
             </Button>
