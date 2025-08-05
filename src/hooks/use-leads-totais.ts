@@ -5,6 +5,7 @@ import {
   ILeadsTotaisDetalhados,
   ITotalPorOrigemDetalhado,
   ITotalPorTipoProcuraDetalhado,
+  ILeadTotal,
 } from "@/services/interfaces/ILead";
 
 interface PaginacaoOutput<T> {
@@ -15,41 +16,26 @@ interface PaginacaoOutput<T> {
   dados: T[];
 }
 
-interface ILeadResumo {
-  id: number;
-  nome: string;
-  telefone?: string;
-  email?: string;
-  cidade?: string;
-  uf?: string;
-  data_criacao?: string;
-  vendedor?: string;
-  consultor?: string;
-  situacao?: string;
-  origem?: string;
-  procura_para?: string;
-}
-
 interface TotalPorOrigem {
   origem: string;
   total: number;
-  leads: PaginacaoOutput<ILeadResumo>;
+  leads: PaginacaoOutput<ILeadTotal>;
 }
 
 interface TotalPorTipoProcura {
   tipo_procura: string;
   total: number;
-  leads: PaginacaoOutput<ILeadResumo>;
+  leads: PaginacaoOutput<ILeadTotal>;
 }
 
 interface TotalTransferidos {
   total: number;
-  leads: PaginacaoOutput<ILeadResumo>;
+  leads: PaginacaoOutput<ILeadTotal>;
 }
 
 interface TotalNaoTransferidos {
   total: number;
-  leads: PaginacaoOutput<ILeadResumo>;
+  leads: PaginacaoOutput<ILeadTotal>;
 }
 
 // Removendo interface duplicada - usando a do arquivo de interfaces
@@ -161,7 +147,7 @@ export const useLeadsTotais = (): UseLeadsTotaisReturn => {
   const fetchDetalhesOrigem = useCallback(
     async (origem: string, pagina: number) => {
       try {
-        setLoading(true);
+        // Não setar loading global para não afetar outros componentes
         setError(null);
 
         const response = await httpClient.getLeadsTotaisPorOrigem({
@@ -187,8 +173,6 @@ export const useLeadsTotais = (): UseLeadsTotaisReturn => {
         setError(
           err instanceof Error ? err.message : "Erro ao carregar detalhes"
         );
-      } finally {
-        setLoading(false);
       }
     },
     [currentFilters, totais]
@@ -197,7 +181,7 @@ export const useLeadsTotais = (): UseLeadsTotaisReturn => {
   const fetchDetalhesTipoProcura = useCallback(
     async (tipoProcura: string, pagina: number) => {
       try {
-        setLoading(true);
+        // Não setar loading global para não afetar outros componentes
         setError(null);
 
         const response = await httpClient.getLeadsTotaisPorTipoProcura({
@@ -223,8 +207,6 @@ export const useLeadsTotais = (): UseLeadsTotaisReturn => {
         setError(
           err instanceof Error ? err.message : "Erro ao carregar detalhes"
         );
-      } finally {
-        setLoading(false);
       }
     },
     [currentFilters, totais]
@@ -233,7 +215,7 @@ export const useLeadsTotais = (): UseLeadsTotaisReturn => {
   const fetchDetalhesTransferidos = useCallback(
     async (pagina: number) => {
       try {
-        setLoading(true);
+        // Não setar loading global para não afetar outros componentes
         setError(null);
 
         const response = await httpClient.getLeadsTotaisTransferidos({
@@ -255,8 +237,6 @@ export const useLeadsTotais = (): UseLeadsTotaisReturn => {
         setError(
           err instanceof Error ? err.message : "Erro ao carregar detalhes"
         );
-      } finally {
-        setLoading(false);
       }
     },
     [currentFilters, totais]
@@ -265,7 +245,7 @@ export const useLeadsTotais = (): UseLeadsTotaisReturn => {
   const fetchDetalhesNaoTransferidos = useCallback(
     async (pagina: number) => {
       try {
-        setLoading(true);
+        // Não setar loading global para não afetar outros componentes
         setError(null);
 
         const response = await httpClient.getLeadsTotaisTransferidos({
@@ -287,8 +267,6 @@ export const useLeadsTotais = (): UseLeadsTotaisReturn => {
         setError(
           err instanceof Error ? err.message : "Erro ao carregar detalhes"
         );
-      } finally {
-        setLoading(false);
       }
     },
     [currentFilters, totais]

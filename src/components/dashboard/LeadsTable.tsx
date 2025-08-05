@@ -65,6 +65,8 @@ interface LeadsTableProps {
   leads: ILead[];
   total?: number; // total retornado pela API
   loading?: boolean;
+  onLeadCreated?: () => void; // Callback para recarregar dados após criar lead
+  onDataChanged?: () => void; // Callback para recarregar dados após qualquer modificação
 }
 
 type SortDirection = "asc" | "desc" | null;
@@ -73,6 +75,8 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
   leads,
   total,
   loading = false,
+  onLeadCreated,
+  onDataChanged,
 }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -116,22 +120,11 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
   // Buscar dados dos dropdowns
   const {
     consultores,
+    vendedores,
     etapas,
     situacoes,
     loading: dropdownsLoading,
   } = useDropdowns();
-
-  // Lista de vendedores (pode vir da API no futuro)
-  const vendedores = [
-    { id: 1, nome: "Pedro Souza" },
-    { id: 2, nome: "Juliana Alves" },
-    { id: 3, nome: "Ricardo Martins" },
-    { id: 4, nome: "Fernanda Cruz" },
-    { id: 5, nome: "Lucas Pereira" },
-    { id: 6, nome: "Camila Santos" },
-    { id: 7, nome: "Diego Pereira" },
-    { id: 8, nome: "Beatriz Costa" },
-  ];
 
   // Filtrar leads baseado no termo de busca
   const filteredLeads = leads.filter((lead) =>
@@ -303,11 +296,15 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
           break;
         case "vincular_vendedor":
           if (selectedVendedor) {
+            // Vincular vendedor a todos os leads selecionados
+            const promises = Array.from(selectedLeads).map((leadId) =>
+              httpClient.vincularVendedorAoLead(leadId, selectedVendedor)
+            );
+            await Promise.all(promises);
             console.log(
-              `Vincular vendedor ${selectedVendedor} aos leads:`,
+              `Vendedor ${selectedVendedor} vinculado aos leads:`,
               Array.from(selectedLeads)
             );
-            // TODO: Implementar endpoint para vincular vendedor
           }
           break;
         default:
@@ -322,6 +319,11 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
       setSelectedConsultor(null);
       setSelectedVendedor(null);
       setIsBatchActionModalOpen(false);
+
+      // Recarregar dados após ação em lote
+      if (onDataChanged) {
+        onDataChanged();
+      }
     } catch (error) {
       console.error("Erro ao executar ação em lote:", error);
       // Aqui você pode adicionar um toast de erro
@@ -349,7 +351,11 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
       setIsCreateModalOpen(false);
       setIsCreatingLead(false);
 
-      // TODO: Recarregar a lista de leads após criar
+      // Recarregar a lista de leads após criar
+      if (onLeadCreated) {
+        onLeadCreated();
+      }
+
       // TODO: Adicionar toast de sucesso
     } catch (error) {
       console.error("Erro ao criar lead:", error);
@@ -380,6 +386,11 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
       setIsUpdateStatusModalOpen(false);
       setSelectedLeadForUpdate(null);
       setIsUpdatingStatus(false);
+
+      // Recarregar dados após atualizar status
+      if (onDataChanged) {
+        onDataChanged();
+      }
 
       // Aqui você pode adicionar um toast de sucesso
       // Aqui você pode recarregar a lista de leads
@@ -426,6 +437,11 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
       setIsConvertToClientModalOpen(false);
       setSelectedLeadForConversion(null);
       setIsConvertingToClient(false);
+
+      // Recarregar dados após converter lead
+      if (onDataChanged) {
+        onDataChanged();
+      }
 
       // TODO: Recarregar lista de leads e mostrar toast de sucesso
     } catch (error) {
@@ -620,6 +636,26 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                   </Button>
                 </TableHead>
                 <TableHead className="text-white font-semibold">UF</TableHead>
+                <TableHead className="text-white">
+                  <Button
+                    variant="ghost"
+                    onClick={() => handleSort("etapa")}
+                    className="h-auto p-0 font-semibold text-white hover:bg-blue-600"
+                  >
+                    Etapa
+                    {getSortIcon("etapa")}
+                  </Button>
+                </TableHead>
+                <TableHead className="text-white">
+                  <Button
+                    variant="ghost"
+                    onClick={() => handleSort("id_cliente")}
+                    className="h-auto p-0 font-semibold text-white hover:bg-blue-600"
+                  >
+                    ID Cliente
+                    {getSortIcon("id_cliente")}
+                  </Button>
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -723,6 +759,19 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                   <TableCell>{formatDate(lead.data_criacao)}</TableCell>
                   <TableCell>
                     <span className="text-sm">{lead.uf}</span>
+                  </TableCell>
+                  <TableCell>
+                    <Badge
+                      variant="outline"
+                      className="border-green-300 text-green-700 bg-green-50 font-medium"
+                    >
+                      {lead.etapa || "Não informado"}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <span className="text-sm font-mono">
+                      {lead.id_cliente || "Não atribuído"}
+                    </span>
                   </TableCell>
                 </TableRow>
               ))}
@@ -879,14 +928,20 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                     <SelectValue placeholder="Escolha um vendedor" />
                   </SelectTrigger>
                   <SelectContent>
-                    {vendedores.map((vendedor) => (
-                      <SelectItem
-                        key={vendedor.id}
-                        value={vendedor.id.toString()}
-                      >
-                        {vendedor.nome}
+                    {dropdownsLoading ? (
+                      <SelectItem value="" disabled>
+                        Carregando vendedores...
                       </SelectItem>
-                    ))}
+                    ) : (
+                      vendedores.map((vendedor) => (
+                        <SelectItem
+                          key={vendedor.codigo}
+                          value={vendedor.codigo.toString()}
+                        >
+                          {vendedor.nome}
+                        </SelectItem>
+                      ))
+                    )}
                   </SelectContent>
                 </Select>
               </div>

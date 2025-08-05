@@ -159,6 +159,26 @@ export class HttpClient {
     return this.request<IConsultor[]>("/pessoa/representante/dropdown");
   }
 
+  async getVendedores(): Promise<IConsultor[]> {
+    return this.request<IConsultor[]>("/pessoa/vendedor/dropdown");
+  }
+
+  // Método para buscar dropdown de origens
+  async getDropdownOrigem(): Promise<{ origem: string; total: number }[]> {
+    return this.request<{ origem: string; total: number }[]>(
+      "/leads/dropdown/origem"
+    );
+  }
+
+  // Método para buscar dropdown de tipos de procura
+  async getDropdownTipoProcura(): Promise<
+    { tipo_procura: string; total: number }[]
+  > {
+    return this.request<{ tipo_procura: string; total: number }[]>(
+      "/leads/dropdown/tipo-procura"
+    );
+  }
+
   // Método para vincular consultor ao lead
   async vincularConsultorAoLead(
     idLead: number,
@@ -174,6 +194,25 @@ export class HttpClient {
       return response;
     } catch (error) {
       console.error("Erro ao vincular consultor ao lead:", error);
+      throw error;
+    }
+  }
+
+  // Método para vincular vendedor ao lead
+  async vincularVendedorAoLead(
+    idLead: number,
+    idVendedor: number
+  ): Promise<any> {
+    try {
+      const response = await this.request<any>(
+        `/leads/${idLead}/vincular-vendedor?id_vendedor=${idVendedor}`,
+        {
+          method: "GET",
+        }
+      );
+      return response;
+    } catch (error) {
+      console.error("Erro ao vincular vendedor ao lead:", error);
       throw error;
     }
   }
@@ -250,7 +289,7 @@ export class HttpClient {
     telefone: string;
     cidade: string;
     uf: string;
-    valor_investimento: number;
+    valor_investimento: number | null;
     tem_ponto: boolean;
   }): Promise<boolean> {
     try {

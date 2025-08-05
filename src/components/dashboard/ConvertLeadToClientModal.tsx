@@ -58,7 +58,7 @@ export const ConvertLeadToClientModal: React.FC<
   });
 
   const {
-    consultores,
+    vendedores,
     ramosAtividade,
     loading: dropdownsLoading,
   } = useDropdowns();
@@ -370,14 +370,20 @@ export const ConvertLeadToClientModal: React.FC<
                 <SelectValue placeholder="Selecione um vendedor" />
               </SelectTrigger>
               <SelectContent>
-                {consultores.map((vendedor) => (
-                  <SelectItem
-                    key={vendedor.codigo}
-                    value={vendedor.codigo.toString()}
-                  >
-                    {vendedor.nome}
+                {dropdownsLoading ? (
+                  <SelectItem value="" disabled>
+                    Carregando vendedores...
                   </SelectItem>
-                ))}
+                ) : (
+                  vendedores.map((vendedor) => (
+                    <SelectItem
+                      key={vendedor.codigo}
+                      value={vendedor.codigo.toString()}
+                    >
+                      {vendedor.nome}
+                    </SelectItem>
+                  ))
+                )}
               </SelectContent>
             </Select>
           </div>

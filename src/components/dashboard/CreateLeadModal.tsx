@@ -43,7 +43,7 @@ export interface CriarLeadRapidoData {
   telefone: string;
   cidade: string;
   uf: string;
-  valor_investimento: number;
+  valor_investimento: number | null;
   tem_ponto: boolean;
 }
 
@@ -144,11 +144,8 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({
       newErrors.uf = "UF é obrigatória";
     }
 
-    if (!formData.valor_investimento_previsto.trim()) {
-      newErrors.valor_investimento_previsto =
-        "Valor de investimento previsto é obrigatório";
-    } else {
-      // Validar se é um valor monetário válido
+    // Valor de investimento é opcional; se preenchido, valida formato
+    if (formData.valor_investimento_previsto.trim()) {
       const valorNumerico = parseFloat(
         formData.valor_investimento_previsto
           .replace(/[R$\s]/g, "")
@@ -234,13 +231,17 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({
     formData: CreateLeadData
   ): CriarLeadRapidoData => {
     // Converter valor de investimento de string para number
-    const valorNumerico =
-      parseFloat(
-        formData.valor_investimento_previsto
-          .replace(/[R$\s]/g, "")
-          .replace(/\./g, "")
-          .replace(",", ".")
-      ) || 0;
+    // Se não preenchido, enviar null
+    let valorNumerico: number | null = null;
+    if (formData.valor_investimento_previsto.trim()) {
+      valorNumerico =
+        parseFloat(
+          formData.valor_investimento_previsto
+            .replace(/[R$\s]/g, "")
+            .replace(/\./g, "")
+            .replace(",", ".")
+        ) || 0;
+    }
 
     // Converter tem_ponto para formato da API (S/N)
     const temPontoApi = formData.tem_ponto ? "S" : "N";
@@ -347,7 +348,7 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({
 
           <div className="space-y-2">
             <Label htmlFor="valor_investimento_previsto">
-              Valor de Investimento Previsto *
+              Valor de Investimento Previsto (opcional)
             </Label>
             <Input
               id="valor_investimento_previsto"

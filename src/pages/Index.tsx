@@ -225,7 +225,21 @@ const Index = () => {
         )}
 
         {/* Tabela de Leads */}
-        <LeadsTable leads={leads} total={total} loading={loading} />
+        <LeadsTable
+          leads={leads}
+          total={total}
+          loading={loading}
+          onLeadCreated={() => {
+            // Recarregar leads e totais após criar um novo lead
+            fetchLeads();
+            fetchTotais();
+          }}
+          onDataChanged={() => {
+            // Recarregar leads e totais após qualquer modificação
+            fetchLeads();
+            fetchTotais();
+          }}
+        />
       </div>
     </div>
   );

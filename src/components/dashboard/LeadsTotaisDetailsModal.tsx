@@ -47,6 +47,9 @@ export const LeadsTotaisDetailsModal: React.FC<
   onPageChange,
   loading = false,
 }) => {
+  // Estado de loading interno para controlar paginação específica
+  const [internalLoading, setInternalLoading] = useState(false);
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("pt-BR");
   };
@@ -59,6 +62,16 @@ export const LeadsTotaisDetailsModal: React.FC<
           "bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold shadow-sm",
       },
       "Em Andamento": {
+        variant: "secondary" as const,
+        className:
+          "bg-gradient-to-r from-yellow-500 to-orange-500 text-white font-semibold shadow-sm",
+      },
+      "Em Negociacao": {
+        variant: "secondary" as const,
+        className:
+          "bg-gradient-to-r from-yellow-500 to-orange-500 text-white font-semibold shadow-sm",
+      },
+      "Proposta Enviada": {
         variant: "secondary" as const,
         className:
           "bg-gradient-to-r from-yellow-500 to-orange-500 text-white font-semibold shadow-sm",
@@ -78,6 +91,11 @@ export const LeadsTotaisDetailsModal: React.FC<
         className:
           "bg-gradient-to-r from-gray-500 to-gray-600 text-white font-semibold shadow-sm",
       },
+      Duplicado: {
+        variant: "outline" as const,
+        className:
+          "bg-gradient-to-r from-gray-500 to-gray-600 text-white font-semibold shadow-sm",
+      },
     };
 
     const config =
@@ -89,6 +107,16 @@ export const LeadsTotaisDetailsModal: React.FC<
         {situacao}
       </Badge>
     );
+  };
+
+  // Função para lidar com mudança de página com loading interno
+  const handlePageChange = async (page: number) => {
+    setInternalLoading(true);
+    try {
+      await onPageChange(page);
+    } finally {
+      setInternalLoading(false);
+    }
   };
 
   // Verificação de segurança para evitar erro quando leads é undefined
@@ -110,6 +138,9 @@ export const LeadsTotaisDetailsModal: React.FC<
     );
   }
 
+  // Usar loading interno ou externo
+  const isTableLoading = internalLoading || loading;
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto border-0 shadow-2xl">
@@ -120,7 +151,7 @@ export const LeadsTotaisDetailsModal: React.FC<
           </p>
         </DialogHeader>
 
-        {loading ? (
+        {isTableLoading ? (
           <div className="animate-pulse space-y-4">
             <div className="h-4 bg-gray-200 rounded w-1/4"></div>
             <div className="space-y-2">
@@ -168,78 +199,90 @@ export const LeadsTotaisDetailsModal: React.FC<
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {leads.dados.map((lead, index) => (
-                    <TableRow
-                      key={lead.id}
-                      className={`hover:bg-blue-50 transition-colors ${
-                        index % 2 === 0 ? "bg-white" : "bg-blue-50/30"
-                      }`}
-                    >
-                      <TableCell className="font-medium">
-                        {lead.nome || "Sem nome"}
-                      </TableCell>
-                      <TableCell>
-                        {lead.email || (
-                          <span className="text-muted-foreground">
-                            Não informado
-                          </span>
-                        )}
-                      </TableCell>
-                      <TableCell>{lead.telefone}</TableCell>
-                      <TableCell>
-                        {lead.origem || (
-                          <span className="text-muted-foreground">
-                            Não informado
-                          </span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {getSituacaoBadge(lead.situacao || "")}
-                      </TableCell>
-                      <TableCell>
-                        {lead.procura_para ? (
-                          <Badge
-                            variant="outline"
-                            className="border-blue-300 text-blue-700 bg-blue-50 font-medium"
-                          >
-                            {lead.procura_para}
-                          </Badge>
-                        ) : (
-                          <span className="text-muted-foreground">
-                            Não informado
-                          </span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {lead.consultor ? (
-                          <span className="text-sm">{lead.consultor}</span>
-                        ) : (
-                          <span className="text-sm text-muted-foreground">
-                            Não atribuído
-                          </span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {lead.vendedor ? (
-                          <span className="text-sm">{lead.vendedor}</span>
-                        ) : (
-                          <span className="text-sm text-muted-foreground">
-                            Não atribuído
-                          </span>
-                        )}
-                      </TableCell>
-                      <TableCell>{formatDate(lead.data_criacao)}</TableCell>
-                      <TableCell>
-                        <span className="text-sm">
-                          {lead.uf || (
+                  {leads.dados && leads.dados.length > 0 ? (
+                    leads.dados.map((lead, index) => (
+                      <TableRow
+                        key={lead.id}
+                        className={`hover:bg-blue-50 transition-colors ${
+                          index % 2 === 0 ? "bg-white" : "bg-blue-50/30"
+                        }`}
+                      >
+                        <TableCell className="font-medium">
+                          {lead.nome || "Sem nome"}
+                        </TableCell>
+                        <TableCell>
+                          {lead.email || (
                             <span className="text-muted-foreground">
                               Não informado
                             </span>
                           )}
-                        </span>
+                        </TableCell>
+                        <TableCell>{lead.telefone}</TableCell>
+                        <TableCell>
+                          {lead.origem && lead.origem.trim() !== "" ? (
+                            lead.origem
+                          ) : (
+                            <span className="text-muted-foreground">
+                              Não informado
+                            </span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {getSituacaoBadge(lead.situacao || "")}
+                        </TableCell>
+                        <TableCell>
+                          {lead.procura_para ? (
+                            <Badge
+                              variant="outline"
+                              className="border-blue-300 text-blue-700 bg-blue-50 font-medium"
+                            >
+                              {lead.procura_para}
+                            </Badge>
+                          ) : (
+                            <span className="text-muted-foreground">
+                              Não informado
+                            </span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {lead.consultor ? (
+                            <span className="text-sm">{lead.consultor}</span>
+                          ) : (
+                            <span className="text-sm text-muted-foreground">
+                              Não atribuído
+                            </span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {lead.vendedor ? (
+                            <span className="text-sm">{lead.vendedor}</span>
+                          ) : (
+                            <span className="text-sm text-muted-foreground">
+                              Não atribuído
+                            </span>
+                          )}
+                        </TableCell>
+                        <TableCell>{formatDate(lead.data_criacao)}</TableCell>
+                        <TableCell>
+                          <span className="text-sm">
+                            {lead.uf || (
+                              <span className="text-muted-foreground">
+                                Não informado
+                              </span>
+                            )}
+                          </span>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={10} className="text-center py-8">
+                        <div className="text-gray-500">
+                          Nenhum lead encontrado.
+                        </div>
                       </TableCell>
                     </TableRow>
-                  ))}
+                  )}
                 </TableBody>
               </Table>
             </div>
@@ -255,8 +298,8 @@ export const LeadsTotaisDetailsModal: React.FC<
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => onPageChange(leads.pagina - 1)}
-                    disabled={leads.pagina === 1}
+                    onClick={() => handlePageChange(leads.pagina - 1)}
+                    disabled={leads.pagina === 1 || internalLoading}
                     className="border-blue-300 text-blue-700 hover:bg-blue-50 hover:border-blue-400"
                   >
                     <ChevronLeft className="h-4 w-4" />
@@ -278,7 +321,8 @@ export const LeadsTotaisDetailsModal: React.FC<
                               leads.pagina === page ? "default" : "outline"
                             }
                             size="sm"
-                            onClick={() => onPageChange(page)}
+                            onClick={() => handlePageChange(page)}
+                            disabled={internalLoading}
                             className={`w-8 h-8 p-0 ${
                               leads.pagina === page
                                 ? "bg-blue-600 hover:bg-blue-700"
@@ -295,8 +339,10 @@ export const LeadsTotaisDetailsModal: React.FC<
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => onPageChange(leads.pagina + 1)}
-                    disabled={leads.pagina === leads.total_paginas}
+                    onClick={() => handlePageChange(leads.pagina + 1)}
+                    disabled={
+                      leads.pagina === leads.total_paginas || internalLoading
+                    }
                     className="border-blue-300 text-blue-700 hover:bg-blue-50 hover:border-blue-400"
                   >
                     Próximo

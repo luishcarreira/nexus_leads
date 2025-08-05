@@ -65,6 +65,11 @@ export const LeadsPorTipoProcuraModal: React.FC<
         className:
           "bg-gradient-to-r from-yellow-500 to-orange-500 text-white font-semibold shadow-sm",
       },
+      "Em Negociacao": {
+        variant: "secondary" as const,
+        className:
+          "bg-gradient-to-r from-yellow-500 to-orange-500 text-white font-semibold shadow-sm",
+      },
       Convertido: {
         variant: "default" as const,
         className:
@@ -76,6 +81,11 @@ export const LeadsPorTipoProcuraModal: React.FC<
           "bg-gradient-to-r from-red-500 to-red-600 text-white font-semibold shadow-sm",
       },
       Aguardando: {
+        variant: "outline" as const,
+        className:
+          "bg-gradient-to-r from-gray-500 to-gray-600 text-white font-semibold shadow-sm",
+      },
+      Duplicado: {
         variant: "outline" as const,
         className:
           "bg-gradient-to-r from-gray-500 to-gray-600 text-white font-semibold shadow-sm",
@@ -201,225 +211,264 @@ export const LeadsPorTipoProcuraModal: React.FC<
           </div>
 
           {/* Seção de Leads do Tipo de Procura Selecionado */}
-          {tipoProcuraSelecionado && leadsAtuais && (
+          {tipoProcuraSelecionado && (
             <div className="border-t pt-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-800">
-                  Leads do Tipo:{" "}
-                  <span className="text-purple-600">
-                    {tipoProcuraSelecionado}
-                  </span>
-                </h3>
-                <Badge
-                  variant="outline"
-                  className="bg-green-100 text-green-700 border-green-300"
-                >
-                  {leadsAtuais.total} leads encontrados
-                </Badge>
-              </div>
-
-              {loading || loadingPagina ? (
-                <div className="animate-pulse space-y-4">
-                  <div className="h-4 bg-gray-200 rounded w-1/4"></div>
-                  <div className="space-y-2">
-                    {Array.from({ length: 5 }).map((_, i) => (
-                      <div key={i} className="h-10 bg-gray-200 rounded"></div>
-                    ))}
+              {leadsAtuais && leadsAtuais.dados ? (
+                <div className="border-t pt-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold text-gray-800">
+                      Leads do Tipo:{" "}
+                      <span className="text-purple-600">
+                        {tipoProcuraSelecionado}
+                      </span>
+                    </h3>
+                    <Badge
+                      variant="outline"
+                      className="bg-green-100 text-green-700 border-green-300"
+                    >
+                      {leadsAtuais.total} leads encontrados
+                    </Badge>
                   </div>
-                </div>
-              ) : (
-                <>
-                  <div className="rounded-lg border border-purple-200 overflow-hidden shadow-sm">
-                    <Table>
-                      <TableHeader>
-                        <TableRow className="bg-gradient-to-r from-purple-600 to-purple-700 text-white">
-                          <TableHead className="text-white font-semibold">
-                            Nome
-                          </TableHead>
-                          <TableHead className="text-white font-semibold">
-                            Email
-                          </TableHead>
-                          <TableHead className="text-white font-semibold">
-                            Telefone
-                          </TableHead>
-                          <TableHead className="text-white font-semibold">
-                            Situação
-                          </TableHead>
-                          <TableHead className="text-white font-semibold">
-                            Procura Para
-                          </TableHead>
-                          <TableHead className="text-white font-semibold">
-                            Consultor
-                          </TableHead>
-                          <TableHead className="text-white font-semibold">
-                            Vendedor
-                          </TableHead>
-                          <TableHead className="text-white font-semibold">
-                            Data Criação
-                          </TableHead>
-                          <TableHead className="text-white font-semibold">
-                            UF
-                          </TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {leadsAtuais.dados.map((lead, index) => (
-                          <TableRow
-                            key={lead.id}
-                            className={`hover:bg-purple-50 transition-colors ${
-                              index % 2 === 0 ? "bg-white" : "bg-purple-50/30"
-                            }`}
-                          >
-                            <TableCell className="font-medium">
-                              {lead.nome || "Sem nome"}
-                            </TableCell>
-                            <TableCell>
-                              {lead.email || (
-                                <span className="text-muted-foreground">
-                                  Não informado
-                                </span>
-                              )}
-                            </TableCell>
-                            <TableCell>{lead.telefone}</TableCell>
-                            <TableCell>
-                              {getSituacaoBadge(lead.situacao || "")}
-                            </TableCell>
-                            <TableCell>
-                              {lead.procura_para ? (
-                                <Badge
-                                  variant="outline"
-                                  className="border-purple-300 text-purple-700 bg-purple-50 font-medium"
-                                >
-                                  {lead.procura_para}
-                                </Badge>
-                              ) : (
-                                <span className="text-muted-foreground">
-                                  Não informado
-                                </span>
-                              )}
-                            </TableCell>
-                            <TableCell>
-                              {lead.consultor ? (
-                                <span className="text-sm">
-                                  {lead.consultor}
-                                </span>
-                              ) : (
-                                <span className="text-sm text-muted-foreground">
-                                  Não atribuído
-                                </span>
-                              )}
-                            </TableCell>
-                            <TableCell>
-                              {lead.vendedor ? (
-                                <span className="text-sm">{lead.vendedor}</span>
-                              ) : (
-                                <span className="text-sm text-muted-foreground">
-                                  Não atribuído
-                                </span>
-                              )}
-                            </TableCell>
-                            <TableCell>
-                              {formatDate(lead.data_criacao)}
-                            </TableCell>
-                            <TableCell>
-                              <span className="text-sm">
-                                {lead.uf || (
-                                  <span className="text-muted-foreground">
-                                    Não informado
-                                  </span>
-                                )}
-                              </span>
-                            </TableCell>
-                          </TableRow>
+
+                  {loading || loadingPagina ? (
+                    <div className="animate-pulse space-y-4">
+                      <div className="h-4 bg-gray-200 rounded w-1/4"></div>
+                      <div className="space-y-2">
+                        {Array.from({ length: 5 }).map((_, i) => (
+                          <div
+                            key={i}
+                            className="h-10 bg-gray-200 rounded"
+                          ></div>
                         ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-
-                  {/* Paginação */}
-                  {leadsAtuais.total_paginas > 1 && (
-                    <div className="flex items-center justify-between space-x-2 py-4">
-                      <div className="text-sm text-purple-600 font-medium">
-                        Página {leadsAtuais.pagina} de{" "}
-                        {leadsAtuais.total_paginas}
-                      </div>
-
-                      <div className="flex items-center space-x-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() =>
-                            handlePageChange(
-                              tipoProcuraSelecionado,
-                              leadsAtuais.pagina - 1
-                            )
-                          }
-                          disabled={leadsAtuais.pagina === 1}
-                          className="border-purple-300 text-purple-700 hover:bg-purple-50 hover:border-purple-400"
-                        >
-                          <ChevronLeft className="h-4 w-4" />
-                          Anterior
-                        </Button>
-
-                        <div className="flex items-center gap-1">
-                          {Array.from(
-                            { length: Math.min(5, leadsAtuais.total_paginas) },
-                            (_, i) => {
-                              const page =
-                                leadsAtuais.pagina <= 3
-                                  ? i + 1
-                                  : leadsAtuais.pagina - 2 + i;
-                              if (page > leadsAtuais.total_paginas) return null;
-
-                              return (
-                                <Button
-                                  key={page}
-                                  variant={
-                                    leadsAtuais.pagina === page
-                                      ? "default"
-                                      : "outline"
-                                  }
-                                  size="sm"
-                                  onClick={() =>
-                                    handlePageChange(
-                                      tipoProcuraSelecionado,
-                                      page
-                                    )
-                                  }
-                                  className={`w-8 h-8 p-0 ${
-                                    leadsAtuais.pagina === page
-                                      ? "bg-purple-600 hover:bg-purple-700"
-                                      : "border-purple-300 text-purple-700 hover:bg-purple-50 hover:border-purple-400"
-                                  }`}
-                                >
-                                  {page}
-                                </Button>
-                              );
-                            }
-                          )}
-                        </div>
-
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() =>
-                            handlePageChange(
-                              tipoProcuraSelecionado,
-                              leadsAtuais.pagina + 1
-                            )
-                          }
-                          disabled={
-                            leadsAtuais.pagina === leadsAtuais.total_paginas
-                          }
-                          className="border-purple-300 text-purple-700 hover:bg-purple-50 hover:border-purple-400"
-                        >
-                          Próximo
-                          <ChevronRight className="h-4 w-4" />
-                        </Button>
                       </div>
                     </div>
+                  ) : (
+                    <>
+                      <div className="rounded-lg border border-purple-200 overflow-hidden shadow-sm">
+                        <Table>
+                          <TableHeader>
+                            <TableRow className="bg-gradient-to-r from-purple-600 to-purple-700 text-white">
+                              <TableHead className="text-white font-semibold">
+                                Nome
+                              </TableHead>
+                              <TableHead className="text-white font-semibold">
+                                Email
+                              </TableHead>
+                              <TableHead className="text-white font-semibold">
+                                Telefone
+                              </TableHead>
+                              <TableHead className="text-white font-semibold">
+                                Situação
+                              </TableHead>
+                              <TableHead className="text-white font-semibold">
+                                Procura Para
+                              </TableHead>
+                              <TableHead className="text-white font-semibold">
+                                Consultor
+                              </TableHead>
+                              <TableHead className="text-white font-semibold">
+                                Vendedor
+                              </TableHead>
+                              <TableHead className="text-white font-semibold">
+                                Data Criação
+                              </TableHead>
+                              <TableHead className="text-white font-semibold">
+                                UF
+                              </TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {leadsAtuais.dados &&
+                            leadsAtuais.dados.length > 0 ? (
+                              leadsAtuais.dados.map((lead, index) => (
+                                <TableRow
+                                  key={lead.id}
+                                  className={`hover:bg-purple-50 transition-colors ${
+                                    index % 2 === 0
+                                      ? "bg-white"
+                                      : "bg-purple-50/30"
+                                  }`}
+                                >
+                                  <TableCell className="font-medium">
+                                    {lead.nome || "Sem nome"}
+                                  </TableCell>
+                                  <TableCell>
+                                    {lead.email || (
+                                      <span className="text-muted-foreground">
+                                        Não informado
+                                      </span>
+                                    )}
+                                  </TableCell>
+                                  <TableCell>{lead.telefone}</TableCell>
+                                  <TableCell>
+                                    {getSituacaoBadge(lead.situacao || "")}
+                                  </TableCell>
+                                  <TableCell>
+                                    {lead.procura_para ? (
+                                      <Badge
+                                        variant="outline"
+                                        className="border-purple-300 text-purple-700 bg-purple-50 font-medium"
+                                      >
+                                        {lead.procura_para}
+                                      </Badge>
+                                    ) : (
+                                      <span className="text-muted-foreground">
+                                        Não informado
+                                      </span>
+                                    )}
+                                  </TableCell>
+                                  <TableCell>
+                                    {lead.consultor ? (
+                                      <span className="text-sm">
+                                        {lead.consultor}
+                                      </span>
+                                    ) : (
+                                      <span className="text-sm text-muted-foreground">
+                                        Não atribuído
+                                      </span>
+                                    )}
+                                  </TableCell>
+                                  <TableCell>
+                                    {lead.vendedor ? (
+                                      <span className="text-sm">
+                                        {lead.vendedor}
+                                      </span>
+                                    ) : (
+                                      <span className="text-sm text-muted-foreground">
+                                        Não atribuído
+                                      </span>
+                                    )}
+                                  </TableCell>
+                                  <TableCell>
+                                    {formatDate(lead.data_criacao)}
+                                  </TableCell>
+                                  <TableCell>
+                                    <span className="text-sm">
+                                      {lead.uf || (
+                                        <span className="text-muted-foreground">
+                                          Não informado
+                                        </span>
+                                      )}
+                                    </span>
+                                  </TableCell>
+                                </TableRow>
+                              ))
+                            ) : (
+                              <TableRow>
+                                <TableCell
+                                  colSpan={9}
+                                  className="text-center py-8"
+                                >
+                                  <div className="text-gray-500">
+                                    Nenhum lead encontrado para este tipo de
+                                    procura.
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                            )}
+                          </TableBody>
+                        </Table>
+                      </div>
+
+                      {/* Paginação */}
+                      {leadsAtuais.total_paginas > 1 && (
+                        <div className="flex items-center justify-between space-x-2 py-4">
+                          <div className="text-sm text-purple-600 font-medium">
+                            Página {leadsAtuais.pagina} de{" "}
+                            {leadsAtuais.total_paginas}
+                          </div>
+
+                          <div className="flex items-center space-x-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() =>
+                                handlePageChange(
+                                  tipoProcuraSelecionado,
+                                  leadsAtuais.pagina - 1
+                                )
+                              }
+                              disabled={leadsAtuais.pagina === 1}
+                              className="border-purple-300 text-purple-700 hover:bg-purple-50 hover:border-purple-400"
+                            >
+                              <ChevronLeft className="h-4 w-4" />
+                              Anterior
+                            </Button>
+
+                            <div className="flex items-center gap-1">
+                              {Array.from(
+                                {
+                                  length: Math.min(
+                                    5,
+                                    leadsAtuais.total_paginas
+                                  ),
+                                },
+                                (_, i) => {
+                                  const page =
+                                    leadsAtuais.pagina <= 3
+                                      ? i + 1
+                                      : leadsAtuais.pagina - 2 + i;
+                                  if (page > leadsAtuais.total_paginas)
+                                    return null;
+
+                                  return (
+                                    <Button
+                                      key={page}
+                                      variant={
+                                        leadsAtuais.pagina === page
+                                          ? "default"
+                                          : "outline"
+                                      }
+                                      size="sm"
+                                      onClick={() =>
+                                        handlePageChange(
+                                          tipoProcuraSelecionado,
+                                          page
+                                        )
+                                      }
+                                      className={`w-8 h-8 p-0 ${
+                                        leadsAtuais.pagina === page
+                                          ? "bg-purple-600 hover:bg-purple-700"
+                                          : "border-purple-300 text-purple-700 hover:bg-purple-50 hover:border-purple-400"
+                                      }`}
+                                    >
+                                      {page}
+                                    </Button>
+                                  );
+                                }
+                              )}
+                            </div>
+
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() =>
+                                handlePageChange(
+                                  tipoProcuraSelecionado,
+                                  leadsAtuais.pagina + 1
+                                )
+                              }
+                              disabled={
+                                leadsAtuais.pagina === leadsAtuais.total_paginas
+                              }
+                              className="border-purple-300 text-purple-700 hover:bg-purple-50 hover:border-purple-400"
+                            >
+                              Próximo
+                              <ChevronRight className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                    </>
                   )}
-                </>
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <Search className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                    Nenhum lead encontrado para este tipo de procura.
+                  </h3>
+                </div>
               )}
             </div>
           )}

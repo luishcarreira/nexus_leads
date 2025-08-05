@@ -29,41 +29,26 @@ interface PaginacaoOutput<T> {
   dados: T[];
 }
 
-interface ILeadResumo {
-  id: number;
-  nome: string;
-  telefone?: string;
-  email?: string;
-  cidade?: string;
-  uf?: string;
-  data_criacao?: string;
-  vendedor?: string;
-  consultor?: string;
-  situacao?: string;
-  origem?: string;
-  procura_para?: string;
-}
-
 interface TotalPorOrigem {
   origem: string;
   total: number;
-  leads: PaginacaoOutput<ILeadResumo>;
+  leads: PaginacaoOutput<ILeadTotal>;
 }
 
 interface TotalPorTipoProcura {
   tipo_procura: string;
   total: number;
-  leads: PaginacaoOutput<ILeadResumo>;
+  leads: PaginacaoOutput<ILeadTotal>;
 }
 
 interface TotalTransferidos {
   total: number;
-  leads: PaginacaoOutput<ILeadResumo>;
+  leads: PaginacaoOutput<ILeadTotal>;
 }
 
 interface TotalNaoTransferidos {
   total: number;
-  leads: PaginacaoOutput<ILeadResumo>;
+  leads: PaginacaoOutput<ILeadTotal>;
 }
 
 // Removendo interface duplicada - usando a do arquivo de interfaces
@@ -86,7 +71,7 @@ export const SummaryCards: React.FC<SummaryCardsProps> = ({
     isOpen: boolean;
     title: string;
     total: number;
-    leads: PaginacaoOutput<ILeadResumo>;
+    leads: PaginacaoOutput<ILeadTotal>;
     type: "origem" | "tipoProcura" | "transferidos" | "naoTransferidos";
     identifier?: string;
   }>({
@@ -132,7 +117,7 @@ export const SummaryCards: React.FC<SummaryCardsProps> = ({
       return;
     }
 
-    let leads: PaginacaoOutput<ILeadResumo>;
+    let leads: PaginacaoOutput<ILeadTotal>;
     let total: number;
 
     switch (type) {
@@ -359,7 +344,7 @@ export const SummaryCards: React.FC<SummaryCardsProps> = ({
         }
         title={detailsModalConfig.title}
         total={detailsModalConfig.total}
-        leads={detailsModalConfig.leads as PaginacaoOutput<ILeadTotal>}
+        leads={detailsModalConfig.leads}
         onPageChange={handlePageChange}
         loading={loading}
       />
@@ -398,7 +383,7 @@ export const DetailedSummary: React.FC<{
     isOpen: boolean;
     title: string;
     total: number;
-    leads: PaginacaoOutput<ILeadResumo>;
+    leads: PaginacaoOutput<ILeadTotal>;
     type: "origem" | "tipoProcura";
     identifier: string;
   }>({
@@ -414,7 +399,7 @@ export const DetailedSummary: React.FC<{
     type: "origem" | "tipoProcura",
     title: string,
     total: number,
-    leads: PaginacaoOutput<ILeadResumo>,
+    leads: PaginacaoOutput<ILeadTotal>,
     identifier: string
   ) => {
     setDetailsModalConfig({
@@ -595,7 +580,7 @@ export const DetailedSummary: React.FC<{
         }
         title={detailsModalConfig.title}
         total={detailsModalConfig.total}
-        leads={detailsModalConfig.leads as PaginacaoOutput<ILeadTotal>}
+        leads={detailsModalConfig.leads}
         onPageChange={handlePageChange}
         loading={loading}
       />

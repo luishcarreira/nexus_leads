@@ -33,18 +33,24 @@ export const useDropdowns = (): UseDropdownsReturn => {
       setLoading(true);
       setError(null);
 
-      const [etapasData, situacoesData, consultoresData, ramosData] =
-        await Promise.all([
-          httpClient.getEtapasLead(),
-          httpClient.getSituacaoLead(),
-          httpClient.getConsultores(),
-          httpClient.getRamosAtividade(),
-        ]);
+      const [
+        etapasData,
+        situacoesData,
+        consultoresData,
+        vendedoresData,
+        ramosData,
+      ] = await Promise.all([
+        httpClient.getEtapasLead(),
+        httpClient.getSituacaoLead(),
+        httpClient.getConsultores(),
+        httpClient.getVendedores(),
+        httpClient.getRamosAtividade(),
+      ]);
 
       setEtapas(etapasData);
       setSituacoes(situacoesData);
       setConsultores(consultoresData);
-      setVendedores(consultoresData); // Usar os mesmos dados dos consultores
+      setVendedores(vendedoresData);
       setRamosAtividade(ramosData);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao carregar dados");
@@ -66,18 +72,24 @@ export const useDropdowns = (): UseDropdownsReturn => {
         setLoading(true);
         setError(null);
 
-        const [etapasData, situacoesData, consultoresData, ramosData] =
-          await Promise.all([
-            httpClient.getEtapasLead(),
-            httpClient.getSituacaoLead(),
-            httpClient.getConsultores(),
-            httpClient.getRamosAtividade(),
-          ]);
+        const [
+          etapasData,
+          situacoesData,
+          consultoresData,
+          vendedoresData,
+          ramosData,
+        ] = await Promise.all([
+          httpClient.getEtapasLead(),
+          httpClient.getSituacaoLead(),
+          httpClient.getConsultores(),
+          httpClient.getVendedores(),
+          httpClient.getRamosAtividade(),
+        ]);
 
         setEtapas(etapasData);
         setSituacoes(situacoesData);
         setConsultores(consultoresData);
-        setVendedores(consultoresData); // Usar os mesmos dados dos consultores
+        setVendedores(vendedoresData);
         setRamosAtividade(ramosData);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Erro ao carregar dados");

@@ -25,6 +25,7 @@ export interface ILead {
   consultor: string | null;
   vendedor: string | null;
   origem: string;
+  etapa: string;
 }
 
 export interface ILeadsResponse {

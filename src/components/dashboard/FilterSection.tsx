@@ -15,6 +15,7 @@ import {
 import { DateRangePicker } from "@/components/ui/date-range-picker";
 import { cn } from "@/lib/utils";
 import { useDropdowns } from "@/hooks/use-dropdowns";
+import { httpClient } from "@/services/httpClient";
 
 interface DateRange {
   from?: Date;
@@ -65,17 +66,36 @@ export const FilterSection: React.FC<FilterProps> = ({
     error: dropdownsError,
   } = useDropdowns();
 
-  // Dados estáticos (pode ser movido para API no futuro)
-  const origens = [
-    "Website",
-    "Facebook",
-    "Google Ads",
-    "Indicação",
-    "WhatsApp",
-    "Telefone",
-  ];
-  const tiposProcura = ["Produto A", "Produto B", "Produto C"];
+  // Estados para dropdowns de origem e tipo de procura
+  const [origens, setOrigens] = useState<{ origem: string; total: number }[]>(
+    []
+  );
+  const [tiposProcura, setTiposProcura] = useState<
+    { tipo_procura: string; total: number }[]
+  >([]);
+  const [loadingDropdowns, setLoadingDropdowns] = useState(false);
   const ufs = ["SP", "RJ", "MG", "RS", "PR", "SC", "BA", "GO", "PE", "CE"];
+
+  // Buscar dados dos dropdowns de origem e tipo de procura
+  useEffect(() => {
+    const fetchDropdowns = async () => {
+      setLoadingDropdowns(true);
+      try {
+        const [origensData, tiposProcuraData] = await Promise.all([
+          httpClient.getDropdownOrigem(),
+          httpClient.getDropdownTipoProcura(),
+        ]);
+        setOrigens(origensData);
+        setTiposProcura(tiposProcuraData);
+      } catch (error) {
+        console.error("Erro ao carregar dropdowns:", error);
+      } finally {
+        setLoadingDropdowns(false);
+      }
+    };
+
+    fetchDropdowns();
+  }, []);
 
   const handleMultiSelectChange = (
     value: string,
@@ -352,44 +372,65 @@ export const FilterSection: React.FC<FilterProps> = ({
 
           <div className="space-y-2">
             <Label className="text-blue-800 font-medium">Origem</Label>
-            <Select
-              value={filters.origem}
-              onValueChange={(value) =>
-                setFilters((prev) => ({ ...prev, origem: value }))
-              }
-            >
-              <SelectTrigger className="border-blue-200 focus:border-blue-500 focus:ring-blue-500">
-                <SelectValue placeholder="Selecionar origem" />
-              </SelectTrigger>
-              <SelectContent>
-                {origens.map((origem) => (
-                  <SelectItem key={origem} value={origem}>
-                    {origem}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {loadingDropdowns ? (
+              <div className="flex items-center justify-center h-10 border rounded-md">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span className="ml-2 text-sm text-muted-foreground">
+                  Carregando...
+                </span>
+              </div>
+            ) : (
+              <Select
+                value={filters.origem}
+                onValueChange={(value) =>
+                  setFilters((prev) => ({ ...prev, origem: value }))
+                }
+              >
+                <SelectTrigger className="border-blue-200 focus:border-blue-500 focus:ring-blue-500">
+                  <SelectValue placeholder="Selecionar origem" />
+                </SelectTrigger>
+                <SelectContent>
+                  {origens.map((origem) => (
+                    <SelectItem key={origem.origem} value={origem.origem}>
+                      {origem.origem} ({origem.total})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
           </div>
 
           <div className="space-y-2">
             <Label className="text-blue-800 font-medium">Tipo de Procura</Label>
-            <Select
-              value={filters.tipoProcura}
-              onValueChange={(value) =>
-                setFilters((prev) => ({ ...prev, tipoProcura: value }))
-              }
-            >
-              <SelectTrigger className="border-blue-200 focus:border-blue-500 focus:ring-blue-500">
-                <SelectValue placeholder="Selecionar tipo" />
-              </SelectTrigger>
-              <SelectContent>
-                {tiposProcura.map((tipo) => (
-                  <SelectItem key={tipo} value={tipo}>
-                    {tipo}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {loadingDropdowns ? (
+              <div className="flex items-center justify-center h-10 border rounded-md">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span className="ml-2 text-sm text-muted-foreground">
+                  Carregando...
+                </span>
+              </div>
+            ) : (
+              <Select
+                value={filters.tipoProcura}
+                onValueChange={(value) =>
+                  setFilters((prev) => ({ ...prev, tipoProcura: value }))
+                }
+              >
+                <SelectTrigger className="border-blue-200 focus:border-blue-500 focus:ring-blue-500">
+                  <SelectValue placeholder="Selecionar tipo" />
+                </SelectTrigger>
+                <SelectContent>
+                  {tiposProcura.map((tipo) => (
+                    <SelectItem
+                      key={tipo.tipo_procura}
+                      value={tipo.tipo_procura}
+                    >
+                      {tipo.tipo_procura} ({tipo.total})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
           </div>
 
           <div className="space-y-2">
