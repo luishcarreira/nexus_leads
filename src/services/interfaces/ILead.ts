@@ -102,23 +102,17 @@ export interface ILeadsTotaisDetalhados {
   total_por_tipo_procura: ITotalPorTipoProcuraDetalhado[];
   transferidos: {
     total: number;
-    leads: {
-      total: number;
-      pagina: number;
-      limite: number;
-      total_paginas: number;
-      dados: ILeadTotal[];
-    };
+    pagina: number;
+    limite: number;
+    total_paginas: number;
+    dados: ILeadTotal[];
   };
   nao_transferidos: {
     total: number;
-    leads: {
-      total: number;
-      pagina: number;
-      limite: number;
-      total_paginas: number;
-      dados: ILeadTotal[];
-    };
+    pagina: number;
+    limite: number;
+    total_paginas: number;
+    dados: ILeadTotal[];
   };
 }
 
@@ -131,6 +125,7 @@ export interface ILeadsTotaisFilters {
   tipo_procura?: string;
   transferidos?: boolean;
   nao_transferidos?: boolean;
+  transferido?: boolean | null; // Novo campo para identificar transferido/não transferido ou totais
 }
 
 // Interfaces para os dropdowns

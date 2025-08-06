@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { ILeadTotal } from "@/services/interfaces/ILead";
+import { httpClient } from "@/services/httpClient";
 
 interface PaginacaoOutput<T> {
   total: number;
@@ -34,6 +35,7 @@ interface LeadsTotaisDetailsModalProps {
   leads: PaginacaoOutput<ILeadTotal>;
   onPageChange: (page: number) => void;
   loading?: boolean;
+  currentFilters?: any; // Filtros atuais para aplicar na paginação
 }
 
 export const LeadsTotaisDetailsModal: React.FC<
@@ -43,15 +45,34 @@ export const LeadsTotaisDetailsModal: React.FC<
   onClose,
   title,
   total,
-  leads,
+  leads: initialLeads,
   onPageChange,
   loading = false,
+  currentFilters,
 }) => {
   // Estado de loading interno para controlar paginação específica
   const [internalLoading, setInternalLoading] = useState(false);
+  // Estado interno para controlar os leads e paginação
+  const [currentLeads, setCurrentLeads] =
+    useState<PaginacaoOutput<ILeadTotal>>(initialLeads);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  // Atualizar estado interno quando o modal abrir ou quando initialLeads mudar
+  React.useEffect(() => {
+    if (isOpen && initialLeads) {
+      setCurrentLeads(initialLeads);
+      setCurrentPage(initialLeads.pagina);
+    }
+  }, [isOpen, initialLeads]);
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("pt-BR");
+    return new Date(dateString).toLocaleString("pt-BR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
   };
 
   const getSituacaoBadge = (situacao: string) => {
@@ -113,14 +134,54 @@ export const LeadsTotaisDetailsModal: React.FC<
   const handlePageChange = async (page: number) => {
     setInternalLoading(true);
     try {
-      await onPageChange(page);
+      // Determinar se é transferidos ou não transferidos baseado no título
+      const isTransferidos = title.toLowerCase().includes("transferidos");
+      const isNaoTransferidos =
+        title.toLowerCase().includes("não transferidos") ||
+        title.toLowerCase().includes("nao transferidos");
+
+      let response;
+
+      if (isTransferidos) {
+        response = await httpClient.getLeadsTotaisTransferidos({
+          transferido: true, // Buscar apenas transferidos
+          pagina: page,
+          limite: 10,
+          // Aplicar filtros de data se disponíveis
+          ...(currentFilters && {
+            data_criacao_inicio: currentFilters.data_criacao_inicio,
+            data_criacao_fim: currentFilters.data_criacao_fim,
+          }),
+        });
+        setCurrentLeads(response.transferidos);
+      } else if (isNaoTransferidos) {
+        response = await httpClient.getLeadsTotaisTransferidos({
+          transferido: false, // Buscar apenas não transferidos
+          pagina: page,
+          limite: 10,
+          // Aplicar filtros de data se disponíveis
+          ...(currentFilters && {
+            data_criacao_inicio: currentFilters.data_criacao_inicio,
+            data_criacao_fim: currentFilters.data_criacao_fim,
+          }),
+        });
+        setCurrentLeads(response.nao_transferidos);
+      } else {
+        // Se não for nenhum dos dois, usar o callback original
+        await onPageChange(page);
+        return;
+      }
+
+      setCurrentPage(page);
+    } catch (error) {
+      console.error("Erro ao carregar página:", error);
     } finally {
       setInternalLoading(false);
     }
   };
 
   // Verificação de segurança para evitar erro quando leads é undefined
-  if (!leads || !leads.dados) {
+  if (!currentLeads || !currentLeads.dados) {
     return (
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto border-0 shadow-2xl">
@@ -199,8 +260,8 @@ export const LeadsTotaisDetailsModal: React.FC<
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {leads.dados && leads.dados.length > 0 ? (
-                    leads.dados.map((lead, index) => (
+                  {currentLeads.dados && currentLeads.dados.length > 0 ? (
+                    currentLeads.dados.map((lead, index) => (
                       <TableRow
                         key={lead.id}
                         className={`hover:bg-blue-50 transition-colors ${
@@ -288,18 +349,18 @@ export const LeadsTotaisDetailsModal: React.FC<
             </div>
 
             {/* Paginação */}
-            {leads.total_paginas > 1 && (
+            {currentLeads.total_paginas > 1 && (
               <div className="flex items-center justify-between space-x-2 py-4">
                 <div className="text-sm text-blue-600 font-medium">
-                  Página {leads.pagina} de {leads.total_paginas}
+                  Página {currentLeads.pagina} de {currentLeads.total_paginas}
                 </div>
 
                 <div className="flex items-center space-x-2">
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => handlePageChange(leads.pagina - 1)}
-                    disabled={leads.pagina === 1 || internalLoading}
+                    onClick={() => handlePageChange(currentLeads.pagina - 1)}
+                    disabled={currentLeads.pagina === 1 || internalLoading}
                     className="border-blue-300 text-blue-700 hover:bg-blue-50 hover:border-blue-400"
                   >
                     <ChevronLeft className="h-4 w-4" />
@@ -308,23 +369,27 @@ export const LeadsTotaisDetailsModal: React.FC<
 
                   <div className="flex items-center gap-1">
                     {Array.from(
-                      { length: Math.min(5, leads.total_paginas) },
+                      { length: Math.min(5, currentLeads.total_paginas) },
                       (_, i) => {
                         const page =
-                          leads.pagina <= 3 ? i + 1 : leads.pagina - 2 + i;
-                        if (page > leads.total_paginas) return null;
+                          currentLeads.pagina <= 3
+                            ? i + 1
+                            : currentLeads.pagina - 2 + i;
+                        if (page > currentLeads.total_paginas) return null;
 
                         return (
                           <Button
                             key={page}
                             variant={
-                              leads.pagina === page ? "default" : "outline"
+                              currentLeads.pagina === page
+                                ? "default"
+                                : "outline"
                             }
                             size="sm"
                             onClick={() => handlePageChange(page)}
                             disabled={internalLoading}
                             className={`w-8 h-8 p-0 ${
-                              leads.pagina === page
+                              currentLeads.pagina === page
                                 ? "bg-blue-600 hover:bg-blue-700"
                                 : "border-blue-300 text-blue-700 hover:bg-blue-50 hover:border-blue-400"
                             }`}
@@ -339,9 +404,10 @@ export const LeadsTotaisDetailsModal: React.FC<
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => handlePageChange(leads.pagina + 1)}
+                    onClick={() => handlePageChange(currentLeads.pagina + 1)}
                     disabled={
-                      leads.pagina === leads.total_paginas || internalLoading
+                      currentLeads.pagina === currentLeads.total_paginas ||
+                      internalLoading
                     }
                     className="border-blue-300 text-blue-700 hover:bg-blue-50 hover:border-blue-400"
                   >

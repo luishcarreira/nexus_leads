@@ -54,7 +54,6 @@ export const useDropdowns = (): UseDropdownsReturn => {
       setRamosAtividade(ramosData);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao carregar dados");
-      console.error("Erro ao carregar dropdowns:", err);
       // Em caso de erro, limpar os dados
       setEtapas([]);
       setSituacoes([]);
@@ -93,7 +92,6 @@ export const useDropdowns = (): UseDropdownsReturn => {
         setRamosAtividade(ramosData);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Erro ao carregar dados");
-        console.error("Erro ao carregar dropdowns:", err);
         setEtapas([]);
         setSituacoes([]);
         setConsultores([]);

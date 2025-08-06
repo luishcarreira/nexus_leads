@@ -137,7 +137,6 @@ export const LeadsPorTipoProcuraModal: React.FC<
       // });
       // setLeadsPorTipoProcura(prev => ({ ...prev, [tipoProcura]: response.total_por_tipo_procura[0].leads }));
     } catch (error) {
-      console.error("Erro ao carregar página:", error);
     } finally {
       setLoadingPagina(false);
     }

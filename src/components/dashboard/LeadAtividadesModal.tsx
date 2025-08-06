@@ -49,7 +49,6 @@ export const LeadAtividadesModal: React.FC<LeadAtividadesModalProps> = ({
       setAtividades(atividadesData);
     } catch (err) {
       setError("Erro ao carregar atividades do lead");
-      console.error("Erro ao buscar atividades:", err);
     } finally {
       setLoading(false);
     }

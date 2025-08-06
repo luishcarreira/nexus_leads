@@ -86,10 +86,6 @@ export const useLeadsTotais = (): UseLeadsTotaisReturn => {
 
   const fetchTotais = useCallback(async (filters: ILeadsTotaisFilters = {}) => {
     try {
-      console.log("Buscando totais com filtros:", {
-        ...defaultFilters,
-        ...filters,
-      });
       setLoading(true);
       setError(null);
 
@@ -100,43 +96,25 @@ export const useLeadsTotais = (): UseLeadsTotaisReturn => {
       const [porOrigem, porTipoProcura, transferidos] = await Promise.all([
         httpClient.getLeadsTotaisPorOrigem(mergedFilters),
         httpClient.getLeadsTotaisPorTipoProcura(mergedFilters),
-        httpClient.getLeadsTotaisTransferidos(mergedFilters),
+        httpClient.getLeadsTotaisTransferidos({
+          ...mergedFilters,
+          transferido: null, // Buscar totais (transferidos + não transferidos)
+          pagina: 1,
+          limite: 10,
+        }),
       ]);
-
-      console.log("Resposta por origem:", porOrigem);
-      console.log("Resposta por tipo procura:", porTipoProcura);
-      console.log("Por origem tem dados?", !!porOrigem.totais_por_origem);
-      console.log(
-        "Por tipo procura tem dados?",
-        !!porTipoProcura.total_por_tipo_procura
-      );
-      console.log(
-        "Por tipo procura tem total_por_tipo_procura?",
-        !!porTipoProcura.total_por_tipo_procura
-      );
-      console.log("Chaves de porTipoProcura:", Object.keys(porTipoProcura));
 
       // Combinar os resultados
       const combinedData: ILeadsTotaisDetalhados = {
         total_leads: porOrigem.total_leads, // Todos devem retornar o mesmo total
         totais_por_origem: porOrigem.totais_por_origem,
-        total_por_tipo_procura: porTipoProcura.total_por_tipo_procura || [],
+        total_por_tipo_procura: porTipoProcura.totais_por_tipo_procura || [],
         transferidos: transferidos.transferidos,
         nao_transferidos: transferidos.nao_transferidos,
       };
 
-      console.log("Dados combinados:", combinedData);
-      console.log("Totais por origem:", combinedData.totais_por_origem);
-      console.log(
-        "Totais por tipo procura:",
-        combinedData.total_por_tipo_procura
-      );
-      console.log("Estrutura porOrigem:", Object.keys(porOrigem));
-      console.log("Estrutura porTipoProcura:", Object.keys(porTipoProcura));
-
       setTotais(combinedData);
     } catch (err) {
-      console.error("Erro ao carregar totais:", err);
       setError(err instanceof Error ? err.message : "Erro ao carregar totais");
       setTotais(null);
     } finally {
@@ -169,7 +147,6 @@ export const useLeadsTotais = (): UseLeadsTotaisReturn => {
           setTotais(updatedTotais);
         }
       } catch (err) {
-        console.error("Erro ao carregar detalhes por origem:", err);
         setError(
           err instanceof Error ? err.message : "Erro ao carregar detalhes"
         );
@@ -196,14 +173,13 @@ export const useLeadsTotais = (): UseLeadsTotaisReturn => {
             ...totais,
             total_por_tipo_procura: totais.total_por_tipo_procura.map((item) =>
               item.tipo_procura === tipoProcura
-                ? { ...item, leads: response.total_por_tipo_procura[0].leads }
+                ? { ...item, leads: response.totais_por_tipo_procura[0].leads }
                 : item
             ),
           };
           setTotais(updatedTotais);
         }
       } catch (err) {
-        console.error("Erro ao carregar detalhes por tipo de procura:", err);
         setError(
           err instanceof Error ? err.message : "Erro ao carregar detalhes"
         );
@@ -220,7 +196,7 @@ export const useLeadsTotais = (): UseLeadsTotaisReturn => {
 
         const response = await httpClient.getLeadsTotaisTransferidos({
           ...currentFilters,
-          transferidos: true,
+          transferido: true, // Buscar apenas transferidos
           pagina,
           limite: 10,
         });
@@ -233,7 +209,6 @@ export const useLeadsTotais = (): UseLeadsTotaisReturn => {
           setTotais(updatedTotais);
         }
       } catch (err) {
-        console.error("Erro ao carregar detalhes de transferidos:", err);
         setError(
           err instanceof Error ? err.message : "Erro ao carregar detalhes"
         );
@@ -250,7 +225,7 @@ export const useLeadsTotais = (): UseLeadsTotaisReturn => {
 
         const response = await httpClient.getLeadsTotaisTransferidos({
           ...currentFilters,
-          nao_transferidos: true,
+          transferido: false, // Buscar apenas não transferidos
           pagina,
           limite: 10,
         });
@@ -263,7 +238,6 @@ export const useLeadsTotais = (): UseLeadsTotaisReturn => {
           setTotais(updatedTotais);
         }
       } catch (err) {
-        console.error("Erro ao carregar detalhes de não transferidos:", err);
         setError(
           err instanceof Error ? err.message : "Erro ao carregar detalhes"
         );

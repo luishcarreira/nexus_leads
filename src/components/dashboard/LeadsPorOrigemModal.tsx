@@ -125,7 +125,6 @@ export const LeadsPorOrigemModal: React.FC<LeadsPorOrigemModalProps> = ({
       // });
       // setLeadsPorOrigem(prev => ({ ...prev, [origem]: response.totais_por_origem[0].leads }));
     } catch (error) {
-      console.error("Erro ao carregar página:", error);
     } finally {
       setLoadingPagina(false);
     }

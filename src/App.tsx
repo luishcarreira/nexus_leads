@@ -16,8 +16,6 @@ const App = () => {
     const urlParams = new URLSearchParams(window.location.search);
     ["usrcod", "empcod", "filcod"].forEach((key) => {
       const value = urlParams.get(key);
-      console.log("key", key);
-      console.log("value", value);
       if (value) {
         localStorage.setItem(key, value);
       }

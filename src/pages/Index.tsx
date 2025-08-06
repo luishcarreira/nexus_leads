@@ -42,7 +42,6 @@ const Index = () => {
   // Função para formatar data para o formato da API (YYYY-MM-DD)
   const formatDateForAPI = (date: Date): string => {
     const formatted = format(date, "yyyy-MM-dd");
-    console.log("Formatando data:", date, "para:", formatted);
     return formatted;
   };
 
@@ -109,42 +108,27 @@ const Index = () => {
   const convertFiltersToTotais = (filters: UIFilters): ILeadsTotaisFilters => {
     const totaisFilters: ILeadsTotaisFilters = {};
 
-    console.log(
-      "Convertendo filtros para totais - filtros recebidos:",
-      filters
-    );
-    console.log("creationDateRange:", filters.creationDateRange);
-
     // Filtro por período de criação
     if (filters.creationDateRange?.from) {
       const dataInicio = formatDateForAPI(filters.creationDateRange.from);
       totaisFilters.data_criacao_inicio = dataInicio;
-      console.log("Data início formatada:", dataInicio);
     }
     if (filters.creationDateRange?.to) {
       const dataFim = formatDateForAPI(filters.creationDateRange.to);
       totaisFilters.data_criacao_fim = dataFim;
-      console.log("Data fim formatada:", dataFim);
     }
-
-    // Log para debug
-    console.log("Filtros convertidos para totais:", totaisFilters);
 
     return totaisFilters;
   };
 
   const handleFiltersChange = useCallback(
     (newFilters: UIFilters) => {
-      console.log("Novos filtros aplicados:", newFilters);
-
       // Buscar leads com os novos filtros
       const leadsFilters = convertFiltersToAPI(newFilters);
-      console.log("Filtros para leads:", leadsFilters);
       fetchLeads(leadsFilters);
 
       // Buscar totais com os novos filtros
       const totaisFilters = convertFiltersToTotais(newFilters);
-      console.log("Filtros para totais:", totaisFilters);
       fetchTotais(totaisFilters);
 
       // Salvar os filtros no estado para manter na interface
@@ -221,6 +205,7 @@ const Index = () => {
               transferidos: fetchDetalhesTransferidos,
               naoTransferidos: fetchDetalhesNaoTransferidos,
             }}
+            currentFilters={convertFiltersToTotais(currentFilters)}
           />
         )}
 

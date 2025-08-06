@@ -37,30 +37,24 @@ interface TotalPorTipoProcura {
 
 interface TotaisPorTipoProcura {
   total_leads: number;
-  total_por_tipo_procura: TotalPorTipoProcura[];
+  totais_por_tipo_procura: TotalPorTipoProcura[];
 }
 
 interface TotaisTransferidos {
   total_leads: number;
   transferidos: {
     total: number;
-    leads: {
-      total: number;
-      pagina: number;
-      limite: number;
-      total_paginas: number;
-      dados: ILead[];
-    };
+    pagina: number;
+    limite: number;
+    total_paginas: number;
+    dados: ILead[];
   };
   nao_transferidos: {
     total: number;
-    leads: {
-      total: number;
-      pagina: number;
-      limite: number;
-      total_paginas: number;
-      dados: ILead[];
-    };
+    pagina: number;
+    limite: number;
+    total_paginas: number;
+    dados: ILead[];
   };
 }
 
@@ -115,7 +109,6 @@ export class HttpClient {
       );
       return response;
     } catch (error) {
-      console.error("Erro ao buscar leads:", error);
       throw error;
     }
   }
@@ -139,7 +132,6 @@ export class HttpClient {
       );
       return response;
     } catch (error) {
-      console.error("Erro ao buscar totais de leads:", error);
       throw error;
     }
   }
@@ -193,7 +185,6 @@ export class HttpClient {
       );
       return response;
     } catch (error) {
-      console.error("Erro ao vincular consultor ao lead:", error);
       throw error;
     }
   }
@@ -212,7 +203,6 @@ export class HttpClient {
       );
       return response;
     } catch (error) {
-      console.error("Erro ao vincular vendedor ao lead:", error);
       throw error;
     }
   }
@@ -231,7 +221,6 @@ export class HttpClient {
       );
       return response;
     } catch (error) {
-      console.error("Erro ao atualizar etapa e situação do lead:", error);
       throw error;
     }
   }
@@ -244,7 +233,6 @@ export class HttpClient {
       );
       return response;
     } catch (error) {
-      console.error("Erro ao buscar atividades do lead:", error);
       throw error;
     }
   }
@@ -299,7 +287,6 @@ export class HttpClient {
       });
       return response;
     } catch (error) {
-      console.error("Erro ao criar lead rápido:", error);
       throw error;
     }
   }
@@ -332,7 +319,6 @@ export class HttpClient {
       );
       return response;
     } catch (err) {
-      console.error("Erro ao buscar totais por origem:", err);
       throw err;
     }
   }
@@ -365,7 +351,6 @@ export class HttpClient {
       );
       return response;
     } catch (err) {
-      console.error("Erro ao buscar totais por tipo de procura:", err);
       throw err;
     }
   }
@@ -389,11 +374,8 @@ export class HttpClient {
       if (filters.limite) {
         queryParams.append("limite", filters.limite.toString());
       }
-      if (filters.transferidos) {
-        queryParams.append("transferidos", "true");
-      }
-      if (filters.nao_transferidos) {
-        queryParams.append("nao_transferidos", "true");
+      if (filters.transferido !== undefined && filters.transferido !== null) {
+        queryParams.append("transferido", filters.transferido.toString());
       }
 
       const response = await this.request<TotaisTransferidos>(
@@ -401,7 +383,6 @@ export class HttpClient {
       );
       return response;
     } catch (err) {
-      console.error("Erro ao buscar totais de transferidos:", err);
       throw err;
     }
   }

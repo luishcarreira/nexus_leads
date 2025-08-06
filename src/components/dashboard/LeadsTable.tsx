@@ -217,7 +217,13 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("pt-BR");
+    return new Date(dateString).toLocaleString("pt-BR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
   };
 
   const handleAction = (action: string, lead: ILead) => {
@@ -227,7 +233,6 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
         setIsModalOpen(true);
         break;
       case "edit":
-        console.log(`Editar lead ${lead.id}`);
         // Implementar edição
         break;
       case "update_status":
@@ -243,7 +248,6 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
         setIsConvertToClientModalOpen(true);
         break;
       default:
-        console.log(`Ação ${action} para o lead ${lead.id}`);
     }
   };
 
@@ -288,10 +292,6 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
               httpClient.vincularConsultorAoLead(leadId, selectedConsultor)
             );
             await Promise.all(promises);
-            console.log(
-              `Consultor ${selectedConsultor} vinculado aos leads:`,
-              Array.from(selectedLeads)
-            );
           }
           break;
         case "vincular_vendedor":
@@ -301,17 +301,9 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
               httpClient.vincularVendedorAoLead(leadId, selectedVendedor)
             );
             await Promise.all(promises);
-            console.log(
-              `Vendedor ${selectedVendedor} vinculado aos leads:`,
-              Array.from(selectedLeads)
-            );
           }
           break;
         default:
-          console.log(
-            `Ação em lote ${batchAction} para leads:`,
-            Array.from(selectedLeads)
-          );
       }
 
       setSelectedLeads(new Set());
@@ -325,7 +317,6 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
         onDataChanged();
       }
     } catch (error) {
-      console.error("Erro ao executar ação em lote:", error);
       // Aqui você pode adicionar um toast de erro
     }
   };
@@ -340,12 +331,8 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
   const handleCreateLead = async (leadData: CriarLeadRapidoData) => {
     setIsCreatingLead(true);
     try {
-      console.log("Criando novo lead:", leadData);
-
       // Chamar o endpoint de criação rápida
       const response = await httpClient.criarLeadRapido(leadData);
-
-      console.log("Lead criado com sucesso:", response);
 
       // Fechar modal e limpar estado
       setIsCreateModalOpen(false);
@@ -358,7 +345,6 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
 
       // TODO: Adicionar toast de sucesso
     } catch (error) {
-      console.error("Erro ao criar lead:", error);
       setIsCreatingLead(false);
       // TODO: Adicionar toast de erro
     }
@@ -378,10 +364,6 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
         idSituacao
       );
 
-      console.log(
-        `Lead ${selectedLeadForUpdate.id} atualizado - Etapa: ${idEtapa}, Situação: ${idSituacao}`
-      );
-
       // Fechar modal e limpar estado
       setIsUpdateStatusModalOpen(false);
       setSelectedLeadForUpdate(null);
@@ -395,7 +377,6 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
       // Aqui você pode adicionar um toast de sucesso
       // Aqui você pode recarregar a lista de leads
     } catch (error) {
-      console.error("Erro ao atualizar status do lead:", error);
       setIsUpdatingStatus(false);
       // Aqui você pode adicionar um toast de erro
     }
@@ -426,12 +407,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
         payload.cnpj = clientData.documento.replace(/\D/g, "");
       }
 
-      console.log("Enviando payload de conversão:", payload);
       await httpClient.converterLeadParaCliente(payload);
-
-      console.log(
-        `Lead ${selectedLeadForConversion.id} convertido em cliente com sucesso!`
-      );
 
       // Fechar modal e limpar estado
       setIsConvertToClientModalOpen(false);
@@ -445,7 +421,6 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
 
       // TODO: Recarregar lista de leads e mostrar toast de sucesso
     } catch (error) {
-      console.error("Erro ao converter lead em cliente:", error);
       setIsConvertingToClient(false);
       // TODO: Mostrar toast de erro
     }
@@ -625,16 +600,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                     {getSortIcon("vendedor")}
                   </Button>
                 </TableHead>
-                <TableHead className="text-white">
-                  <Button
-                    variant="ghost"
-                    onClick={() => handleSort("data_criacao")}
-                    className="h-auto p-0 font-semibold text-white hover:bg-blue-600"
-                  >
-                    Data Criação
-                    {getSortIcon("data_criacao")}
-                  </Button>
-                </TableHead>
+
                 <TableHead className="text-white font-semibold">UF</TableHead>
                 <TableHead className="text-white">
                   <Button
@@ -654,6 +620,16 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                   >
                     ID Cliente
                     {getSortIcon("id_cliente")}
+                  </Button>
+                </TableHead>
+                <TableHead className="text-white">
+                  <Button
+                    variant="ghost"
+                    onClick={() => handleSort("data_criacao")}
+                    className="h-auto p-0 font-semibold text-white hover:bg-blue-600"
+                  >
+                    Data Criação
+                    {getSortIcon("data_criacao")}
                   </Button>
                 </TableHead>
               </TableRow>
@@ -756,7 +732,6 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                       </span>
                     )}
                   </TableCell>
-                  <TableCell>{formatDate(lead.data_criacao)}</TableCell>
                   <TableCell>
                     <span className="text-sm">{lead.uf}</span>
                   </TableCell>
@@ -773,6 +748,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                       {lead.id_cliente || "Não atribuído"}
                     </span>
                   </TableCell>
+                  <TableCell>{formatDate(lead.data_criacao)}</TableCell>
                 </TableRow>
               ))}
             </TableBody>

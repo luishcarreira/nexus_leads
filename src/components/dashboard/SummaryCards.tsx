@@ -60,12 +60,14 @@ interface SummaryCardsProps {
     transferidos: (pagina: number) => void;
     naoTransferidos: (pagina: number) => void;
   };
+  currentFilters?: any; // Filtros atuais para aplicar na paginação
 }
 
 export const SummaryCards: React.FC<SummaryCardsProps> = ({
   data,
   loading = false,
   onPageChange,
+  currentFilters,
 }) => {
   const [detailsModalConfig, setDetailsModalConfig] = useState<{
     isOpen: boolean;
@@ -122,15 +124,21 @@ export const SummaryCards: React.FC<SummaryCardsProps> = ({
 
     switch (type) {
       case "transferidos":
-        leads = data.transferidos.leads;
+        leads = data.transferidos;
         total = data.transferidos.total;
         break;
       case "naoTransferidos":
-        leads = data.nao_transferidos.leads;
+        leads = data.nao_transferidos;
         total = data.nao_transferidos.total;
         break;
       default:
         return;
+    }
+
+    // Verificar se os leads estão disponíveis
+    if (!leads || !leads.dados) {
+      console.error("Leads não disponíveis para:", type);
+      return;
     }
 
     setDetailsModalConfig({
@@ -192,10 +200,6 @@ export const SummaryCards: React.FC<SummaryCardsProps> = ({
       </div>
     );
   }
-
-  console.log("Dados recebidos no SummaryCards:", data);
-  console.log("Totais por origem:", data?.totais_por_origem);
-  console.log("Totais por tipo procura:", data?.total_por_tipo_procura);
 
   const cards = [
     {
@@ -347,6 +351,7 @@ export const SummaryCards: React.FC<SummaryCardsProps> = ({
         leads={detailsModalConfig.leads}
         onPageChange={handlePageChange}
         loading={loading}
+        currentFilters={currentFilters}
       />
 
       <LeadsPorOrigemModal

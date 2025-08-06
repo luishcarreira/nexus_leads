@@ -88,7 +88,6 @@ export const FilterSection: React.FC<FilterProps> = ({
         setOrigens(origensData);
         setTiposProcura(tiposProcuraData);
       } catch (error) {
-        console.error("Erro ao carregar dropdowns:", error);
       } finally {
         setLoadingDropdowns(false);
       }
@@ -121,11 +120,6 @@ export const FilterSection: React.FC<FilterProps> = ({
       ufs: selectedUFs,
       ...filters,
     };
-    console.log("Filtros a serem aplicados:", allFilters);
-    console.log(
-      "creationDateRange nos filtros finais:",
-      allFilters.creationDateRange
-    );
     onFiltersChange(allFilters);
   }, [
     creationDateRange,
@@ -143,11 +137,6 @@ export const FilterSection: React.FC<FilterProps> = ({
   // Sincronizar filtros APENAS na montagem
   useEffect(() => {
     if (!currentFilters) return;
-
-    console.log(
-      "Sincronizando estado local com currentFilters:",
-      currentFilters
-    );
 
     if (currentFilters.creationDateRange) {
       setCreationDateRange(currentFilters.creationDateRange);
@@ -330,8 +319,6 @@ export const FilterSection: React.FC<FilterProps> = ({
             </Label>
             <DateRangePicker
               onUpdate={(values) => {
-                console.log("DateRangePicker onUpdate chamado com:", values);
-                console.log("Range recebido:", values.range);
                 setCreationDateRange(values.range);
               }}
               initialDateFrom={creationDateRange.from}
