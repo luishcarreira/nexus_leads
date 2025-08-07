@@ -58,7 +58,7 @@ interface UseLeadsTotaisReturn {
 const getDefaultDateRange = () => {
   const end = new Date();
   const start = new Date();
-  start.setDate(start.getDate() - 7);
+  start.setDate(start.getDate() - 3); // Alterado de 7 para 3 dias para ser consistente
 
   // Formatar para YYYY-MM-DD
   const formatDate = (date: Date) => {
@@ -79,7 +79,7 @@ export const useLeadsTotais = (): UseLeadsTotaisReturn => {
   };
 
   const [totais, setTotais] = useState<ILeadsTotaisDetalhados | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false); // Alterado de true para false
   const [error, setError] = useState<string | null>(null);
   const [currentFilters, setCurrentFilters] =
     useState<ILeadsTotaisFilters>(defaultFilters);
@@ -247,9 +247,9 @@ export const useLeadsTotais = (): UseLeadsTotaisReturn => {
   );
 
   // Carregar dados iniciais com filtro default
-  useEffect(() => {
-    fetchTotais();
-  }, [fetchTotais]);
+  // useEffect(() => {
+  //   fetchTotais();
+  // }, [fetchTotais]);
 
   return {
     totais,

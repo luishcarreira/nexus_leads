@@ -161,9 +161,9 @@ export const FilterSection: React.FC<FilterProps> = ({
   }, []);
 
   // Aplicar filtros iniciais automaticamente
-  useEffect(() => {
-    applyFilters();
-  }, []); // Executar apenas uma vez na montagem
+  // useEffect(() => {
+  //   applyFilters();
+  // }, []); // Executar apenas uma vez na montagem
 
   const MultiSelect = ({
     options,

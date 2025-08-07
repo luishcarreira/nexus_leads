@@ -491,13 +491,13 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                     <Users className="mr-2 h-4 w-4" />
                     Vincular Consultor
                   </DropdownMenuItem>
-                  <DropdownMenuItem
+                  {/* <DropdownMenuItem
                     onClick={() => handleBatchAction("vincular_vendedor")}
                     className="cursor-pointer"
                   >
                     <Users className="mr-2 h-4 w-4" />
                     Vincular Vendedor
-                  </DropdownMenuItem>
+                  </DropdownMenuItem> */}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     onClick={() => setSelectedLeads(new Set())}

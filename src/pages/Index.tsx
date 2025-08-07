@@ -137,19 +137,35 @@ const Index = () => {
     [fetchLeads, fetchTotais]
   );
 
-  // Carregar dados iniciais
+  // Carregar dados iniciais com filtros padrão
   React.useEffect(() => {
-    fetchLeads();
-    fetchTotais();
-  }, [fetchLeads, fetchTotais]);
+    // Aplicar filtros padrão (últimos 3 dias)
+    const defaultFilters: UIFilters = {
+      creationDateRange: {
+        from: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000), // 3 dias atrás
+        to: new Date(), // hoje
+      },
+    };
+
+    // Buscar leads e totais com filtros padrão
+    const leadsFilters = convertFiltersToAPI(defaultFilters);
+    const totaisFilters = convertFiltersToTotais(defaultFilters);
+
+    fetchLeads(leadsFilters);
+    fetchTotais(totaisFilters);
+
+    // Definir filtros padrão no estado
+    setCurrentFilters(defaultFilters);
+  }, []); // Executar apenas uma vez na montagem - fetchLeads e fetchTotais são estáveis
 
   // Exibir tela de loading APENAS na primeira carga
   const [initialLoading, setInitialLoading] = React.useState(true);
   React.useEffect(() => {
-    if (!loading) {
+    // Só parar o loading inicial quando ambos leads e totais terminarem de carregar
+    if (!loading && !totaisLoading) {
       setInitialLoading(false);
     }
-  }, [loading]);
+  }, [loading, totaisLoading]);
 
   if (initialLoading) {
     return (

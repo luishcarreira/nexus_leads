@@ -17,7 +17,7 @@ interface UseLeadsReturn {
 export const useLeads = (): UseLeadsReturn => {
   const [leads, setLeads] = useState<ILead[]>([]);
   const [total, setTotal] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false); // Alterado de true para false
   const [error, setError] = useState<string | null>(null);
 
   const fetchLeads = useCallback(async (filters: ILeadsFilters = {}) => {
@@ -38,9 +38,9 @@ export const useLeads = (): UseLeadsReturn => {
   }, []);
 
   // Carregar dados iniciais apenas uma vez
-  useEffect(() => {
-    fetchLeads();
-  }, []);
+  // useEffect(() => {
+  //   fetchLeads();
+  // }, []);
 
   return {
     leads,
