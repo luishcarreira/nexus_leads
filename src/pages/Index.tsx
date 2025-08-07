@@ -104,32 +104,14 @@ const Index = () => {
     return apiFilters;
   };
 
-  // Converter filtros para totais (apenas período de criação)
-  const convertFiltersToTotais = (filters: UIFilters): ILeadsTotaisFilters => {
-    const totaisFilters: ILeadsTotaisFilters = {};
-
-    // Filtro por período de criação
-    if (filters.creationDateRange?.from) {
-      const dataInicio = formatDateForAPI(filters.creationDateRange.from);
-      totaisFilters.data_criacao_inicio = dataInicio;
-    }
-    if (filters.creationDateRange?.to) {
-      const dataFim = formatDateForAPI(filters.creationDateRange.to);
-      totaisFilters.data_criacao_fim = dataFim;
-    }
-
-    return totaisFilters;
-  };
-
   const handleFiltersChange = useCallback(
     (newFilters: UIFilters) => {
       // Buscar leads com os novos filtros
       const leadsFilters = convertFiltersToAPI(newFilters);
       fetchLeads(leadsFilters);
 
-      // Buscar totais com os novos filtros
-      const totaisFilters = convertFiltersToTotais(newFilters);
-      fetchTotais(totaisFilters);
+      // Buscar totais com os mesmos filtros
+      fetchTotais(leadsFilters);
 
       // Salvar os filtros no estado para manter na interface
       setCurrentFilters(newFilters);
@@ -149,7 +131,7 @@ const Index = () => {
 
     // Buscar leads e totais com filtros padrão
     const leadsFilters = convertFiltersToAPI(defaultFilters);
-    const totaisFilters = convertFiltersToTotais(defaultFilters);
+    const totaisFilters = convertFiltersToAPI(defaultFilters); // This line was not in the new_code, but should be changed for consistency
 
     fetchLeads(leadsFilters);
     fetchTotais(totaisFilters);
@@ -221,7 +203,7 @@ const Index = () => {
               transferidos: fetchDetalhesTransferidos,
               naoTransferidos: fetchDetalhesNaoTransferidos,
             }}
-            currentFilters={convertFiltersToTotais(currentFilters)}
+            currentFilters={convertFiltersToAPI(currentFilters)}
           />
         )}
 

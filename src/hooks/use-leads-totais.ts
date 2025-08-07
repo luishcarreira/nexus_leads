@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { httpClient } from "@/services/httpClient";
 import {
-  ILeadsTotaisFilters,
+  ILeadsFilters,
   ILeadsTotaisDetalhados,
   ITotalPorOrigemDetalhado,
   ITotalPorTipoProcuraDetalhado,
@@ -44,7 +44,7 @@ interface UseLeadsTotaisReturn {
   totais: ILeadsTotaisDetalhados | null;
   loading: boolean;
   error: string | null;
-  fetchTotais: (filters?: ILeadsTotaisFilters) => Promise<void>;
+  fetchTotais: (filters?: ILeadsFilters) => Promise<void>;
   fetchDetalhesOrigem: (origem: string, pagina: number) => Promise<void>;
   fetchDetalhesTipoProcura: (
     tipoProcura: string,
@@ -52,7 +52,7 @@ interface UseLeadsTotaisReturn {
   ) => Promise<void>;
   fetchDetalhesTransferidos: (pagina: number) => Promise<void>;
   fetchDetalhesNaoTransferidos: (pagina: number) => Promise<void>;
-  currentFilters: ILeadsTotaisFilters;
+  currentFilters: ILeadsFilters;
 }
 
 const getDefaultDateRange = () => {
@@ -82,9 +82,9 @@ export const useLeadsTotais = (): UseLeadsTotaisReturn => {
   const [loading, setLoading] = useState(false); // Alterado de true para false
   const [error, setError] = useState<string | null>(null);
   const [currentFilters, setCurrentFilters] =
-    useState<ILeadsTotaisFilters>(defaultFilters);
+    useState<ILeadsFilters>(defaultFilters);
 
-  const fetchTotais = useCallback(async (filters: ILeadsTotaisFilters = {}) => {
+  const fetchTotais = useCallback(async (filters: ILeadsFilters = {}) => {
     try {
       setLoading(true);
       setError(null);

@@ -114,17 +114,66 @@ export class HttpClient {
   }
 
   // Método para buscar totais de leads
-  async getLeadsTotais(
-    filters: ILeadsTotaisFilters = {}
-  ): Promise<ILeadsTotais> {
+  async getLeadsTotais(filters: ILeadsFilters = {}): Promise<ILeadsTotais> {
     try {
       const queryParams = new URLSearchParams();
 
+      // Filtros de data
       if (filters.data_criacao_inicio) {
         queryParams.append("data_criacao_inicio", filters.data_criacao_inicio);
       }
       if (filters.data_criacao_fim) {
         queryParams.append("data_criacao_fim", filters.data_criacao_fim);
+      }
+
+      // Filtros de situação
+      if (filters.situacao) {
+        queryParams.append("situacao", filters.situacao);
+      }
+
+      // Filtros de origem
+      if (filters.origem) {
+        queryParams.append("origem", filters.origem);
+      }
+
+      // Filtros de tipo de procura
+      if (filters.tipo_procura) {
+        queryParams.append("tipo_procura", filters.tipo_procura);
+      }
+
+      // Filtros de nome
+      if (filters.nome) {
+        queryParams.append("nome", filters.nome);
+      }
+
+      // Filtros de email
+      if (filters.email) {
+        queryParams.append("email", filters.email);
+      }
+
+      // Filtros de telefone
+      if (filters.telefone) {
+        queryParams.append("telefone", filters.telefone);
+      }
+
+      // Filtros de UF
+      if (filters.uf) {
+        queryParams.append("uf", filters.uf);
+      }
+
+      // Filtros de etapa
+      if (filters.etapa) {
+        queryParams.append("etapa", filters.etapa);
+      }
+
+      // Filtros de consultor
+      if (filters.id_consultor) {
+        queryParams.append("id_consultor", filters.id_consultor.toString());
+      }
+
+      // Filtros de vendedor
+      if (filters.id_vendedor) {
+        queryParams.append("id_vendedor", filters.id_vendedor.toString());
       }
 
       const response = await this.request<ILeadsTotais>(
@@ -293,25 +342,75 @@ export class HttpClient {
 
   // Método para buscar totais por origem
   async getLeadsTotaisPorOrigem(
-    filters: ILeadsTotaisFilters = {}
+    filters: ILeadsFilters = {}
   ): Promise<TotaisPorOrigem> {
     try {
       const queryParams = new URLSearchParams();
 
+      // Filtros de data
       if (filters.data_criacao_inicio) {
         queryParams.append("data_criacao_inicio", filters.data_criacao_inicio);
       }
       if (filters.data_criacao_fim) {
         queryParams.append("data_criacao_fim", filters.data_criacao_fim);
       }
+
+      // Filtros de situação
+      if (filters.situacao) {
+        queryParams.append("situacao", filters.situacao);
+      }
+
+      // Filtros de origem
+      if (filters.origem) {
+        queryParams.append("origem", filters.origem);
+      }
+
+      // Filtros de tipo de procura
+      if (filters.tipo_procura) {
+        queryParams.append("tipo_procura", filters.tipo_procura);
+      }
+
+      // Filtros de nome
+      if (filters.nome) {
+        queryParams.append("nome", filters.nome);
+      }
+
+      // Filtros de email
+      if (filters.email) {
+        queryParams.append("email", filters.email);
+      }
+
+      // Filtros de telefone
+      if (filters.telefone) {
+        queryParams.append("telefone", filters.telefone);
+      }
+
+      // Filtros de UF
+      if (filters.uf) {
+        queryParams.append("uf", filters.uf);
+      }
+
+      // Filtros de etapa
+      if (filters.etapa) {
+        queryParams.append("etapa", filters.etapa);
+      }
+
+      // Filtros de consultor
+      if (filters.id_consultor) {
+        queryParams.append("id_consultor", filters.id_consultor.toString());
+      }
+
+      // Filtros de vendedor
+      if (filters.id_vendedor) {
+        queryParams.append("id_vendedor", filters.id_vendedor.toString());
+      }
+
+      // Filtros de paginação
       if (filters.pagina) {
         queryParams.append("pagina", filters.pagina.toString());
       }
       if (filters.limite) {
         queryParams.append("limite", filters.limite.toString());
-      }
-      if (filters.origem) {
-        queryParams.append("origem", filters.origem);
       }
 
       const response = await this.request<TotaisPorOrigem>(
@@ -325,25 +424,75 @@ export class HttpClient {
 
   // Método para buscar totais por tipo de procura
   async getLeadsTotaisPorTipoProcura(
-    filters: ILeadsTotaisFilters = {}
+    filters: ILeadsFilters = {}
   ): Promise<TotaisPorTipoProcura> {
     try {
       const queryParams = new URLSearchParams();
 
+      // Filtros de data
       if (filters.data_criacao_inicio) {
         queryParams.append("data_criacao_inicio", filters.data_criacao_inicio);
       }
       if (filters.data_criacao_fim) {
         queryParams.append("data_criacao_fim", filters.data_criacao_fim);
       }
+
+      // Filtros de situação
+      if (filters.situacao) {
+        queryParams.append("situacao", filters.situacao);
+      }
+
+      // Filtros de origem
+      if (filters.origem) {
+        queryParams.append("origem", filters.origem);
+      }
+
+      // Filtros de tipo de procura
+      if (filters.tipo_procura) {
+        queryParams.append("tipo_procura", filters.tipo_procura);
+      }
+
+      // Filtros de nome
+      if (filters.nome) {
+        queryParams.append("nome", filters.nome);
+      }
+
+      // Filtros de email
+      if (filters.email) {
+        queryParams.append("email", filters.email);
+      }
+
+      // Filtros de telefone
+      if (filters.telefone) {
+        queryParams.append("telefone", filters.telefone);
+      }
+
+      // Filtros de UF
+      if (filters.uf) {
+        queryParams.append("uf", filters.uf);
+      }
+
+      // Filtros de etapa
+      if (filters.etapa) {
+        queryParams.append("etapa", filters.etapa);
+      }
+
+      // Filtros de consultor
+      if (filters.id_consultor) {
+        queryParams.append("id_consultor", filters.id_consultor.toString());
+      }
+
+      // Filtros de vendedor
+      if (filters.id_vendedor) {
+        queryParams.append("id_vendedor", filters.id_vendedor.toString());
+      }
+
+      // Filtros de paginação
       if (filters.pagina) {
         queryParams.append("pagina", filters.pagina.toString());
       }
       if (filters.limite) {
         queryParams.append("limite", filters.limite.toString());
-      }
-      if (filters.tipo_procura) {
-        queryParams.append("tipo_procura", filters.tipo_procura);
       }
 
       const response = await this.request<TotaisPorTipoProcura>(
@@ -357,23 +506,78 @@ export class HttpClient {
 
   // Método para buscar totais de transferidos
   async getLeadsTotaisTransferidos(
-    filters: ILeadsTotaisFilters = {}
+    filters: ILeadsFilters = {}
   ): Promise<TotaisTransferidos> {
     try {
       const queryParams = new URLSearchParams();
 
+      // Filtros de data
       if (filters.data_criacao_inicio) {
         queryParams.append("data_criacao_inicio", filters.data_criacao_inicio);
       }
       if (filters.data_criacao_fim) {
         queryParams.append("data_criacao_fim", filters.data_criacao_fim);
       }
+
+      // Filtros de situação
+      if (filters.situacao) {
+        queryParams.append("situacao", filters.situacao);
+      }
+
+      // Filtros de origem
+      if (filters.origem) {
+        queryParams.append("origem", filters.origem);
+      }
+
+      // Filtros de tipo de procura
+      if (filters.tipo_procura) {
+        queryParams.append("tipo_procura", filters.tipo_procura);
+      }
+
+      // Filtros de nome
+      if (filters.nome) {
+        queryParams.append("nome", filters.nome);
+      }
+
+      // Filtros de email
+      if (filters.email) {
+        queryParams.append("email", filters.email);
+      }
+
+      // Filtros de telefone
+      if (filters.telefone) {
+        queryParams.append("telefone", filters.telefone);
+      }
+
+      // Filtros de UF
+      if (filters.uf) {
+        queryParams.append("uf", filters.uf);
+      }
+
+      // Filtros de etapa
+      if (filters.etapa) {
+        queryParams.append("etapa", filters.etapa);
+      }
+
+      // Filtros de consultor
+      if (filters.id_consultor) {
+        queryParams.append("id_consultor", filters.id_consultor.toString());
+      }
+
+      // Filtros de vendedor
+      if (filters.id_vendedor) {
+        queryParams.append("id_vendedor", filters.id_vendedor.toString());
+      }
+
+      // Filtros de paginação
       if (filters.pagina) {
         queryParams.append("pagina", filters.pagina.toString());
       }
       if (filters.limite) {
         queryParams.append("limite", filters.limite.toString());
       }
+
+      // Filtro específico de transferido
       if (filters.transferido !== undefined && filters.transferido !== null) {
         queryParams.append("transferido", filters.transferido.toString());
       }

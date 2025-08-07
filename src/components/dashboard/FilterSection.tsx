@@ -172,7 +172,7 @@ export const FilterSection: React.FC<FilterProps> = ({
     placeholder,
     maxLimit = 3,
   }: {
-    options: string[];
+    options: string[] | { label: string; value: string }[];
     selected: string[];
     onChange: (value: string) => void;
     placeholder: string;
@@ -198,6 +198,28 @@ export const FilterSection: React.FC<FilterProps> = ({
       };
     }, []);
 
+    // Função para obter o label de uma opção
+    const getOptionLabel = (
+      option: string | { label: string; value: string }
+    ) => {
+      if (typeof option === "string") return option;
+      return option.label;
+    };
+
+    // Função para obter o valor de uma opção
+    const getOptionValue = (
+      option: string | { label: string; value: string }
+    ) => {
+      if (typeof option === "string") return option;
+      return option.value;
+    };
+
+    // Função para obter o label de um valor selecionado
+    const getSelectedLabel = (value: string) => {
+      const option = options.find((opt) => getOptionValue(opt) === value);
+      return option ? getOptionLabel(option) : value;
+    };
+
     return (
       <div className="relative" ref={dropdownRef}>
         <div
@@ -211,7 +233,7 @@ export const FilterSection: React.FC<FilterProps> = ({
                   key={item}
                   className="bg-blue-100 text-blue-700 px-2 py-1 rounded-md text-xs font-medium flex items-center gap-1"
                 >
-                  {item}
+                  {getSelectedLabel(item)}
                   <X
                     className="h-3 w-3 cursor-pointer hover:text-blue-900"
                     onClick={(e) => {
@@ -259,35 +281,39 @@ export const FilterSection: React.FC<FilterProps> = ({
               </div>
 
               <div className="max-h-[200px] overflow-y-auto space-y-1">
-                {options.map((option) => (
-                  <div
-                    key={option}
-                    className={cn(
-                      "flex items-center space-x-3 p-2 hover:bg-blue-50 cursor-pointer rounded-lg transition-colors",
-                      selected.includes(option) &&
-                        "bg-blue-100 border border-blue-200"
-                    )}
-                    onClick={() => onChange(option)}
-                  >
-                    <Checkbox
-                      checked={selected.includes(option)}
-                      className="text-blue-600 border-blue-300"
-                    />
-                    <span
+                {options.map((option) => {
+                  const value = getOptionValue(option);
+                  const label = getOptionLabel(option);
+                  return (
+                    <div
+                      key={value}
                       className={cn(
-                        "text-sm flex-1",
-                        selected.includes(option)
-                          ? "text-blue-700 font-medium"
-                          : "text-gray-700"
+                        "flex items-center space-x-3 p-2 hover:bg-blue-50 cursor-pointer rounded-lg transition-colors",
+                        selected.includes(value) &&
+                          "bg-blue-100 border border-blue-200"
                       )}
+                      onClick={() => onChange(value)}
                     >
-                      {option}
-                    </span>
-                    {selected.includes(option) && (
-                      <div className="w-2 h-2 bg-blue-500 rounded-full" />
-                    )}
-                  </div>
-                ))}
+                      <Checkbox
+                        checked={selected.includes(value)}
+                        className="text-blue-600 border-blue-300"
+                      />
+                      <span
+                        className={cn(
+                          "text-sm flex-1",
+                          selected.includes(value)
+                            ? "text-blue-700 font-medium"
+                            : "text-gray-700"
+                        )}
+                      >
+                        {label}
+                      </span>
+                      {selected.includes(value) && (
+                        <div className="w-2 h-2 bg-blue-500 rounded-full" />
+                      )}
+                    </div>
+                  );
+                })}
               </div>
 
               {selected.length >= maxLimit && (
@@ -343,7 +369,10 @@ export const FilterSection: React.FC<FilterProps> = ({
               </div>
             ) : (
               <MultiSelect
-                options={situacoes.map((s) => s.descricao)}
+                options={situacoes.map((s) => ({
+                  label: s.descricao,
+                  value: s.descricao,
+                }))}
                 selected={selectedSituacoes}
                 onChange={(value) =>
                   handleMultiSelectChange(
@@ -435,7 +464,10 @@ export const FilterSection: React.FC<FilterProps> = ({
               </div>
             ) : (
               <MultiSelect
-                options={etapas.map((e) => e.descricao)}
+                options={etapas.map((e) => ({
+                  label: e.descricao,
+                  value: e.descricao,
+                }))}
                 selected={selectedEtapas}
                 onChange={(value) =>
                   handleMultiSelectChange(
@@ -567,7 +599,10 @@ export const FilterSection: React.FC<FilterProps> = ({
                 </div>
               ) : (
                 <MultiSelect
-                  options={consultores.map((c) => c.nome)}
+                  options={consultores.map((c) => ({
+                    label: c.nome,
+                    value: c.codigo.toString(),
+                  }))}
                   selected={selectedConsultores}
                   onChange={(value) =>
                     handleMultiSelectChange(
@@ -596,7 +631,10 @@ export const FilterSection: React.FC<FilterProps> = ({
                 </div>
               ) : (
                 <MultiSelect
-                  options={vendedores.map((v) => v.nome)}
+                  options={vendedores.map((v) => ({
+                    label: v.nome,
+                    value: v.codigo.toString(),
+                  }))}
                   selected={selectedVendedores}
                   onChange={(value) =>
                     handleMultiSelectChange(
@@ -613,7 +651,7 @@ export const FilterSection: React.FC<FilterProps> = ({
             <div className="space-y-2">
               <Label className="text-blue-800 font-medium">UF</Label>
               <MultiSelect
-                options={ufs}
+                options={ufs.map((uf) => ({ label: uf, value: uf }))}
                 selected={selectedUFs}
                 onChange={(value) =>
                   handleMultiSelectChange(value, selectedUFs, setSelectedUFs)

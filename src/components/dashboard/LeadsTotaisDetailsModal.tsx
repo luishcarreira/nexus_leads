@@ -16,7 +16,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { ILeadTotal } from "@/services/interfaces/ILead";
+import { ILeadTotal, ILeadsFilters } from "@/services/interfaces/ILead";
 import { httpClient } from "@/services/httpClient";
 
 interface PaginacaoOutput<T> {
@@ -35,7 +35,7 @@ interface LeadsTotaisDetailsModalProps {
   leads: PaginacaoOutput<ILeadTotal>;
   onPageChange: (page: number) => void;
   loading?: boolean;
-  currentFilters?: any; // Filtros atuais para aplicar na paginação
+  currentFilters?: ILeadsFilters; // Filtros atuais para aplicar na paginação
 }
 
 export const LeadsTotaisDetailsModal: React.FC<

@@ -50,6 +50,7 @@ export interface ILeadsFilters {
   limite?: number;
   order_by?: string;
   order_header?: string;
+  transferido?: boolean | null; // Campo para filtrar transferidos/não transferidos
 }
 
 // Interfaces para os totais de leads

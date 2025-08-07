@@ -19,6 +19,7 @@ import {
   ILeadsTotaisDetalhados,
   ITotalPorOrigemDetalhado,
   ITotalPorTipoProcuraDetalhado,
+  ILeadsFilters,
 } from "@/services/interfaces/ILead";
 
 interface PaginacaoOutput<T> {
@@ -60,7 +61,7 @@ interface SummaryCardsProps {
     transferidos: (pagina: number) => void;
     naoTransferidos: (pagina: number) => void;
   };
-  currentFilters?: any; // Filtros atuais para aplicar na paginação
+  currentFilters?: ILeadsFilters; // Filtros atuais para aplicar na paginação
 }
 
 export const SummaryCards: React.FC<SummaryCardsProps> = ({
