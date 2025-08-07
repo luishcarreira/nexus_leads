@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Table,
   TableBody,
@@ -8,17 +8,15 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Card } from "@/components/ui/card";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
@@ -27,39 +25,47 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
-  Eye,
-  Edit,
-  Share2,
+  ChevronDown,
+  ChevronUp,
   MoreHorizontal,
-  Search,
+  Plus,
+  Users,
+  UserCheck,
+  UserX,
+  Edit,
+  Activity,
+  UserPlus,
+  Loader2,
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
-  ChevronLeft,
-  ChevronRight,
-  Users,
-  CheckSquare,
   Square,
-  Plus,
+  Search,
+  Eye,
   Target,
   FileText,
-  UserCheck,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
-import { Card } from "@/components/ui/card";
 import { ILead } from "@/services/interfaces/ILead";
-import { LeadDetailsModal } from "./LeadDetailsModal";
+import { httpClient } from "@/services/httpClient";
+import { useDropdowns } from "@/hooks/use-dropdowns";
 import { CreateLeadModal, CriarLeadRapidoData } from "./CreateLeadModal";
 import { UpdateLeadStatusModal } from "./UpdateLeadStatusModal";
 import { LeadAtividadesModal } from "./LeadAtividadesModal";
 import { ConvertLeadToClientModal } from "./ConvertLeadToClientModal";
-import { httpClient } from "@/services/httpClient";
-import { useDropdowns } from "@/hooks/use-dropdowns";
+import { LeadDetailsModal } from "./LeadDetailsModal";
+import { useToast } from "@/hooks/use-toast";
 
 interface LeadsTableProps {
   leads: ILead[];
@@ -78,6 +84,15 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
   onLeadCreated,
   onDataChanged,
 }) => {
+  const { toast } = useToast();
+  const {
+    etapas,
+    situacoes,
+    consultores,
+    vendedores,
+    loading: dropdownsLoading,
+    error: dropdownsError,
+  } = useDropdowns();
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
@@ -116,15 +131,6 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
   const [selectedLeadForConversion, setSelectedLeadForConversion] =
     useState<ILead | null>(null);
   const [isConvertingToClient, setIsConvertingToClient] = useState(false);
-
-  // Buscar dados dos dropdowns
-  const {
-    consultores,
-    vendedores,
-    etapas,
-    situacoes,
-    loading: dropdownsLoading,
-  } = useDropdowns();
 
   // Filtrar leads baseado no termo de busca
   const filteredLeads = leads.filter((lead) =>
@@ -292,6 +298,16 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
               httpClient.vincularConsultorAoLead(leadId, selectedConsultor)
             );
             await Promise.all(promises);
+
+            // Toast de sucesso para vinculação de consultor
+            const consultorNome =
+              consultores.find((c) => c.codigo === selectedConsultor)?.nome ||
+              "Consultor";
+            toast({
+              title: "Consultor vinculado com sucesso!",
+              description: `${selectedLeads.size} lead(s) vinculado(s) ao consultor ${consultorNome}.`,
+              variant: "default",
+            });
           }
           break;
         case "vincular_vendedor":
@@ -301,6 +317,16 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
               httpClient.vincularVendedorAoLead(leadId, selectedVendedor)
             );
             await Promise.all(promises);
+
+            // Toast de sucesso para vinculação de vendedor
+            const vendedorNome =
+              vendedores.find((v) => v.codigo === selectedVendedor)?.nome ||
+              "Vendedor";
+            toast({
+              title: "Vendedor vinculado com sucesso!",
+              description: `${selectedLeads.size} lead(s) vinculado(s) ao vendedor ${vendedorNome}.`,
+              variant: "default",
+            });
           }
           break;
         default:
@@ -317,7 +343,12 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
         onDataChanged();
       }
     } catch (error) {
-      // Aqui você pode adicionar um toast de erro
+      // Toast de erro para ações em lote
+      toast({
+        title: "Erro na ação em lote",
+        description: "Não foi possível executar a ação. Tente novamente.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -343,10 +374,21 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
         onLeadCreated();
       }
 
-      // TODO: Adicionar toast de sucesso
+      // Toast de sucesso
+      toast({
+        title: "Lead criado com sucesso!",
+        description: `O lead "${leadData.nome}" foi criado e adicionado à lista.`,
+        variant: "default",
+      });
     } catch (error) {
       setIsCreatingLead(false);
-      // TODO: Adicionar toast de erro
+
+      // Toast de erro
+      toast({
+        title: "Erro ao criar lead",
+        description: "Não foi possível criar o lead. Tente novamente.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -374,11 +416,22 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
         onDataChanged();
       }
 
-      // Aqui você pode adicionar um toast de sucesso
-      // Aqui você pode recarregar a lista de leads
+      // Toast de sucesso
+      toast({
+        title: "Status atualizado com sucesso!",
+        description: `O status do lead "${selectedLeadForUpdate.nome}" foi atualizado.`,
+        variant: "default",
+      });
     } catch (error) {
       setIsUpdatingStatus(false);
-      // Aqui você pode adicionar um toast de erro
+
+      // Toast de erro
+      toast({
+        title: "Erro ao atualizar status",
+        description:
+          "Não foi possível atualizar o status do lead. Tente novamente.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -419,10 +472,22 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
         onDataChanged();
       }
 
-      // TODO: Recarregar lista de leads e mostrar toast de sucesso
+      // Toast de sucesso
+      toast({
+        title: "Lead convertido com sucesso!",
+        description: `O lead "${selectedLeadForConversion.nome}" foi convertido em cliente.`,
+        variant: "default",
+      });
     } catch (error) {
       setIsConvertingToClient(false);
-      // TODO: Mostrar toast de erro
+
+      // Toast de erro
+      toast({
+        title: "Erro ao converter lead",
+        description:
+          "Não foi possível converter o lead em cliente. Tente novamente.",
+        variant: "destructive",
+      });
     }
   };
 
