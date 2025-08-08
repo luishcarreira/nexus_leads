@@ -179,6 +179,7 @@ export const FilterSection: React.FC<FilterProps> = ({
     maxLimit?: number;
   }) => {
     const [isOpen, setIsOpen] = useState(false);
+    const [searchTerm, setSearchTerm] = useState("");
     const dropdownRef = React.useRef<HTMLDivElement>(null);
 
     // Fechar dropdown quando clicar fora
@@ -189,6 +190,7 @@ export const FilterSection: React.FC<FilterProps> = ({
           !dropdownRef.current.contains(event.target as Node)
         ) {
           setIsOpen(false);
+          setSearchTerm(""); // Limpar busca quando fechar
         }
       };
 
@@ -219,6 +221,13 @@ export const FilterSection: React.FC<FilterProps> = ({
       const option = options.find((opt) => getOptionValue(opt) === value);
       return option ? getOptionLabel(option) : value;
     };
+
+    // Filtrar opções baseado no termo de busca
+    const filteredOptions = options.filter((option) => {
+      const label = getOptionLabel(option).toLowerCase();
+      const search = searchTerm.toLowerCase();
+      return label.includes(search);
+    });
 
     return (
       <div className="relative" ref={dropdownRef}>
@@ -262,7 +271,10 @@ export const FilterSection: React.FC<FilterProps> = ({
                   <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
                   <Input
                     placeholder="Buscar..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
                     className="pl-9 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                    onClick={(e) => e.stopPropagation()}
                   />
                 </div>
                 {selected.length > 0 && (
@@ -281,39 +293,47 @@ export const FilterSection: React.FC<FilterProps> = ({
               </div>
 
               <div className="max-h-[200px] overflow-y-auto space-y-1">
-                {options.map((option) => {
-                  const value = getOptionValue(option);
-                  const label = getOptionLabel(option);
-                  return (
-                    <div
-                      key={value}
-                      className={cn(
-                        "flex items-center space-x-3 p-2 hover:bg-blue-50 cursor-pointer rounded-lg transition-colors",
-                        selected.includes(value) &&
-                          "bg-blue-100 border border-blue-200"
-                      )}
-                      onClick={() => onChange(value)}
-                    >
-                      <Checkbox
-                        checked={selected.includes(value)}
-                        className="text-blue-600 border-blue-300"
-                      />
-                      <span
+                {filteredOptions.length > 0 ? (
+                  filteredOptions.map((option) => {
+                    const value = getOptionValue(option);
+                    const label = getOptionLabel(option);
+                    return (
+                      <div
+                        key={value}
                         className={cn(
-                          "text-sm flex-1",
-                          selected.includes(value)
-                            ? "text-blue-700 font-medium"
-                            : "text-gray-700"
+                          "flex items-center space-x-3 p-2 hover:bg-blue-50 cursor-pointer rounded-lg transition-colors",
+                          selected.includes(value) &&
+                            "bg-blue-100 border border-blue-200"
                         )}
+                        onClick={() => onChange(value)}
                       >
-                        {label}
-                      </span>
-                      {selected.includes(value) && (
-                        <div className="w-2 h-2 bg-blue-500 rounded-full" />
-                      )}
-                    </div>
-                  );
-                })}
+                        <Checkbox
+                          checked={selected.includes(value)}
+                          className="text-blue-600 border-blue-300"
+                        />
+                        <span
+                          className={cn(
+                            "text-sm flex-1",
+                            selected.includes(value)
+                              ? "text-blue-700 font-medium"
+                              : "text-gray-700"
+                          )}
+                        >
+                          {label}
+                        </span>
+                        {selected.includes(value) && (
+                          <div className="w-2 h-2 bg-blue-500 rounded-full" />
+                        )}
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div className="text-center py-4 text-gray-500 text-sm">
+                    {searchTerm
+                      ? "Nenhum resultado encontrado"
+                      : "Nenhuma opção disponível"}
+                  </div>
+                )}
               </div>
 
               {selected.length >= maxLimit && (
