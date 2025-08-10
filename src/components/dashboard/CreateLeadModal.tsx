@@ -45,6 +45,7 @@ export interface CriarLeadRapidoData {
   uf: string;
   valor_investimento: number | null;
   tem_ponto: boolean;
+  email?: string | null;
 }
 
 export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({
@@ -253,6 +254,7 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({
       uf: formData.uf,
       valor_investimento: valorNumerico,
       tem_ponto: temPontoApi === "S" ? true : false,
+      email: formData.email?.trim() ? formData.email.trim() : null,
     };
   };
 

@@ -67,6 +67,24 @@ export class HttpClient {
     this.defaultParams = "";
   }
 
+  // Função auxiliar para construir query params limpos
+  private buildQueryParams(filters: ILeadsFilters): URLSearchParams {
+    const queryParams = new URLSearchParams();
+
+    Object.entries(filters).forEach(([key, value]) => {
+      if (
+        value !== undefined &&
+        value !== null &&
+        value !== "" &&
+        value !== "undefined"
+      ) {
+        queryParams.append(key, value.toString());
+      }
+    });
+
+    return queryParams;
+  }
+
   private async request<T>(
     endpoint: string,
     options: RequestInit = {}
@@ -92,17 +110,33 @@ export class HttpClient {
     return response.json();
   }
 
+  // Dropdown paginado de cidades
+  async getDropdownCidade(
+    params: {
+      pagina?: number;
+      limite?: number;
+      order_by?: string;
+      order_header?: string;
+      nome?: string;
+    } = {}
+  ): Promise<{ total: number; data: { id: string; descricao: string }[] }> {
+    const query = new URLSearchParams();
+    if (params.pagina) query.append("pagina", params.pagina.toString());
+    if (params.limite) query.append("limite", params.limite.toString());
+    if (params.order_by) query.append("order_by", params.order_by);
+    if (params.order_header) query.append("order_header", params.order_header);
+    if (params.nome) query.append("nome", params.nome);
+
+    return this.request<{
+      total: number;
+      data: { id: string; descricao: string }[];
+    }>(`/cidade/dropdown?${query.toString()}`);
+  }
+
   // Método para buscar leads com filtros
   async getLeads(filters: ILeadsFilters = {}): Promise<ILeadsResponse> {
     try {
-      const queryParams = new URLSearchParams();
-
-      // Adicionar todos os filtros aos parâmetros da query
-      Object.entries(filters).forEach(([key, value]) => {
-        if (value !== undefined && value !== null && value !== "") {
-          queryParams.append(key, value.toString());
-        }
-      });
+      const queryParams = this.buildQueryParams(filters);
 
       const response = await this.request<ILeadsResponse>(
         `/leads?${queryParams.toString()}`
@@ -116,65 +150,7 @@ export class HttpClient {
   // Método para buscar totais de leads
   async getLeadsTotais(filters: ILeadsFilters = {}): Promise<ILeadsTotais> {
     try {
-      const queryParams = new URLSearchParams();
-
-      // Filtros de data
-      if (filters.data_criacao_inicio) {
-        queryParams.append("data_criacao_inicio", filters.data_criacao_inicio);
-      }
-      if (filters.data_criacao_fim) {
-        queryParams.append("data_criacao_fim", filters.data_criacao_fim);
-      }
-
-      // Filtros de situação
-      if (filters.situacao) {
-        queryParams.append("situacao", filters.situacao);
-      }
-
-      // Filtros de origem
-      if (filters.origem) {
-        queryParams.append("origem", filters.origem);
-      }
-
-      // Filtros de tipo de procura
-      if (filters.tipo_procura) {
-        queryParams.append("tipo_procura", filters.tipo_procura);
-      }
-
-      // Filtros de nome
-      if (filters.nome) {
-        queryParams.append("nome", filters.nome);
-      }
-
-      // Filtros de email
-      if (filters.email) {
-        queryParams.append("email", filters.email);
-      }
-
-      // Filtros de telefone
-      if (filters.telefone) {
-        queryParams.append("telefone", filters.telefone);
-      }
-
-      // Filtros de UF
-      if (filters.uf) {
-        queryParams.append("uf", filters.uf);
-      }
-
-      // Filtros de etapa
-      if (filters.etapa) {
-        queryParams.append("etapa", filters.etapa);
-      }
-
-      // Filtros de consultor
-      if (filters.id_consultor) {
-        queryParams.append("id_consultor", filters.id_consultor.toString());
-      }
-
-      // Filtros de vendedor
-      if (filters.id_vendedor) {
-        queryParams.append("id_vendedor", filters.id_vendedor.toString());
-      }
+      const queryParams = this.buildQueryParams(filters);
 
       const response = await this.request<ILeadsTotais>(
         `/leads/totais?${queryParams.toString()}`
@@ -307,6 +283,7 @@ export class HttpClient {
     id_vendedor: number;
     id_ramo_atividade: string;
     id_usuario?: string;
+    id_cidade?: string;
   }): Promise<boolean> {
     const bodyWithUser = {
       ...payload,
@@ -328,6 +305,7 @@ export class HttpClient {
     uf: string;
     valor_investimento: number | null;
     tem_ponto: boolean;
+    email?: string | null;
   }): Promise<boolean> {
     try {
       const response = await this.request<boolean>("/leads/criar-rapido", {
@@ -336,6 +314,7 @@ export class HttpClient {
       });
       return response;
     } catch (error) {
+      console.error("Erro ao criar lead rápido:", error);
       throw error;
     }
   }
@@ -345,73 +324,7 @@ export class HttpClient {
     filters: ILeadsFilters = {}
   ): Promise<TotaisPorOrigem> {
     try {
-      const queryParams = new URLSearchParams();
-
-      // Filtros de data
-      if (filters.data_criacao_inicio) {
-        queryParams.append("data_criacao_inicio", filters.data_criacao_inicio);
-      }
-      if (filters.data_criacao_fim) {
-        queryParams.append("data_criacao_fim", filters.data_criacao_fim);
-      }
-
-      // Filtros de situação
-      if (filters.situacao) {
-        queryParams.append("situacao", filters.situacao);
-      }
-
-      // Filtros de origem
-      if (filters.origem) {
-        queryParams.append("origem", filters.origem);
-      }
-
-      // Filtros de tipo de procura
-      if (filters.tipo_procura) {
-        queryParams.append("tipo_procura", filters.tipo_procura);
-      }
-
-      // Filtros de nome
-      if (filters.nome) {
-        queryParams.append("nome", filters.nome);
-      }
-
-      // Filtros de email
-      if (filters.email) {
-        queryParams.append("email", filters.email);
-      }
-
-      // Filtros de telefone
-      if (filters.telefone) {
-        queryParams.append("telefone", filters.telefone);
-      }
-
-      // Filtros de UF
-      if (filters.uf) {
-        queryParams.append("uf", filters.uf);
-      }
-
-      // Filtros de etapa
-      if (filters.etapa) {
-        queryParams.append("etapa", filters.etapa);
-      }
-
-      // Filtros de consultor
-      if (filters.id_consultor) {
-        queryParams.append("id_consultor", filters.id_consultor.toString());
-      }
-
-      // Filtros de vendedor
-      if (filters.id_vendedor) {
-        queryParams.append("id_vendedor", filters.id_vendedor.toString());
-      }
-
-      // Filtros de paginação
-      if (filters.pagina) {
-        queryParams.append("pagina", filters.pagina.toString());
-      }
-      if (filters.limite) {
-        queryParams.append("limite", filters.limite.toString());
-      }
+      const queryParams = this.buildQueryParams(filters);
 
       const response = await this.request<TotaisPorOrigem>(
         `/leads/totais/por-origem?${queryParams.toString()}`
@@ -427,73 +340,7 @@ export class HttpClient {
     filters: ILeadsFilters = {}
   ): Promise<TotaisPorTipoProcura> {
     try {
-      const queryParams = new URLSearchParams();
-
-      // Filtros de data
-      if (filters.data_criacao_inicio) {
-        queryParams.append("data_criacao_inicio", filters.data_criacao_inicio);
-      }
-      if (filters.data_criacao_fim) {
-        queryParams.append("data_criacao_fim", filters.data_criacao_fim);
-      }
-
-      // Filtros de situação
-      if (filters.situacao) {
-        queryParams.append("situacao", filters.situacao);
-      }
-
-      // Filtros de origem
-      if (filters.origem) {
-        queryParams.append("origem", filters.origem);
-      }
-
-      // Filtros de tipo de procura
-      if (filters.tipo_procura) {
-        queryParams.append("tipo_procura", filters.tipo_procura);
-      }
-
-      // Filtros de nome
-      if (filters.nome) {
-        queryParams.append("nome", filters.nome);
-      }
-
-      // Filtros de email
-      if (filters.email) {
-        queryParams.append("email", filters.email);
-      }
-
-      // Filtros de telefone
-      if (filters.telefone) {
-        queryParams.append("telefone", filters.telefone);
-      }
-
-      // Filtros de UF
-      if (filters.uf) {
-        queryParams.append("uf", filters.uf);
-      }
-
-      // Filtros de etapa
-      if (filters.etapa) {
-        queryParams.append("etapa", filters.etapa);
-      }
-
-      // Filtros de consultor
-      if (filters.id_consultor) {
-        queryParams.append("id_consultor", filters.id_consultor.toString());
-      }
-
-      // Filtros de vendedor
-      if (filters.id_vendedor) {
-        queryParams.append("id_vendedor", filters.id_vendedor.toString());
-      }
-
-      // Filtros de paginação
-      if (filters.pagina) {
-        queryParams.append("pagina", filters.pagina.toString());
-      }
-      if (filters.limite) {
-        queryParams.append("limite", filters.limite.toString());
-      }
+      const queryParams = this.buildQueryParams(filters);
 
       const response = await this.request<TotaisPorTipoProcura>(
         `/leads/totais/por-tipo-procura?${queryParams.toString()}`
@@ -509,78 +356,7 @@ export class HttpClient {
     filters: ILeadsFilters = {}
   ): Promise<TotaisTransferidos> {
     try {
-      const queryParams = new URLSearchParams();
-
-      // Filtros de data
-      if (filters.data_criacao_inicio) {
-        queryParams.append("data_criacao_inicio", filters.data_criacao_inicio);
-      }
-      if (filters.data_criacao_fim) {
-        queryParams.append("data_criacao_fim", filters.data_criacao_fim);
-      }
-
-      // Filtros de situação
-      if (filters.situacao) {
-        queryParams.append("situacao", filters.situacao);
-      }
-
-      // Filtros de origem
-      if (filters.origem) {
-        queryParams.append("origem", filters.origem);
-      }
-
-      // Filtros de tipo de procura
-      if (filters.tipo_procura) {
-        queryParams.append("tipo_procura", filters.tipo_procura);
-      }
-
-      // Filtros de nome
-      if (filters.nome) {
-        queryParams.append("nome", filters.nome);
-      }
-
-      // Filtros de email
-      if (filters.email) {
-        queryParams.append("email", filters.email);
-      }
-
-      // Filtros de telefone
-      if (filters.telefone) {
-        queryParams.append("telefone", filters.telefone);
-      }
-
-      // Filtros de UF
-      if (filters.uf) {
-        queryParams.append("uf", filters.uf);
-      }
-
-      // Filtros de etapa
-      if (filters.etapa) {
-        queryParams.append("etapa", filters.etapa);
-      }
-
-      // Filtros de consultor
-      if (filters.id_consultor) {
-        queryParams.append("id_consultor", filters.id_consultor.toString());
-      }
-
-      // Filtros de vendedor
-      if (filters.id_vendedor) {
-        queryParams.append("id_vendedor", filters.id_vendedor.toString());
-      }
-
-      // Filtros de paginação
-      if (filters.pagina) {
-        queryParams.append("pagina", filters.pagina.toString());
-      }
-      if (filters.limite) {
-        queryParams.append("limite", filters.limite.toString());
-      }
-
-      // Filtro específico de transferido
-      if (filters.transferido !== undefined && filters.transferido !== null) {
-        queryParams.append("transferido", filters.transferido.toString());
-      }
+      const queryParams = this.buildQueryParams(filters);
 
       const response = await this.request<TotaisTransferidos>(
         `/leads/totais/transferidos?${queryParams.toString()}`

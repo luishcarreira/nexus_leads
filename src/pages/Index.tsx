@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 
 // Interface para os filtros da interface
 interface UIFilters {
-  creationDateRange?: { from: Date; to: Date };
+  creationDateRange?: { from?: Date; to?: Date } | undefined;
   situacoes?: string[];
   origem?: string;
   tipoProcura?: string;
@@ -29,7 +29,16 @@ interface UIFilters {
 const Index = () => {
   const [currentFilters, setCurrentFilters] = useState<UIFilters>({});
   const [showTotais, setShowTotais] = useState(true);
-  const { leads, total, loading, error, fetchLeads } = useLeads();
+  const {
+    leads,
+    total,
+    currentPage,
+    totalPages,
+    loading,
+    error,
+    fetchLeads,
+    setPage,
+  } = useLeads();
   const {
     totais,
     loading: totaisLoading,
@@ -49,13 +58,13 @@ const Index = () => {
   const convertFiltersToAPI = (filters: UIFilters): ILeadsFilters => {
     const apiFilters: ILeadsFilters = {};
 
-    // Filtro por período de criação
-    if (filters.creationDateRange?.from) {
+    // Filtro por período de criação - só adiciona se o range existir e tiver datas
+    if (filters.creationDateRange && filters.creationDateRange.from) {
       apiFilters.data_criacao_inicio = formatDateForAPI(
         filters.creationDateRange.from
       );
     }
-    if (filters.creationDateRange?.to) {
+    if (filters.creationDateRange && filters.creationDateRange.to) {
       apiFilters.data_criacao_fim = formatDateForAPI(
         filters.creationDateRange.to
       );
@@ -211,16 +220,21 @@ const Index = () => {
         <LeadsTable
           leads={leads}
           total={total}
+          currentPage={currentPage}
+          totalPages={totalPages}
           loading={loading}
+          onPageChange={setPage}
           onLeadCreated={() => {
-            // Recarregar leads e totais após criar um novo lead
-            fetchLeads();
-            fetchTotais();
+            // Recarregar leads e totais mantendo filtros atuais
+            const apiFilters = convertFiltersToAPI(currentFilters);
+            fetchLeads(apiFilters);
+            fetchTotais(apiFilters);
           }}
           onDataChanged={() => {
-            // Recarregar leads e totais após qualquer modificação
-            fetchLeads();
-            fetchTotais();
+            // Recarregar leads e totais mantendo filtros atuais
+            const apiFilters = convertFiltersToAPI(currentFilters);
+            fetchLeads(apiFilters);
+            fetchTotais(apiFilters);
           }}
         />
       </div>

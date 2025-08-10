@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { DateRangePicker } from "@/components/ui/date-range-picker";
+import { DatePicker } from "@/components/ui/date-picker";
 import { cn } from "@/lib/utils";
 import { useDropdowns } from "@/hooks/use-dropdowns";
 import { httpClient } from "@/services/httpClient";
@@ -363,14 +363,12 @@ export const FilterSection: React.FC<FilterProps> = ({
             <Label className="text-blue-800 font-medium">
               Período de Criação
             </Label>
-            <DateRangePicker
-              onUpdate={(values) => {
-                setCreationDateRange(values.range);
+            <DatePicker
+              value={creationDateRange}
+              onChange={(range) => {
+                setCreationDateRange(range || {});
               }}
-              initialDateFrom={creationDateRange.from}
-              initialDateTo={creationDateRange.to}
               placeholder="Selecionar período"
-              showCompare={false}
             />
           </div>
 
@@ -524,7 +522,7 @@ export const FilterSection: React.FC<FilterProps> = ({
               variant="outline"
               onClick={() => {
                 const emptyFilters = {
-                  creationDateRange: getDefaultDateRange(), // Usar o período default ao limpar
+                  creationDateRange: {}, // Enviar None (sem datas)
                   nextAgendaDateRange: {},
                   situacoes: [],
                   etapas: [],
@@ -539,7 +537,7 @@ export const FilterSection: React.FC<FilterProps> = ({
                 };
 
                 // Limpar estado local
-                setCreationDateRange(getDefaultDateRange()); // Usar o período default
+                setCreationDateRange({}); // Enviar None (sem datas)
                 setNextAgendaDateRange({});
                 setSelectedSituacoes([]);
                 setSelectedEtapas([]);
@@ -595,12 +593,12 @@ export const FilterSection: React.FC<FilterProps> = ({
               <Label className="text-blue-800 font-medium">
                 Período da Próxima Agenda
               </Label>
-              <DateRangePicker
-                onUpdate={(values) => setNextAgendaDateRange(values.range)}
-                initialDateFrom={nextAgendaDateRange.from}
-                initialDateTo={nextAgendaDateRange.to}
+              <DatePicker
+                value={nextAgendaDateRange}
+                onChange={(range) => {
+                  setNextAgendaDateRange(range || {});
+                }}
                 placeholder="Selecionar período"
-                showCompare={false}
               />
             </div>
 

@@ -70,7 +70,10 @@ import { useToast } from "@/hooks/use-toast";
 interface LeadsTableProps {
   leads: ILead[];
   total?: number; // total retornado pela API
+  currentPage: number;
+  totalPages: number;
   loading?: boolean;
+  onPageChange?: (page: number) => void; // Callback para mudança de página
   onLeadCreated?: () => void; // Callback para recarregar dados após criar lead
   onDataChanged?: () => void; // Callback para recarregar dados após qualquer modificação
 }
@@ -80,7 +83,10 @@ type SortDirection = "asc" | "desc" | null;
 export const LeadsTable: React.FC<LeadsTableProps> = ({
   leads,
   total,
+  currentPage,
+  totalPages,
   loading = false,
+  onPageChange,
   onLeadCreated,
   onDataChanged,
 }) => {
@@ -94,8 +100,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
     error: dropdownsError,
   } = useDropdowns();
   const [searchTerm, setSearchTerm] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(10);
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
   const [sortColumn, setSortColumn] = useState<keyof ILead | null>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>(null);
   const [selectedLead, setSelectedLead] = useState<ILead | null>(null);
@@ -132,15 +137,47 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
     useState<ILead | null>(null);
   const [isConvertingToClient, setIsConvertingToClient] = useState(false);
 
-  // Filtrar leads baseado no termo de busca
-  const filteredLeads = leads.filter((lead) =>
-    Object.values(lead).some((value) =>
-      value?.toString().toLowerCase().includes(searchTerm.toLowerCase())
-    )
-  );
+  // Debounce para o termo de busca
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 300); // 300ms de delay
 
-  // Ordenar leads
-  const sortedLeads = [...filteredLeads].sort((a, b) => {
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  // A busca agora será tratada pelo componente pai via API
+
+  // Como a busca agora é feita na API, vamos apenas mostrar os dados
+  // O filtro local será apenas para busca visual rápida se necessário
+  const displayLeads = debouncedSearchTerm
+    ? leads.filter((lead) => {
+        const searchLower = debouncedSearchTerm.toLowerCase();
+        const searchFields = [
+          lead.nome,
+          lead.email,
+          lead.telefone,
+          lead.telefone_tratado,
+          lead.origem,
+          lead.situacao,
+          lead.uf,
+          lead.cidade,
+          lead.etapa,
+          lead.procura_para,
+          lead.consultor,
+          lead.vendedor,
+          lead.id.toString(),
+          lead.id_cliente?.toString(),
+        ];
+        return searchFields.some((field) => {
+          if (!field) return false;
+          return field.toString().toLowerCase().includes(searchLower);
+        });
+      })
+    : leads;
+
+  // Ordenação local (pode ser removida se implementada na API)
+  const sortedLeads = [...displayLeads].sort((a, b) => {
     if (!sortColumn || !sortDirection) return 0;
 
     const aValue = a[sortColumn]?.toString() || "";
@@ -152,12 +189,6 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
       return bValue.localeCompare(aValue);
     }
   });
-
-  // Paginação
-  const totalPages = Math.ceil(sortedLeads.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const currentLeads = sortedLeads.slice(startIndex, endIndex);
 
   const handleSort = (column: keyof ILead) => {
     if (sortColumn === column) {
@@ -274,10 +305,10 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
   };
 
   const handleSelectAll = () => {
-    if (selectedLeads.size === currentLeads.length) {
+    if (selectedLeads.size === sortedLeads.length) {
       setSelectedLeads(new Set());
     } else {
-      setSelectedLeads(new Set(currentLeads.map((lead) => lead.id)));
+      setSelectedLeads(new Set(sortedLeads.map((lead) => lead.id)));
     }
   };
 
@@ -452,6 +483,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
         facebook: clientData.facebook,
         id_vendedor: clientData.id_vendedor,
         id_ramo_atividade: clientData.id_ramo_atividade,
+        id_cidade: clientData.id_cidade,
       };
 
       if (fisicaJuridica === "F") {
@@ -516,7 +548,13 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
               Leads Cadastrados
             </h3>
             <p className="text-sm text-blue-600">
-              {total ?? filteredLeads.length} leads encontrados
+              {total ?? 0} leads encontrados
+              {debouncedSearchTerm && (
+                <span className="ml-2 text-green-800 font-semibold bg-green-100 px-2 py-1 rounded-full">
+                  Filtro local: "{debouncedSearchTerm}" ({sortedLeads.length}{" "}
+                  exibidos)
+                </span>
+              )}
               {selectedLeads.size > 0 && (
                 <span className="ml-2 text-blue-800 font-semibold bg-blue-100 px-2 py-1 rounded-full">
                   {selectedLeads.size} selecionado(s)
@@ -581,8 +619,16 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                 placeholder="Buscar leads..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-8 w-64 border-blue-200 focus:border-blue-500 focus:ring-blue-500"
+                className="pl-8 pr-8 w-64 border-blue-200 focus:border-blue-500 focus:ring-blue-500"
               />
+              {searchTerm && (
+                <button
+                  onClick={() => setSearchTerm("")}
+                  className="absolute right-2 top-2.5 h-4 w-4 text-gray-400 hover:text-gray-600"
+                >
+                  ×
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -595,8 +641,8 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                 <TableHead className="w-12 text-white">
                   <Checkbox
                     checked={
-                      selectedLeads.size === currentLeads.length &&
-                      currentLeads.length > 0
+                      selectedLeads.size === sortedLeads.length &&
+                      sortedLeads.length > 0
                     }
                     onCheckedChange={handleSelectAll}
                     aria-label="Selecionar todos"
@@ -700,7 +746,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {currentLeads.map((lead, index) => (
+              {sortedLeads.map((lead, index) => (
                 <TableRow
                   key={lead.id}
                   className={`hover:bg-blue-50 transition-colors ${
@@ -772,12 +818,18 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                   <TableCell>{lead.origem}</TableCell>
                   <TableCell>{getSituacaoBadge(lead.situacao)}</TableCell>
                   <TableCell>
-                    <Badge
-                      variant="outline"
-                      className="border-blue-300 text-blue-700 bg-blue-50 font-medium"
-                    >
-                      {lead.procura_para}
-                    </Badge>
+                    {lead.procura_para ? (
+                      <Badge
+                        variant="outline"
+                        className="border-blue-300 text-blue-700 bg-blue-50 font-medium"
+                      >
+                        {lead.procura_para}
+                      </Badge>
+                    ) : (
+                      <span className="text-sm text-muted-foreground">
+                        Não informado
+                      </span>
+                    )}
                   </TableCell>
                   <TableCell>
                     {lead.consultor ? (
@@ -810,7 +862,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                   </TableCell>
                   <TableCell>
                     <span className="text-sm font-mono">
-                      {lead.id_cliente || "Não atribuído"}
+                      {lead.id_cliente ? lead.id_cliente : "Não atribuído"}
                     </span>
                   </TableCell>
                   <TableCell>{formatDate(lead.data_criacao)}</TableCell>
@@ -824,16 +876,14 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
         {totalPages > 1 && (
           <div className="flex items-center justify-between space-x-2 py-6 border-t border-blue-100">
             <div className="text-sm text-blue-600 font-medium">
-              Mostrando {startIndex + 1} a{" "}
-              {Math.min(endIndex, filteredLeads.length)} de{" "}
-              {total ?? filteredLeads.length} leads
+              Página {currentPage} de {totalPages} - Total: {total} leads
             </div>
 
             <div className="flex items-center space-x-2">
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                onClick={() => onPageChange?.(currentPage - 1)}
                 disabled={currentPage === 1}
                 className="border-blue-300 text-blue-700 hover:bg-blue-50 hover:border-blue-400"
               >
@@ -851,7 +901,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                       key={page}
                       variant={currentPage === page ? "default" : "outline"}
                       size="sm"
-                      onClick={() => setCurrentPage(page)}
+                      onClick={() => onPageChange?.(page)}
                       className={`w-8 h-8 p-0 ${
                         currentPage === page
                           ? "bg-blue-600 hover:bg-blue-700"
@@ -867,9 +917,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() =>
-                  setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-                }
+                onClick={() => onPageChange?.(currentPage + 1)}
                 disabled={currentPage === totalPages}
                 className="border-blue-300 text-blue-700 hover:bg-blue-50 hover:border-blue-400"
               >
