@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 interface UIFilters {
   creationDateRange?: { from?: Date; to?: Date } | undefined;
   situacoes?: string[];
+  etapas?: string[];
   origem?: string;
   tipoProcura?: string;
   nome?: string;
@@ -73,6 +74,11 @@ const Index = () => {
     // Filtro por situações
     if (filters.situacoes?.length > 0) {
       apiFilters.situacao = filters.situacoes.join(",");
+    }
+
+    // Filtro por etapas
+    if (filters.etapas?.length > 0) {
+      apiFilters.etapa = filters.etapas.join(",");
     }
 
     // Filtro por origem
