@@ -91,6 +91,16 @@ export const ConvertLeadToClientModal: React.FC<
     }
   };
 
+  // Buscar cidades automaticamente enquanto digita (debounced)
+  useEffect(() => {
+    if (!isCidadeModalOpen) return;
+    const timeoutId = setTimeout(() => {
+      // Reinicia na página 1 sempre que o termo mudar
+      fetchCidades(1);
+    }, 400);
+    return () => clearTimeout(timeoutId);
+  }, [cidadeSearch, isCidadeModalOpen, cidadePageSize]);
+
   const {
     vendedores,
     ramosAtividade,
