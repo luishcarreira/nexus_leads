@@ -17,8 +17,6 @@ import { LeadsPorTipoProcuraModal } from "./LeadsPorTipoProcuraModal";
 import {
   ILeadTotal,
   ILeadsTotaisDetalhados,
-  ITotalPorOrigemDetalhado,
-  ITotalPorTipoProcuraDetalhado,
   ILeadsFilters,
 } from "@/services/interfaces/ILead";
 
@@ -30,30 +28,6 @@ interface PaginacaoOutput<T> {
   dados: T[];
 }
 
-interface TotalPorOrigem {
-  origem: string;
-  total: number;
-  leads: PaginacaoOutput<ILeadTotal>;
-}
-
-interface TotalPorTipoProcura {
-  tipo_procura: string;
-  total: number;
-  leads: PaginacaoOutput<ILeadTotal>;
-}
-
-interface TotalTransferidos {
-  total: number;
-  leads: PaginacaoOutput<ILeadTotal>;
-}
-
-interface TotalNaoTransferidos {
-  total: number;
-  leads: PaginacaoOutput<ILeadTotal>;
-}
-
-// Removendo interface duplicada - usando a do arquivo de interfaces
-
 interface SummaryCardsProps {
   data: ILeadsTotaisDetalhados | null;
   loading?: boolean;
@@ -61,7 +35,7 @@ interface SummaryCardsProps {
     transferidos: (pagina: number) => void;
     naoTransferidos: (pagina: number) => void;
   };
-  currentFilters?: ILeadsFilters; // Filtros atuais para aplicar na paginação
+  currentFilters?: ILeadsFilters;
 }
 
 export const SummaryCards: React.FC<SummaryCardsProps> = ({
@@ -362,6 +336,7 @@ export const SummaryCards: React.FC<SummaryCardsProps> = ({
         }
         totaisPorOrigem={data?.totais_por_origem || []}
         loading={loading}
+        currentFilters={currentFilters}
       />
 
       <LeadsPorTipoProcuraModal
@@ -371,6 +346,7 @@ export const SummaryCards: React.FC<SummaryCardsProps> = ({
         }
         totaisPorTipoProcura={data?.total_por_tipo_procura || []}
         loading={loading}
+        currentFilters={currentFilters}
       />
     </>
   );

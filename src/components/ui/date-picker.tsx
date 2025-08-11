@@ -2,6 +2,7 @@ import * as React from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Calendar as CalendarIcon, X } from "lucide-react";
+import type { DateRange as DayPickerDateRange } from "react-day-picker";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -12,14 +13,9 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 
-interface DateRange {
-  from?: Date;
-  to?: Date;
-}
-
 interface DatePickerProps {
-  value?: DateRange;
-  onChange?: (range: DateRange | undefined) => void;
+  value?: DayPickerDateRange;
+  onChange?: (range: DayPickerDateRange | undefined) => void;
   placeholder?: string;
   className?: string;
 }
@@ -30,13 +26,13 @@ export function DatePicker({
   placeholder = "Selecionar período",
   className,
 }: DatePickerProps) {
-  const [date, setDate] = React.useState<DateRange | undefined>(value);
+  const [date, setDate] = React.useState<DayPickerDateRange | undefined>(value);
 
   React.useEffect(() => {
     setDate(value);
   }, [value]);
 
-  const handleSelect = (selectedRange: DateRange | undefined) => {
+  const handleSelect = (selectedRange: DayPickerDateRange | undefined) => {
     setDate(selectedRange);
     onChange?.(selectedRange);
   };
@@ -48,7 +44,7 @@ export function DatePicker({
     onChange?.(undefined);
   };
 
-  const formatDateRange = (range?: DateRange): string => {
+  const formatDateRange = (range?: DayPickerDateRange): string => {
     if (!range?.from) {
       return placeholder;
     }

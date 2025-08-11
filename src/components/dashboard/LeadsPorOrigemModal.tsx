@@ -20,7 +20,9 @@ import { ChevronLeft, ChevronRight, Filter, Users } from "lucide-react";
 import {
   ILeadTotal,
   ITotalPorOrigemDetalhado,
+  ILeadsFilters,
 } from "@/services/interfaces/ILead";
+import { httpClient } from "@/services/httpClient";
 
 interface PaginacaoOutput<T> {
   total: number;
@@ -35,6 +37,7 @@ interface LeadsPorOrigemModalProps {
   onClose: () => void;
   totaisPorOrigem: ITotalPorOrigemDetalhado[];
   loading?: boolean;
+  currentFilters?: ILeadsFilters;
 }
 
 export const LeadsPorOrigemModal: React.FC<LeadsPorOrigemModalProps> = ({
@@ -42,6 +45,7 @@ export const LeadsPorOrigemModal: React.FC<LeadsPorOrigemModalProps> = ({
   onClose,
   totaisPorOrigem,
   loading = false,
+  currentFilters,
 }) => {
   const [origemSelecionada, setOrigemSelecionada] = useState<string | null>(
     null
@@ -96,34 +100,41 @@ export const LeadsPorOrigemModal: React.FC<LeadsPorOrigemModalProps> = ({
     );
   };
 
-  const handleOrigemClick = (origem: string) => {
+  const handleOrigemClick = async (origem: string) => {
     setOrigemSelecionada(origem);
-    // Inicializar página 1 se não existir
-    if (!paginaAtual[origem]) {
-      setPaginaAtual((prev) => ({ ...prev, [origem]: 1 }));
-    }
-    // Usar dados iniciais se não tiver carregado ainda
-    const origemData = totaisPorOrigem.find((o) => o.origem === origem);
-    if (origemData && !leadsPorOrigem[origem]) {
-      setLeadsPorOrigem((prev) => ({ ...prev, [origem]: origemData.leads }));
+    setLoadingPagina(true);
+    const firstPage = 1;
+    try {
+      setPaginaAtual((prev) => ({ ...prev, [origem]: firstPage }));
+      // Busca imediata na API ao clicar na origem
+      const response = await httpClient.getLeadsPorOrigem(origem, {
+        ...(currentFilters || {}),
+        pagina: firstPage,
+        limite: 10,
+      });
+      setLeadsPorOrigem((prev) => ({ ...prev, [origem]: response }));
+    } catch (error) {
+      // fallback: mostrar dados existentes se houverem
+      const origemData = totaisPorOrigem.find((o) => o.origem === origem);
+      if (origemData && !leadsPorOrigem[origem]) {
+        setLeadsPorOrigem((prev) => ({ ...prev, [origem]: origemData.leads }));
+      }
+    } finally {
+      setLoadingPagina(false);
     }
   };
 
   const handlePageChange = async (origem: string, page: number) => {
     setLoadingPagina(true);
     try {
-      // Simular carregamento - você pode implementar uma chamada real aqui se necessário
-      await new Promise((resolve) => setTimeout(resolve, 300));
+      const response = await httpClient.getLeadsPorOrigem(origem, {
+        ...(currentFilters || {}),
+        pagina: page,
+        limite: 10,
+      });
 
       setPaginaAtual((prev) => ({ ...prev, [origem]: page }));
-
-      // Se você quiser buscar dados reais da API, descomente e implemente:
-      // const response = await httpClient.getLeadsTotaisPorOrigem({
-      //   origem,
-      //   pagina: page,
-      //   limite: 10,
-      // });
-      // setLeadsPorOrigem(prev => ({ ...prev, [origem]: response.totais_por_origem[0].leads }));
+      setLeadsPorOrigem((prev) => ({ ...prev, [origem]: response }));
     } catch (error) {
     } finally {
       setLoadingPagina(false);

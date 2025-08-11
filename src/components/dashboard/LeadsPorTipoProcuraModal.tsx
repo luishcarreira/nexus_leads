@@ -20,7 +20,9 @@ import { ChevronLeft, ChevronRight, Filter, Search } from "lucide-react";
 import {
   ILeadTotal,
   ITotalPorTipoProcuraDetalhado,
+  ILeadsFilters,
 } from "@/services/interfaces/ILead";
+import { httpClient } from "@/services/httpClient";
 
 interface PaginacaoOutput<T> {
   total: number;
@@ -35,11 +37,18 @@ interface LeadsPorTipoProcuraModalProps {
   onClose: () => void;
   totaisPorTipoProcura: ITotalPorTipoProcuraDetalhado[];
   loading?: boolean;
+  currentFilters?: ILeadsFilters;
 }
 
 export const LeadsPorTipoProcuraModal: React.FC<
   LeadsPorTipoProcuraModalProps
-> = ({ isOpen, onClose, totaisPorTipoProcura, loading = false }) => {
+> = ({
+  isOpen,
+  onClose,
+  totaisPorTipoProcura,
+  loading = false,
+  currentFilters,
+}) => {
   const [tipoProcuraSelecionado, setTipoProcuraSelecionado] = useState<
     string | null
   >(null);
@@ -103,39 +112,45 @@ export const LeadsPorTipoProcuraModal: React.FC<
     );
   };
 
-  const handleTipoProcuraClick = (tipoProcura: string) => {
+  const handleTipoProcuraClick = async (tipoProcura: string) => {
     setTipoProcuraSelecionado(tipoProcura);
-    // Inicializar página 1 se não existir
-    if (!paginaAtual[tipoProcura]) {
-      setPaginaAtual((prev) => ({ ...prev, [tipoProcura]: 1 }));
-    }
-    // Usar dados iniciais se não tiver carregado ainda
-    const tipoProcuraData = totaisPorTipoProcura.find(
-      (t) => t.tipo_procura === tipoProcura
-    );
-    if (tipoProcuraData && !leadsPorTipoProcura[tipoProcura]) {
-      setLeadsPorTipoProcura((prev) => ({
-        ...prev,
-        [tipoProcura]: tipoProcuraData.leads,
-      }));
+    setLoadingPagina(true);
+    const firstPage = 1;
+    try {
+      setPaginaAtual((prev) => ({ ...prev, [tipoProcura]: firstPage }));
+      // Busca imediata na API ao clicar no tipo de procura
+      const response = await httpClient.getLeadsPorTipoProcura(tipoProcura, {
+        ...(currentFilters || {}),
+        pagina: firstPage,
+        limite: 10,
+      });
+      setLeadsPorTipoProcura((prev) => ({ ...prev, [tipoProcura]: response }));
+    } catch (error) {
+      // fallback: mostrar dados existentes se houverem
+      const tipoProcuraData = totaisPorTipoProcura.find(
+        (t) => t.tipo_procura === tipoProcura
+      );
+      if (tipoProcuraData && !leadsPorTipoProcura[tipoProcura]) {
+        setLeadsPorTipoProcura((prev) => ({
+          ...prev,
+          [tipoProcura]: tipoProcuraData.leads,
+        }));
+      }
+    } finally {
+      setLoadingPagina(false);
     }
   };
 
   const handlePageChange = async (tipoProcura: string, page: number) => {
     setLoadingPagina(true);
     try {
-      // Simular carregamento - você pode implementar uma chamada real aqui se necessário
-      await new Promise((resolve) => setTimeout(resolve, 300));
-
+      const response = await httpClient.getLeadsPorTipoProcura(tipoProcura, {
+        ...(currentFilters || {}),
+        pagina: page,
+        limite: 10,
+      });
       setPaginaAtual((prev) => ({ ...prev, [tipoProcura]: page }));
-
-      // Se você quiser buscar dados reais da API, descomente e implemente:
-      // const response = await httpClient.getLeadsTotaisPorTipoProcura({
-      //   tipo_procura: tipoProcura,
-      //   pagina: page,
-      //   limite: 10,
-      // });
-      // setLeadsPorTipoProcura(prev => ({ ...prev, [tipoProcura]: response.total_por_tipo_procura[0].leads }));
+      setLeadsPorTipoProcura((prev) => ({ ...prev, [tipoProcura]: response }));
     } catch (error) {
     } finally {
       setLoadingPagina(false);

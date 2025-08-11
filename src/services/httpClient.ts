@@ -182,18 +182,18 @@ export class HttpClient {
 
   // Método para buscar dropdown de origens
   async getDropdownOrigem(): Promise<{ origem: string; total: number }[]> {
-    return this.request<{ origem: string; total: number }[]>(
-      "/leads/dropdown/origem"
-    );
+    // Deprecated in favor of getOrigensTotais. Kept for backward compatibility.
+    const data = await this.getOrigensTotais();
+    return data;
   }
 
   // Método para buscar dropdown de tipos de procura
   async getDropdownTipoProcura(): Promise<
     { tipo_procura: string; total: number }[]
   > {
-    return this.request<{ tipo_procura: string; total: number }[]>(
-      "/leads/dropdown/tipo-procura"
-    );
+    // Deprecated in favor of getTiposProcuraTotais. Kept for backward compatibility.
+    const data = await this.getTiposProcuraTotais();
+    return data;
   }
 
   // Método para vincular consultor ao lead
@@ -323,48 +323,144 @@ export class HttpClient {
   async getLeadsTotaisPorOrigem(
     filters: ILeadsFilters = {}
   ): Promise<TotaisPorOrigem> {
-    try {
-      const queryParams = this.buildQueryParams(filters);
-
-      const response = await this.request<TotaisPorOrigem>(
-        `/leads/totais/por-origem?${queryParams.toString()}`
-      );
-      return response;
-    } catch (err) {
-      throw err;
-    }
+    // Deprecated old combined endpoint. Reconstructed using new endpoints for backward compatibility.
+    const origens = await this.getOrigensTotais(filters);
+    // For compatibility, we will not prefetch leads per origem here to avoid N+1 requests.
+    return {
+      total_leads: origens.reduce((sum, o) => sum + o.total, 0),
+      totais_por_origem: origens.map((o) => ({
+        origem: o.origem,
+        total: o.total,
+        leads: {
+          total: 0,
+          pagina: 1,
+          limite: filters.limite || 10,
+          total_paginas: 0,
+          dados: [],
+        },
+      })),
+    } as unknown as TotaisPorOrigem; // NOTE: shape matches the old consumer expectations for totals
   }
 
   // Método para buscar totais por tipo de procura
   async getLeadsTotaisPorTipoProcura(
     filters: ILeadsFilters = {}
   ): Promise<TotaisPorTipoProcura> {
-    try {
-      const queryParams = this.buildQueryParams(filters);
-
-      const response = await this.request<TotaisPorTipoProcura>(
-        `/leads/totais/por-tipo-procura?${queryParams.toString()}`
-      );
-      return response;
-    } catch (err) {
-      throw err;
-    }
+    // Deprecated old combined endpoint. Reconstructed using new endpoints for backward compatibility.
+    const tipos = await this.getTiposProcuraTotais(filters);
+    return {
+      total_leads: tipos.reduce((sum, t) => sum + t.total, 0),
+      totais_por_tipo_procura: tipos.map((t) => ({
+        tipo_procura: t.tipo_procura,
+        total: t.total,
+        leads: {
+          total: 0,
+          pagina: 1,
+          limite: filters.limite || 10,
+          total_paginas: 0,
+          dados: [],
+        },
+      })),
+    } as unknown as TotaisPorTipoProcura;
   }
 
   // Método para buscar totais de transferidos
   async getLeadsTotaisTransferidos(
     filters: ILeadsFilters = {}
   ): Promise<TotaisTransferidos> {
-    try {
-      const queryParams = this.buildQueryParams(filters);
+    // Deprecated old combined endpoint. Reconstructed using new endpoints for backward compatibility.
+    const [transferidos, nao_transferidos] = await Promise.all([
+      this.getLeadsTransferidos(filters),
+      this.getLeadsNaoTransferidos(filters),
+    ]);
+    return {
+      total_leads: transferidos.total + nao_transferidos.total,
+      transferidos,
+      nao_transferidos,
+    } as unknown as TotaisTransferidos;
+  }
 
-      const response = await this.request<TotaisTransferidos>(
-        `/leads/totais/transferidos?${queryParams.toString()}`
-      );
-      return response;
-    } catch (err) {
-      throw err;
-    }
+  // Novos endpoints conforme especificação
+  async getOrigensTotais(
+    filters: ILeadsFilters = {}
+  ): Promise<{ origem: string; total: number }[]> {
+    const queryParams = this.buildQueryParams(filters);
+    const raw = await this.request<Array<{ ORIGEM: string; TOTAL: number }>>(
+      `/leads/origens/totais?${queryParams.toString()}`
+    );
+    // Normalizar para chaves minúsculas esperadas no front
+    return raw.map((item) => ({ origem: item.ORIGEM, total: item.TOTAL }));
+  }
+
+  async getLeadsPorOrigem(
+    origem: string,
+    filters: ILeadsFilters = {}
+  ): Promise<{
+    total: number;
+    pagina: number;
+    limite: number;
+    total_paginas: number;
+    dados: ILead[] | any[];
+  }> {
+    const { origem: _omit, ...rest } = filters;
+    const queryParams = this.buildQueryParams(rest);
+    return this.request(
+      `/leads/origens/${encodeURIComponent(origem)}?${queryParams.toString()}`
+    );
+  }
+
+  async getTiposProcuraTotais(
+    filters: ILeadsFilters = {}
+  ): Promise<{ tipo_procura: string; total: number }[]> {
+    const queryParams = this.buildQueryParams(filters);
+    const raw = await this.request<
+      Array<{ TIPO_PROCURA: string; TOTAL: number }>
+    >(`/leads/tipos-procura/totais?${queryParams.toString()}`);
+    return raw.map((item) => ({
+      tipo_procura: item.TIPO_PROCURA,
+      total: item.TOTAL,
+    }));
+  }
+
+  async getLeadsPorTipoProcura(
+    tipoProcura: string,
+    filters: ILeadsFilters = {}
+  ): Promise<{
+    total: number;
+    pagina: number;
+    limite: number;
+    total_paginas: number;
+    dados: ILead[] | any[];
+  }> {
+    const { tipo_procura: _omit, ...rest } = filters;
+    const queryParams = this.buildQueryParams(rest);
+    return this.request(
+      `/leads/tipos-procura/${encodeURIComponent(
+        tipoProcura
+      )}?${queryParams.toString()}`
+    );
+  }
+
+  async getLeadsTransferidos(filters: ILeadsFilters = {}): Promise<{
+    total: number;
+    pagina: number;
+    limite: number;
+    total_paginas: number;
+    dados: ILead[] | any[];
+  }> {
+    const queryParams = this.buildQueryParams(filters);
+    return this.request(`/leads/transferidos?${queryParams.toString()}`);
+  }
+
+  async getLeadsNaoTransferidos(filters: ILeadsFilters = {}): Promise<{
+    total: number;
+    pagina: number;
+    limite: number;
+    total_paginas: number;
+    dados: ILead[] | any[];
+  }> {
+    const queryParams = this.buildQueryParams(filters);
+    return this.request(`/leads/nao-transferidos?${queryParams.toString()}`);
   }
 }
 

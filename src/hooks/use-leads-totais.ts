@@ -72,11 +72,11 @@ const getDefaultDateRange = () => {
 };
 
 export const useLeadsTotais = (): UseLeadsTotaisReturn => {
+  // Não aplicar datas por padrão. Datas só devem ser enviadas quando o usuário selecionar.
   const defaultFilters = {
-    ...getDefaultDateRange(),
     pagina: 1,
     limite: 10,
-  };
+  } as ILeadsFilters;
 
   const [totais, setTotais] = useState<ILeadsTotaisDetalhados | null>(null);
   const [loading, setLoading] = useState(false); // Alterado de true para false
@@ -89,13 +89,18 @@ export const useLeadsTotais = (): UseLeadsTotaisReturn => {
       setLoading(true);
       setError(null);
 
-      const mergedFilters = { ...defaultFilters, ...filters };
+      // Aplicar apenas pagina/limite como default, sem injetar datas automaticamente
+      const mergedFilters: ILeadsFilters = {
+        pagina: filters.pagina ?? defaultFilters.pagina,
+        limite: filters.limite ?? defaultFilters.limite,
+        ...filters,
+      };
       setCurrentFilters(mergedFilters);
 
-      // Buscar dados de cada endpoint em paralelo
-      const [porOrigem, porTipoProcura, transferidos] = await Promise.all([
-        httpClient.getLeadsTotaisPorOrigem(mergedFilters),
-        httpClient.getLeadsTotaisPorTipoProcura(mergedFilters),
+      // Buscar dados de cada endpoint em paralelo (novos endpoints)
+      const [origensTotais, tiposTotais, transferidos] = await Promise.all([
+        httpClient.getOrigensTotais(mergedFilters),
+        httpClient.getTiposProcuraTotais(mergedFilters),
         httpClient.getLeadsTotaisTransferidos({
           ...mergedFilters,
           transferido: null, // Buscar totais (transferidos + não transferidos)
@@ -104,11 +109,36 @@ export const useLeadsTotais = (): UseLeadsTotaisReturn => {
         }),
       ]);
 
-      // Combinar os resultados
+      // Combinar os resultados ajustando para a interface usada no front
       const combinedData: ILeadsTotaisDetalhados = {
-        total_leads: porOrigem.total_leads, // Todos devem retornar o mesmo total
-        totais_por_origem: porOrigem.totais_por_origem,
-        total_por_tipo_procura: porTipoProcura.totais_por_tipo_procura || [],
+        total_leads:
+          origensTotais.reduce((sum, o) => sum + o.total, 0) ||
+          tiposTotais.reduce((sum, t) => sum + t.total, 0) ||
+          (transferidos.transferidos?.total || 0) +
+            (transferidos.nao_transferidos?.total || 0),
+        totais_por_origem: origensTotais.map((o) => ({
+          origem: o.origem,
+          total: o.total,
+          // leads serão buscados on-demand no modal específico
+          leads: {
+            total: 0,
+            pagina: 1,
+            limite: 10,
+            total_paginas: 0,
+            dados: [],
+          },
+        })),
+        total_por_tipo_procura: tiposTotais.map((t) => ({
+          tipo_procura: t.tipo_procura,
+          total: t.total,
+          leads: {
+            total: 0,
+            pagina: 1,
+            limite: 10,
+            total_paginas: 0,
+            dados: [],
+          },
+        })),
         transferidos: transferidos.transferidos,
         nao_transferidos: transferidos.nao_transferidos,
       };
@@ -128,9 +158,8 @@ export const useLeadsTotais = (): UseLeadsTotaisReturn => {
         // Não setar loading global para não afetar outros componentes
         setError(null);
 
-        const response = await httpClient.getLeadsTotaisPorOrigem({
+        const response = await httpClient.getLeadsPorOrigem(origem, {
           ...currentFilters,
-          origem,
           pagina,
           limite: 10,
         });
@@ -139,9 +168,7 @@ export const useLeadsTotais = (): UseLeadsTotaisReturn => {
           const updatedTotais = {
             ...totais,
             totais_por_origem: totais.totais_por_origem.map((item) =>
-              item.origem === origem
-                ? { ...item, leads: response.totais_por_origem[0].leads }
-                : item
+              item.origem === origem ? { ...item, leads: response } : item
             ),
           };
           setTotais(updatedTotais);
@@ -161,9 +188,8 @@ export const useLeadsTotais = (): UseLeadsTotaisReturn => {
         // Não setar loading global para não afetar outros componentes
         setError(null);
 
-        const response = await httpClient.getLeadsTotaisPorTipoProcura({
+        const response = await httpClient.getLeadsPorTipoProcura(tipoProcura, {
           ...currentFilters,
-          tipo_procura: tipoProcura,
           pagina,
           limite: 10,
         });
@@ -173,7 +199,7 @@ export const useLeadsTotais = (): UseLeadsTotaisReturn => {
             ...totais,
             total_por_tipo_procura: totais.total_por_tipo_procura.map((item) =>
               item.tipo_procura === tipoProcura
-                ? { ...item, leads: response.totais_por_tipo_procura[0].leads }
+                ? { ...item, leads: response }
                 : item
             ),
           };
