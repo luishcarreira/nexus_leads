@@ -253,6 +253,9 @@ export const LeadsPorOrigemModal: React.FC<LeadsPorOrigemModalProps> = ({
                             Procura Para
                           </TableHead>
                           <TableHead className="text-white font-semibold">
+                            Origem
+                          </TableHead>
+                          <TableHead className="text-white font-semibold">
                             Consultor
                           </TableHead>
                           <TableHead className="text-white font-semibold">
@@ -301,6 +304,11 @@ export const LeadsPorOrigemModal: React.FC<LeadsPorOrigemModalProps> = ({
                                   Não informado
                                 </span>
                               )}
+                            </TableCell>
+                            <TableCell>
+                              {lead.origem == " "
+                                ? "Desconhecido"
+                                : lead.origem}
                             </TableCell>
                             <TableCell>
                               {lead.consultor ? (

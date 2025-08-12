@@ -278,6 +278,9 @@ export const LeadsPorTipoProcuraModal: React.FC<
                                 Procura Para
                               </TableHead>
                               <TableHead className="text-white font-semibold">
+                                Origem
+                              </TableHead>
+                              <TableHead className="text-white font-semibold">
                                 Consultor
                               </TableHead>
                               <TableHead className="text-white font-semibold">
@@ -327,9 +330,14 @@ export const LeadsPorTipoProcuraModal: React.FC<
                                       </Badge>
                                     ) : (
                                       <span className="text-muted-foreground">
-                                        Não informado
+                                        Desconhecido
                                       </span>
                                     )}
+                                  </TableCell>
+                                  <TableCell>
+                                    {lead.origem == " "
+                                      ? "Desconhecido"
+                                      : lead.origem}
                                   </TableCell>
                                   <TableCell>
                                     {lead.consultor ? (
