@@ -14,6 +14,7 @@ import {
 import { LeadsTotaisDetailsModal } from "./LeadsTotaisDetailsModal";
 import { LeadsPorOrigemModal } from "./LeadsPorOrigemModal";
 import { LeadsPorTipoProcuraModal } from "./LeadsPorTipoProcuraModal";
+import { LeadsPorVendedorModal } from "./LeadsPorVendedorModal";
 import {
   ILeadTotal,
   ILeadsTotaisDetalhados,
@@ -71,6 +72,12 @@ export const SummaryCards: React.FC<SummaryCardsProps> = ({
     isOpen: false,
   });
 
+  const [vendedorModalConfig, setVendedorModalConfig] = useState<{
+    isOpen: boolean;
+  }>({
+    isOpen: false,
+  });
+
   const handleCardClick = (
     type: "origem" | "tipoProcura" | "transferidos" | "naoTransferidos",
     title: string,
@@ -94,14 +101,16 @@ export const SummaryCards: React.FC<SummaryCardsProps> = ({
       return;
     }
 
+    // Para transferidos, abrir o novo modal por vendedor
+    if (type === "transferidos") {
+      setVendedorModalConfig({ isOpen: true });
+      return;
+    }
+
     let leads: PaginacaoOutput<ILeadTotal>;
     let total: number;
 
     switch (type) {
-      case "transferidos":
-        leads = data.transferidos;
-        total = data.transferidos.total;
-        break;
       case "naoTransferidos":
         leads = data.nao_transferidos;
         total = data.nao_transferidos.total;
@@ -346,6 +355,14 @@ export const SummaryCards: React.FC<SummaryCardsProps> = ({
         }
         totaisPorTipoProcura={data?.total_por_tipo_procura || []}
         loading={loading}
+        currentFilters={currentFilters}
+      />
+
+      <LeadsPorVendedorModal
+        isOpen={vendedorModalConfig.isOpen}
+        onClose={() =>
+          setVendedorModalConfig((prev) => ({ ...prev, isOpen: false }))
+        }
         currentFilters={currentFilters}
       />
     </>

@@ -462,6 +462,39 @@ export class HttpClient {
     const queryParams = this.buildQueryParams(filters);
     return this.request(`/leads/nao-transferidos?${queryParams.toString()}`);
   }
+
+  // Totais por vendedor (apenas transferidos), com filtros e paginação
+  async getVendedoresTotais(filters: ILeadsFilters = {}): Promise<{
+    totais_por_vendedor: Array<{
+      id_vendedor: number;
+      vendedor: string;
+      total: number;
+    }>;
+    total_vendedores: number;
+  }> {
+    const queryParams = this.buildQueryParams(filters);
+    return this.request(`/leads/vendedores/totais?${queryParams.toString()}`);
+  }
+
+  // Listar leads por vendedor com filtros (inclui tipo_procura)
+  async getLeadsPorVendedor(
+    idVendedor: number,
+    filters: ILeadsFilters = {}
+  ): Promise<{
+    total: number;
+    pagina: number;
+    limite: number;
+    total_paginas: number;
+    dados: ILead[] | any[];
+  }> {
+    const { id_vendedor: _omit, ...rest } = filters;
+    const queryParams = this.buildQueryParams(rest);
+    return this.request(
+      `/leads/vendedores/${encodeURIComponent(
+        idVendedor
+      )}?${queryParams.toString()}`
+    );
+  }
 }
 
 export const httpClient = new HttpClient(
