@@ -134,40 +134,31 @@ export const LeadsTotaisDetailsModal: React.FC<
   const handlePageChange = async (page: number) => {
     setInternalLoading(true);
     try {
-      // Determinar se é transferidos ou não transferidos baseado no título
-      const isTransferidos = title.toLowerCase().includes("transferidos");
+      const lowerTitle = title.toLowerCase();
+      const isTransferidos =
+        lowerTitle.includes("transferidos") &&
+        !lowerTitle.includes("não transferidos") &&
+        !lowerTitle.includes("nao transferidos");
       const isNaoTransferidos =
-        title.toLowerCase().includes("não transferidos") ||
-        title.toLowerCase().includes("nao transferidos");
-
-      let response;
+        lowerTitle.includes("não transferidos") ||
+        lowerTitle.includes("nao transferidos");
 
       if (isTransferidos) {
-        response = await httpClient.getLeadsTotaisTransferidos({
-          transferido: true, // Buscar apenas transferidos
+        const response = await httpClient.getLeadsTransferidos({
+          ...(currentFilters || {}),
           pagina: page,
           limite: 10,
-          // Aplicar filtros de data se disponíveis
-          ...(currentFilters && {
-            data_criacao_inicio: currentFilters.data_criacao_inicio,
-            data_criacao_fim: currentFilters.data_criacao_fim,
-          }),
         });
-        setCurrentLeads(response.transferidos);
+        setCurrentLeads(response as unknown as PaginacaoOutput<ILeadTotal>);
       } else if (isNaoTransferidos) {
-        response = await httpClient.getLeadsTotaisTransferidos({
-          transferido: false, // Buscar apenas não transferidos
+        const response = await httpClient.getLeadsNaoTransferidos({
+          ...(currentFilters || {}),
           pagina: page,
           limite: 10,
-          // Aplicar filtros de data se disponíveis
-          ...(currentFilters && {
-            data_criacao_inicio: currentFilters.data_criacao_inicio,
-            data_criacao_fim: currentFilters.data_criacao_fim,
-          }),
         });
-        setCurrentLeads(response.nao_transferidos);
+        setCurrentLeads(response as unknown as PaginacaoOutput<ILeadTotal>);
       } else {
-        // Se não for nenhum dos dois, usar o callback original
+        // Fallback para callback externo
         await onPageChange(page);
         return;
       }

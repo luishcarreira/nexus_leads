@@ -476,6 +476,23 @@ export class HttpClient {
     return this.request(`/leads/vendedores/totais?${queryParams.toString()}`);
   }
 
+  // Totais de tipos de procura por vendedor específico
+  async getTotaisTiposProcuraPorVendedor(
+    idVendedor: number,
+    filters: ILeadsFilters = {}
+  ): Promise<{ tipo_procura: string; total: number }[]> {
+    const queryParams = this.buildQueryParams(filters);
+    const raw = await this.request<
+      Array<{ TIPO_PROCURA: string; TOTAL: number }>
+    >(
+      `/leads/vendedores/${idVendedor}/tipos-procura/totais?${queryParams.toString()}`
+    );
+    return raw.map((item) => ({
+      tipo_procura: item.TIPO_PROCURA,
+      total: item.TOTAL,
+    }));
+  }
+
   // Listar leads por vendedor com filtros (inclui tipo_procura)
   async getLeadsPorVendedor(
     idVendedor: number,

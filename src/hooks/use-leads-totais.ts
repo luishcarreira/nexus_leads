@@ -220,9 +220,8 @@ export const useLeadsTotais = (): UseLeadsTotaisReturn => {
         // Não setar loading global para não afetar outros componentes
         setError(null);
 
-        const response = await httpClient.getLeadsTotaisTransferidos({
+        const response = await httpClient.getLeadsTransferidos({
           ...currentFilters,
-          transferido: true, // Buscar apenas transferidos
           pagina,
           limite: 10,
         });
@@ -230,7 +229,7 @@ export const useLeadsTotais = (): UseLeadsTotaisReturn => {
         if (totais) {
           const updatedTotais = {
             ...totais,
-            transferidos: response.transferidos,
+            transferidos: response as unknown as PaginacaoOutput<ILeadTotal>,
           };
           setTotais(updatedTotais);
         }
@@ -249,9 +248,8 @@ export const useLeadsTotais = (): UseLeadsTotaisReturn => {
         // Não setar loading global para não afetar outros componentes
         setError(null);
 
-        const response = await httpClient.getLeadsTotaisTransferidos({
+        const response = await httpClient.getLeadsNaoTransferidos({
           ...currentFilters,
-          transferido: false, // Buscar apenas não transferidos
           pagina,
           limite: 10,
         });
@@ -259,7 +257,8 @@ export const useLeadsTotais = (): UseLeadsTotaisReturn => {
         if (totais) {
           const updatedTotais = {
             ...totais,
-            nao_transferidos: response.nao_transferidos,
+            nao_transferidos:
+              response as unknown as PaginacaoOutput<ILeadTotal>,
           };
           setTotais(updatedTotais);
         }

@@ -173,3 +173,16 @@ export interface ILeadAtividade {
   hora_agenda: string;
   detalhe_retorno: string;
 }
+
+// Interface para totais por vendedor com breakdown por tipo de procura
+export interface ITotalPorVendedor {
+  id_vendedor: number;
+  vendedor: string;
+  total: number;
+  totais_por_tipo_procura: ITotalPorTipoProcura[];
+}
+
+export interface IVendedoresTotais {
+  totais_por_vendedor: ITotalPorVendedor[];
+  total_vendedores: number;
+}

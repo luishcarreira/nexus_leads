@@ -25,7 +25,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { httpClient } from "@/services/httpClient";
-import { ILeadTotal, ILeadsFilters } from "@/services/interfaces/ILead";
+import {
+  ILeadTotal,
+  ILeadsFilters,
+  ITotalPorVendedor,
+  IVendedoresTotais,
+} from "@/services/interfaces/ILead";
 
 interface PaginacaoOutput<T> {
   total: number;
@@ -48,9 +53,7 @@ export const LeadsPorVendedorModal: React.FC<LeadsPorVendedorModalProps> = ({
 }) => {
   const [loading, setLoading] = useState(false);
   const [loadingPagina, setLoadingPagina] = useState(false);
-  const [totais, setTotais] = useState<
-    Array<{ id_vendedor: number; vendedor: string; total: number }>
-  >([]);
+  const [totais, setTotais] = useState<ITotalPorVendedor[]>([]);
   const [totalVendedores, setTotalVendedores] = useState(0);
   const [vendedorSelecionado, setVendedorSelecionado] = useState<number | null>(
     null
@@ -64,17 +67,29 @@ export const LeadsPorVendedorModal: React.FC<LeadsPorVendedorModalProps> = ({
   const [tiposProcura, setTiposProcura] = useState<
     Array<{ tipo_procura: string; total: number }>
   >([]);
+  const [tiposProcuraVendedor, setTiposProcuraVendedor] = useState<
+    Array<{ tipo_procura: string; total: number }>
+  >([]);
 
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen) {
+      // Limpar estados quando modal fechar
+      setVendedorSelecionado(null);
+      setTiposProcuraVendedor([]);
+      setLeadsPorVendedor({});
+      setSelectedTipoProcura(null);
+      return;
+    }
+
     const fetchTotais = async () => {
       setLoading(true);
       try {
-        const response = await httpClient.getVendedoresTotais({
-          ...(currentFilters || {}),
-          pagina: 1,
-          limite: 25,
-        });
+        const response: IVendedoresTotais =
+          await httpClient.getVendedoresTotais({
+            ...(currentFilters || {}),
+            pagina: 1,
+            limite: 25,
+          });
         setTotais(response.totais_por_vendedor || []);
         setTotalVendedores(response.total_vendedores || 0);
       } finally {
@@ -163,17 +178,30 @@ export const LeadsPorVendedorModal: React.FC<LeadsPorVendedorModalProps> = ({
     setVendedorSelecionado(idVendedor);
     setLoadingPagina(true);
     const firstPage = 1;
+
     try {
-      const response = await httpClient.getLeadsPorVendedor(idVendedor, {
+      // Buscar leads do vendedor
+      const leadsResponse = await httpClient.getLeadsPorVendedor(idVendedor, {
         ...(currentFilters || {}),
         ...(selectedTipoProcura ? { tipo_procura: selectedTipoProcura } : {}),
         pagina: firstPage,
         limite: 10,
       });
+
+      // Buscar totais detalhados de tipos de procura para este vendedor
+      const tiposResponse = await httpClient.getTotaisTiposProcuraPorVendedor(
+        idVendedor,
+        {
+          ...(currentFilters || {}),
+        }
+      );
+
       setLeadsPorVendedor((prev) => ({
         ...prev,
-        [idVendedor]: response as unknown as PaginacaoOutput<ILeadTotal>,
+        [idVendedor]: leadsResponse as unknown as PaginacaoOutput<ILeadTotal>,
       }));
+
+      setTiposProcuraVendedor(tiposResponse);
     } finally {
       setLoadingPagina(false);
     }
@@ -278,18 +306,41 @@ export const LeadsPorVendedorModal: React.FC<LeadsPorVendedorModalProps> = ({
                         {vend.vendedor || "Sem vendedor"}
                       </CardTitle>
                     </CardHeader>
-                    <CardContent className="pt-0 flex items-center justify-between">
-                      <Badge
-                        variant="outline"
-                        className="bg-emerald-100 text-emerald-700 border-emerald-300"
-                      >
-                        {vend.total} leads
-                      </Badge>
-                      {vendedorSelecionado === vend.id_vendedor && (
-                        <Badge variant="default" className="bg-emerald-600">
-                          Selecionado
+                    <CardContent className="pt-0 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <Badge
+                          variant="outline"
+                          className="bg-emerald-100 text-emerald-700 border-emerald-300 font-semibold"
+                        >
+                          {vend.total} leads total
                         </Badge>
-                      )}
+                        {vendedorSelecionado === vend.id_vendedor && (
+                          <Badge variant="default" className="bg-emerald-600">
+                            Selecionado
+                          </Badge>
+                        )}
+                      </div>
+
+                      {/* Breakdown por tipo de procura */}
+                      {/* {vend.totais_por_tipo_procura &&
+                        vend.totais_por_tipo_procura.length > 0 && (
+                          <div className="space-y-1">
+                            <div className="text-xs font-medium text-gray-600 uppercase tracking-wide">
+                              Por tipo de procura:
+                            </div>
+                            <div className="flex flex-wrap gap-1">
+                              {vend.totais_por_tipo_procura.map((tipo) => (
+                                <Badge
+                                  key={tipo.tipo_procura}
+                                  variant="secondary"
+                                  className="text-xs px-2 py-1 bg-blue-100 text-blue-700 border-blue-300"
+                                >
+                                  {tipo.tipo_procura}: {tipo.total}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+                        )} */}
                     </CardContent>
                   </Card>
                 ))}
@@ -297,16 +348,65 @@ export const LeadsPorVendedorModal: React.FC<LeadsPorVendedorModalProps> = ({
             )}
           </div>
 
-          {/* Lista de leads do vendedor */}
-          {vendedorSelecionado && leadsAtuais && (
+          {/* Detalhes do vendedor selecionado */}
+          {vendedorSelecionado && (
             <div className="border-t pt-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-800">
-                  Leads do Vendedor:{" "}
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                  Detalhes do Vendedor:{" "}
                   <span className="text-emerald-600">
                     {totais.find((t) => t.id_vendedor === vendedorSelecionado)
                       ?.vendedor || vendedorSelecionado}
                   </span>
+                </h3>
+
+                {/* Totais detalhados por tipo de procura */}
+                {tiposProcuraVendedor.length > 0 && (
+                  <div className="bg-gradient-to-r from-emerald-50 to-green-50 rounded-lg p-4 border border-emerald-200">
+                    <h4 className="text-sm font-semibold text-emerald-800 mb-3 flex items-center gap-2">
+                      <div className="w-2 h-2 bg-emerald-600 rounded-full"></div>
+                      Distribuição por Tipo de Procura
+                    </h4>
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                      {tiposProcuraVendedor.map((tipo) => (
+                        <div
+                          key={tipo.tipo_procura}
+                          className="bg-white rounded-lg p-3 border border-emerald-200 shadow-sm"
+                        >
+                          <div className="text-xs font-medium text-gray-600 uppercase tracking-wide mb-1">
+                            {tipo.tipo_procura}
+                          </div>
+                          <div className="text-lg font-bold text-emerald-700">
+                            {tipo.total}
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            {(
+                              (tipo.total /
+                                tiposProcuraVendedor.reduce(
+                                  (sum, t) => sum + t.total,
+                                  0
+                                )) *
+                              100
+                            ).toFixed(1)}
+                            %
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Lista de leads do vendedor */}
+          {vendedorSelecionado && leadsAtuais && (
+            <div
+              className={tiposProcuraVendedor.length > 0 ? "" : "border-t pt-6"}
+            >
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-800">
+                  Lista de Leads
                 </h3>
                 <div className="flex items-center gap-3">
                   <div className="min-w-[220px]">
