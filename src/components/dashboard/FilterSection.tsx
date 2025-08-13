@@ -16,18 +16,16 @@ import { DatePicker } from "@/components/ui/date-picker";
 import { cn } from "@/lib/utils";
 import { useDropdowns } from "@/hooks/use-dropdowns";
 import { httpClient } from "@/services/httpClient";
+import type { DateRange as DayPickerDateRange } from "react-day-picker";
 
-interface DateRange {
-  from?: Date;
-  to?: Date;
-}
+// Using DayPicker's DateRange type for compatibility with DatePicker component
 
 interface FilterProps {
   onFiltersChange: (filters: any) => void;
   currentFilters?: any;
 }
 
-const getDefaultDateRange = () => {
+const getDefaultDateRange = (): DayPickerDateRange => {
   const end = new Date();
   const start = new Date();
   start.setDate(start.getDate() - 3);
@@ -39,10 +37,12 @@ export const FilterSection: React.FC<FilterProps> = ({
   currentFilters,
 }) => {
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
-  const [creationDateRange, setCreationDateRange] = useState<DateRange>(
-    getDefaultDateRange()
-  );
-  const [nextAgendaDateRange, setNextAgendaDateRange] = useState<DateRange>({});
+  const [creationDateRange, setCreationDateRange] = useState<
+    DayPickerDateRange | undefined
+  >(getDefaultDateRange());
+  const [nextAgendaDateRange, setNextAgendaDateRange] = useState<
+    DayPickerDateRange | undefined
+  >(undefined);
   const [selectedSituacoes, setSelectedSituacoes] = useState<string[]>([]);
   const [selectedEtapas, setSelectedEtapas] = useState<string[]>([]);
   const [selectedConsultores, setSelectedConsultores] = useState<string[]>([]);
@@ -53,6 +53,7 @@ export const FilterSection: React.FC<FilterProps> = ({
     tipoProcura: "",
     nome: "",
     email: "",
+    telefone: "",
     apenasSemConsultor: false,
   });
 
@@ -155,6 +156,7 @@ export const FilterSection: React.FC<FilterProps> = ({
       tipoProcura: currentFilters.tipoProcura || "",
       nome: currentFilters.nome || "",
       email: currentFilters.email || "",
+      telefone: currentFilters.telefone || "",
       apenasSemConsultor: currentFilters.apenasSemConsultor || false,
     });
     // DICA: se precisar refletir filtros externos novamente, remova []
@@ -366,7 +368,7 @@ export const FilterSection: React.FC<FilterProps> = ({
             <DatePicker
               value={creationDateRange}
               onChange={(range) => {
-                setCreationDateRange(range || {});
+                setCreationDateRange(range);
               }}
               placeholder="Selecionar período"
             />
@@ -533,12 +535,13 @@ export const FilterSection: React.FC<FilterProps> = ({
                   tipoProcura: "",
                   nome: "",
                   email: "",
+                  telefone: "",
                   apenasSemConsultor: false,
                 };
 
                 // Limpar estado local
-                setCreationDateRange({}); // Enviar None (sem datas)
-                setNextAgendaDateRange({});
+                setCreationDateRange(undefined); // Enviar None (sem datas)
+                setNextAgendaDateRange(undefined);
                 setSelectedSituacoes([]);
                 setSelectedEtapas([]);
                 setSelectedConsultores([]);
@@ -549,6 +552,7 @@ export const FilterSection: React.FC<FilterProps> = ({
                   tipoProcura: "",
                   nome: "",
                   email: "",
+                  telefone: "",
                   apenasSemConsultor: false,
                 });
 
@@ -590,13 +594,25 @@ export const FilterSection: React.FC<FilterProps> = ({
             </div>
 
             <div className="space-y-2">
+              <Label className="text-blue-800 font-medium">Telefone</Label>
+              <Input
+                placeholder="Buscar por telefone"
+                value={filters.telefone}
+                onChange={(e) =>
+                  setFilters((prev) => ({ ...prev, telefone: e.target.value }))
+                }
+                className="border-blue-200 focus:border-blue-500 focus:ring-blue-500"
+              />
+            </div>
+
+            <div className="space-y-2">
               <Label className="text-blue-800 font-medium">
                 Período da Próxima Agenda
               </Label>
               <DatePicker
                 value={nextAgendaDateRange}
                 onChange={(range) => {
-                  setNextAgendaDateRange(range || {});
+                  setNextAgendaDateRange(range);
                 }}
                 placeholder="Selecionar período"
               />

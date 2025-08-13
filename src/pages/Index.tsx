@@ -21,6 +21,7 @@ interface UIFilters {
   tipoProcura?: string;
   nome?: string;
   email?: string;
+  telefone?: string;
   consultores?: string[];
   vendedores?: string[];
   ufs?: string[];
@@ -99,6 +100,11 @@ const Index = () => {
     // Filtro por email
     if (filters.email) {
       apiFilters.email = filters.email;
+    }
+
+    // Filtro por telefone
+    if (filters.telefone) {
+      apiFilters.telefone = filters.telefone;
     }
 
     // Filtro por consultores
