@@ -182,18 +182,20 @@ export class HttpClient {
 
   // Método para buscar dropdown de origens
   async getDropdownOrigem(): Promise<{ origem: string; total: number }[]> {
-    // Deprecated in favor of getOrigensTotais. Kept for backward compatibility.
-    const data = await this.getOrigensTotais();
-    return data;
+    // Usar endpoint dedicado com cache no backend
+    return this.request<{ origem: string; total: number }[]>(
+      `/leads/dropdown/origem`
+    );
   }
 
   // Método para buscar dropdown de tipos de procura
   async getDropdownTipoProcura(): Promise<
     { tipo_procura: string; total: number }[]
   > {
-    // Deprecated in favor of getTiposProcuraTotais. Kept for backward compatibility.
-    const data = await this.getTiposProcuraTotais();
-    return data;
+    // Usar endpoint dedicado com cache no backend
+    return this.request<{ tipo_procura: string; total: number }[]>(
+      `/leads/dropdown/tipo-procura`
+    );
   }
 
   // Método para vincular consultor ao lead
