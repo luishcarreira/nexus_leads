@@ -15,11 +15,43 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { ILead } from "@/services/interfaces/ILead";
 import { useDropdowns } from "@/hooks/use-dropdowns";
-import { User, Building2, Loader2, MapPin, Search, X } from "lucide-react";
+import {
+  User,
+  Building2,
+  Loader2,
+  MapPin,
+  Search,
+  X,
+  Check,
+  ChevronsUpDown,
+} from "lucide-react";
 import { httpClient } from "@/services/httpClient";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface ConvertLeadToClientData {
   tipo: "fisica" | "juridica";
@@ -72,6 +104,8 @@ export const ConvertLeadToClientModal: React.FC<
   const [loadingCidades, setLoadingCidades] = useState(false);
   const [selectedCidadeDescricao, setSelectedCidadeDescricao] =
     useState<string>("");
+  const [isVendedorOpen, setIsVendedorOpen] = useState(false);
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 
   const fetchCidades = async (page = 1) => {
     setLoadingCidades(true);
@@ -171,6 +205,15 @@ export const ConvertLeadToClientModal: React.FC<
       alert("Por favor, selecione vendedor e ramo de atividade");
       return;
     }
+    await onSubmit(formData);
+  };
+
+  const handleConfirmSubmit = async () => {
+    if (formData.id_vendedor === 0 || !formData.id_ramo_atividade) {
+      alert("Por favor, selecione vendedor e ramo de atividade");
+      return;
+    }
+    setIsConfirmOpen(false);
     await onSubmit(formData);
   };
 
@@ -447,37 +490,65 @@ export const ConvertLeadToClientModal: React.FC<
               </Select>
             </div>
 
-            {/* Vendedor */}
+            {/* Vendedor (Combobox pesquisável) */}
             <div className="space-y-3">
               <Label className="text-sm font-semibold text-blue-800">
                 Vendedor *
               </Label>
-              <Select
-                value={formData.id_vendedor.toString()}
-                onValueChange={(value) =>
-                  handleInputChange("id_vendedor", parseInt(value))
-                }
-              >
-                <SelectTrigger className="border-blue-200 focus:border-blue-500 focus:ring-blue-500">
-                  <SelectValue placeholder="Selecione um vendedor" />
-                </SelectTrigger>
-                <SelectContent>
-                  {dropdownsLoading ? (
-                    <SelectItem value="" disabled>
-                      Carregando vendedores...
-                    </SelectItem>
-                  ) : (
-                    vendedores.map((vendedor) => (
-                      <SelectItem
-                        key={vendedor.codigo}
-                        value={vendedor.codigo.toString()}
-                      >
-                        {vendedor.nome}
-                      </SelectItem>
-                    ))
-                  )}
-                </SelectContent>
-              </Select>
+              <Popover open={isVendedorOpen} onOpenChange={setIsVendedorOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={isVendedorOpen}
+                    className="w-full justify-between border-blue-200 focus:border-blue-500 focus:ring-blue-500"
+                  >
+                    {formData.id_vendedor
+                      ? vendedores.find(
+                          (v) => v.codigo === formData.id_vendedor
+                        )?.nome
+                      : "Selecione um vendedor"}
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="p-0 w-[--radix-popover-trigger-width]">
+                  <Command>
+                    <CommandInput placeholder="Buscar vendedor..." />
+                    <CommandEmpty>Nenhum vendedor encontrado.</CommandEmpty>
+                    <CommandList>
+                      <CommandGroup>
+                        {dropdownsLoading ? (
+                          <div className="px-3 py-2 text-sm text-muted-foreground">
+                            Carregando vendedores...
+                          </div>
+                        ) : (
+                          vendedores.map((vendedor) => (
+                            <CommandItem
+                              key={vendedor.codigo}
+                              value={`${vendedor.codigo} ${vendedor.nome}`}
+                              onSelect={(value) => {
+                                const id = parseInt(value.split(" ")[0], 10);
+                                handleInputChange("id_vendedor", id);
+                                setIsVendedorOpen(false);
+                              }}
+                            >
+                              <Check
+                                className={
+                                  "mr-2 h-4 w-4 " +
+                                  (formData.id_vendedor === vendedor.codigo
+                                    ? "opacity-100"
+                                    : "opacity-0")
+                                }
+                              />
+                              <span>{vendedor.nome}</span>
+                            </CommandItem>
+                          ))
+                        )}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
             </div>
 
             {/* Botões */}
@@ -491,7 +562,8 @@ export const ConvertLeadToClientModal: React.FC<
                 Cancelar
               </Button>
               <Button
-                type="submit"
+                type="button"
+                onClick={() => setIsConfirmOpen(true)}
                 disabled={loading || dropdownsLoading}
                 className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg"
               >
@@ -508,6 +580,26 @@ export const ConvertLeadToClientModal: React.FC<
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* Confirmação antes de converter */}
+      <AlertDialog open={isConfirmOpen} onOpenChange={setIsConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar conversão</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja converter este lead em cliente? Esta ação
+              poderá atualizar os dados do lead e atribuir o vendedor
+              selecionado.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={loading}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmSubmit} disabled={loading}>
+              Confirmar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Modal de Seleção de Cidade */}
       <Dialog open={isCidadeModalOpen} onOpenChange={setIsCidadeModalOpen}>
