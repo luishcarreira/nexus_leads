@@ -276,10 +276,10 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({
               value={formData.nome}
               onChange={(e) => handleInputChange("nome", e.target.value)}
               placeholder="Nome completo"
-              className={errors.nome ? "border-red-500" : ""}
+              className={errors.nome ? "border-destructive" : ""}
             />
             {errors.nome && (
-              <p className="text-sm text-red-500">{errors.nome}</p>
+              <p className="text-sm text-destructive">{errors.nome}</p>
             )}
           </div>
 
@@ -292,10 +292,10 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({
                 handleInputChange("telefone", formatPhone(e.target.value))
               }
               placeholder="(11) 99999-9999"
-              className={errors.telefone ? "border-red-500" : ""}
+              className={errors.telefone ? "border-destructive" : ""}
             />
             {errors.telefone && (
-              <p className="text-sm text-red-500">{errors.telefone}</p>
+              <p className="text-sm text-destructive">{errors.telefone}</p>
             )}
           </div>
 
@@ -307,10 +307,10 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({
               value={formData.email}
               onChange={(e) => handleInputChange("email", e.target.value)}
               placeholder="email@exemplo.com"
-              className={errors.email ? "border-red-500" : ""}
+              className={errors.email ? "border-destructive" : ""}
             />
             {errors.email && (
-              <p className="text-sm text-red-500">{errors.email}</p>
+              <p className="text-sm text-destructive">{errors.email}</p>
             )}
           </div>
 
@@ -321,10 +321,10 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({
               value={formData.cidade}
               onChange={(e) => handleInputChange("cidade", e.target.value)}
               placeholder="Nome da cidade"
-              className={errors.cidade ? "border-red-500" : ""}
+              className={errors.cidade ? "border-destructive" : ""}
             />
             {errors.cidade && (
-              <p className="text-sm text-red-500">{errors.cidade}</p>
+              <p className="text-sm text-destructive">{errors.cidade}</p>
             )}
           </div>
 
@@ -334,7 +334,7 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({
               value={formData.uf}
               onValueChange={(value) => handleInputChange("uf", value)}
             >
-              <SelectTrigger className={errors.uf ? "border-red-500" : ""}>
+              <SelectTrigger className={errors.uf ? "border-destructive" : ""}>
                 <SelectValue placeholder="Selecione a UF" />
               </SelectTrigger>
               <SelectContent>
@@ -345,7 +345,9 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({
                 ))}
               </SelectContent>
             </Select>
-            {errors.uf && <p className="text-sm text-red-500">{errors.uf}</p>}
+            {errors.uf && (
+              <p className="text-sm text-destructive">{errors.uf}</p>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -363,11 +365,11 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({
               }
               placeholder="Ex: R$ 50.000,00"
               className={
-                errors.valor_investimento_previsto ? "border-red-500" : ""
+                errors.valor_investimento_previsto ? "border-destructive" : ""
               }
             />
             {errors.valor_investimento_previsto && (
-              <p className="text-sm text-red-500">
+              <p className="text-sm text-destructive">
                 {errors.valor_investimento_previsto}
               </p>
             )}

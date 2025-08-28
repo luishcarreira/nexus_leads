@@ -153,12 +153,12 @@ export const SummaryCards: React.FC<SummaryCardsProps> = ({
         {Array.from({ length: 6 }).map((_, index) => (
           <Card key={index} className="border-0 shadow-lg">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-              <div className="h-4 bg-gray-200 rounded w-24 animate-pulse"></div>
-              <div className="w-10 h-10 bg-gray-200 rounded-xl animate-pulse"></div>
+              <div className="h-4 bg-muted rounded w-24 animate-pulse"></div>
+              <div className="w-10 h-10 bg-muted rounded-xl animate-pulse"></div>
             </CardHeader>
             <CardContent>
-              <div className="h-8 bg-gray-200 rounded w-16 mb-2 animate-pulse"></div>
-              <div className="h-3 bg-gray-200 rounded w-20 animate-pulse"></div>
+              <div className="h-8 bg-muted rounded w-16 mb-2 animate-pulse"></div>
+              <div className="h-3 bg-muted rounded w-20 animate-pulse"></div>
             </CardContent>
           </Card>
         ))}
@@ -172,12 +172,12 @@ export const SummaryCards: React.FC<SummaryCardsProps> = ({
         {Array.from({ length: 6 }).map((_, index) => (
           <Card key={index} className="border-0 shadow-lg">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-              <div className="h-4 bg-gray-200 rounded w-24"></div>
-              <div className="w-10 h-10 bg-gray-200 rounded-xl"></div>
+              <div className="h-4 bg-muted rounded w-24"></div>
+              <div className="w-10 h-10 bg-muted rounded-xl"></div>
             </CardHeader>
             <CardContent>
-              <div className="h-8 bg-gray-200 rounded w-16 mb-2"></div>
-              <div className="h-3 bg-gray-200 rounded w-20"></div>
+              <div className="h-8 bg-muted rounded w-16 mb-2"></div>
+              <div className="h-3 bg-muted rounded w-20"></div>
             </CardContent>
           </Card>
         ))}
@@ -191,11 +191,11 @@ export const SummaryCards: React.FC<SummaryCardsProps> = ({
       value: data.total_leads,
       icon: Users,
       description: "Total geral de leads",
-      gradient: "from-blue-500 to-blue-600",
-      iconBg: "bg-blue-500/10",
-      iconColor: "text-blue-600",
-      textColor: "text-blue-700",
-      borderColor: "border-blue-200",
+      gradient: "from-primary to-primary",
+      iconBg: "bg-primary/10",
+      iconColor: "text-primary",
+      textColor: "text-foreground",
+      borderColor: "border-border",
       shadowColor: "shadow-lg",
     },
     {
@@ -237,10 +237,10 @@ export const SummaryCards: React.FC<SummaryCardsProps> = ({
           ? `${data.total_por_tipo_procura.length} tipos diferentes`
           : "Sem dados",
       gradient: "from-purple-500 to-purple-600",
-      iconBg: "bg-purple-500/10",
-      iconColor: "text-purple-600",
-      textColor: "text-purple-700",
-      borderColor: "border-purple-200",
+      iconBg: "bg-violet-500/10 dark:bg-violet-500/20",
+      iconColor: "text-violet-600 dark:text-violet-400",
+      textColor: "text-foreground",
+      borderColor: "border-border",
       shadowColor: "shadow-lg",
       onClick: () =>
         data?.total_por_tipo_procura?.length > 0 &&
@@ -252,10 +252,10 @@ export const SummaryCards: React.FC<SummaryCardsProps> = ({
       icon: UserCheck,
       description: "Para vendedores",
       gradient: "from-green-500 to-emerald-600",
-      iconBg: "bg-green-500/10",
-      iconColor: "text-green-600",
-      textColor: "text-green-700",
-      borderColor: "border-green-200",
+      iconBg: "bg-green-500/10 dark:bg-green-500/20",
+      iconColor: "text-green-600 dark:text-green-400",
+      textColor: "text-foreground",
+      borderColor: "border-border",
       shadowColor: "shadow-lg",
       onClick: () => handleCardClick("transferidos", "Leads Transferidos"),
     },
@@ -265,10 +265,10 @@ export const SummaryCards: React.FC<SummaryCardsProps> = ({
       icon: UserX,
       description: "Aguardando ação",
       gradient: "from-red-500 to-red-600",
-      iconBg: "bg-red-500/10",
-      iconColor: "text-red-600",
-      textColor: "text-red-700",
-      borderColor: "border-red-200",
+      iconBg: "bg-red-500/10 dark:bg-red-500/20",
+      iconColor: "text-red-600 dark:text-red-400",
+      textColor: "text-foreground",
+      borderColor: "border-border",
       shadowColor: "shadow-lg",
       onClick: () =>
         handleCardClick("naoTransferidos", "Leads Não Transferidos"),
@@ -426,7 +426,7 @@ export const DetailedSummary: React.FC<{
         {Array.from({ length: 3 }).map((_, index) => (
           <Card key={index} className="border-0 shadow-lg">
             <CardHeader>
-              <div className="h-6 bg-gray-200 rounded w-32 animate-pulse"></div>
+              <div className="h-6 bg-muted rounded w-32 animate-pulse"></div>
             </CardHeader>
             <CardContent className="space-y-3">
               {Array.from({ length: 3 }).map((_, itemIndex) => (
@@ -434,8 +434,8 @@ export const DetailedSummary: React.FC<{
                   key={itemIndex}
                   className="flex justify-between items-center p-2"
                 >
-                  <div className="h-4 bg-gray-200 rounded w-20 animate-pulse"></div>
-                  <div className="h-6 bg-gray-200 rounded w-12 animate-pulse"></div>
+                  <div className="h-4 bg-muted rounded w-20 animate-pulse"></div>
+                  <div className="h-6 bg-muted rounded w-12 animate-pulse"></div>
                 </div>
               ))}
             </CardContent>
@@ -486,12 +486,12 @@ export const DetailedSummary: React.FC<{
         </Card>
 
         {/* Detalhes por Tipo de Procura */}
-        <Card className="group relative overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border-purple-200">
+        <Card className="group relative overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border-border">
           <div className="absolute inset-0 bg-gradient-to-br from-purple-500 to-purple-600 opacity-5 group-hover:opacity-10 transition-opacity duration-300" />
           <CardHeader className="relative z-10">
-            <CardTitle className="text-sm font-semibold text-purple-700 flex items-center gap-3">
-              <div className="p-2 bg-purple-500/10 rounded-lg group-hover:scale-110 transition-transform duration-300">
-                <Target className="h-5 w-5 text-purple-600" />
+            <CardTitle className="text-sm font-semibold text-foreground flex items-center gap-3">
+              <div className="p-2 bg-violet-500/10 dark:bg-violet-500/20 rounded-lg group-hover:scale-110 transition-transform duration-300">
+                <Target className="h-5 w-5 text-violet-600 dark:text-violet-400" />
               </div>
               Por Tipo de Procura
             </CardTitle>
@@ -511,10 +511,10 @@ export const DetailedSummary: React.FC<{
                   )
                 }
               >
-                <span className="text-sm font-medium text-purple-700">
+                <span className="text-sm font-medium text-foreground">
                   {item.tipo_procura}
                 </span>
-                <span className="font-bold text-purple-600 text-lg">
+                <span className="font-bold text-violet-600 dark:text-violet-400 text-lg">
                   {item.total.toLocaleString()}
                 </span>
               </div>
@@ -523,19 +523,19 @@ export const DetailedSummary: React.FC<{
         </Card>
 
         {/* Status de Transferência */}
-        <Card className="group relative overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border-blue-200">
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-blue-600 opacity-5 group-hover:opacity-10 transition-opacity duration-300" />
+        <Card className="group relative overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border-border">
+          <div className="absolute inset-0 bg-gradient-to-br from-primary to-primary opacity-5 group-hover:opacity-10 transition-opacity duration-300" />
           <CardHeader className="relative z-10">
-            <CardTitle className="text-sm font-semibold text-blue-700 flex items-center gap-3">
-              <div className="p-2 bg-blue-500/10 rounded-lg group-hover:scale-110 transition-transform duration-300">
-                <TrendingUp className="h-5 w-5 text-blue-600" />
+            <CardTitle className="text-sm font-semibold text-foreground flex items-center gap-3">
+              <div className="p-2 bg-primary/10 rounded-lg group-hover:scale-110 transition-transform duration-300">
+                <TrendingUp className="h-5 w-5 text-primary" />
               </div>
               Status de Transferência
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3 relative z-10">
             <div className="flex justify-between items-center p-2 bg-white/60 rounded-lg">
-              <span className="text-sm font-medium text-blue-700 flex items-center gap-2">
+              <span className="text-sm font-medium text-foreground flex items-center gap-2">
                 <CheckCircle className="h-4 w-4 text-green-600" />
                 Transferidos
               </span>
@@ -544,7 +544,7 @@ export const DetailedSummary: React.FC<{
               </span>
             </div>
             <div className="flex justify-between items-center p-2 bg-white/60 rounded-lg">
-              <span className="text-sm font-medium text-blue-700 flex items-center gap-2">
+              <span className="text-sm font-medium text-foreground flex items-center gap-2">
                 <Clock className="h-4 w-4 text-orange-600" />
                 Pendentes
               </span>
@@ -552,12 +552,12 @@ export const DetailedSummary: React.FC<{
                 {data.nao_transferidos.total.toLocaleString()}
               </span>
             </div>
-            <div className="pt-3 border-t border-blue-200">
-              <div className="flex justify-between items-center p-2 bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg">
-                <span className="text-sm font-semibold text-blue-800">
+            <div className="pt-3 border-t border-border">
+              <div className="flex justify-between items-center p-2 bg-accent rounded-lg">
+                <span className="text-sm font-semibold text-foreground">
                   Taxa de Transferência
                 </span>
-                <span className="font-bold text-blue-600 text-lg">
+                <span className="font-bold text-primary text-lg">
                   {data.total_leads > 0
                     ? (
                         (data.transferidos.total / data.total_leads) *

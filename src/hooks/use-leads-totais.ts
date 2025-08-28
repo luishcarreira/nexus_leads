@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { httpClient } from "@/services/httpClient";
+import { leadsService } from "@/services/LeadsService";
 import {
   ILeadsFilters,
   ILeadsTotaisDetalhados,
@@ -99,9 +99,9 @@ export const useLeadsTotais = (): UseLeadsTotaisReturn => {
 
       // Buscar dados de cada endpoint em paralelo (novos endpoints)
       const [origensTotais, tiposTotais, transferidos] = await Promise.all([
-        httpClient.getOrigensTotais(mergedFilters),
-        httpClient.getTiposProcuraTotais(mergedFilters),
-        httpClient.getLeadsTotaisTransferidos({
+        leadsService.getOrigensTotais(mergedFilters),
+        leadsService.getTiposProcuraTotais(mergedFilters),
+        leadsService.getLeadsTotaisTransferidos({
           ...mergedFilters,
           transferido: null, // Buscar totais (transferidos + não transferidos)
           pagina: 1,
@@ -158,7 +158,7 @@ export const useLeadsTotais = (): UseLeadsTotaisReturn => {
         // Não setar loading global para não afetar outros componentes
         setError(null);
 
-        const response = await httpClient.getLeadsPorOrigem(origem, {
+        const response = await leadsService.getLeadsPorOrigem(origem, {
           ...currentFilters,
           pagina,
           limite: 10,
@@ -188,11 +188,14 @@ export const useLeadsTotais = (): UseLeadsTotaisReturn => {
         // Não setar loading global para não afetar outros componentes
         setError(null);
 
-        const response = await httpClient.getLeadsPorTipoProcura(tipoProcura, {
-          ...currentFilters,
-          pagina,
-          limite: 10,
-        });
+        const response = await leadsService.getLeadsPorTipoProcura(
+          tipoProcura,
+          {
+            ...currentFilters,
+            pagina,
+            limite: 10,
+          }
+        );
 
         if (totais) {
           const updatedTotais = {
@@ -220,7 +223,7 @@ export const useLeadsTotais = (): UseLeadsTotaisReturn => {
         // Não setar loading global para não afetar outros componentes
         setError(null);
 
-        const response = await httpClient.getLeadsTransferidos({
+        const response = await leadsService.getLeadsTransferidos({
           ...currentFilters,
           pagina,
           limite: 10,
@@ -248,7 +251,7 @@ export const useLeadsTotais = (): UseLeadsTotaisReturn => {
         // Não setar loading global para não afetar outros componentes
         setError(null);
 
-        const response = await httpClient.getLeadsNaoTransferidos({
+        const response = await leadsService.getLeadsNaoTransferidos({
           ...currentFilters,
           pagina,
           limite: 10,

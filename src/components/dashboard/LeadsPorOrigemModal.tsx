@@ -22,7 +22,7 @@ import {
   ITotalPorOrigemDetalhado,
   ILeadsFilters,
 } from "@/services/interfaces/ILead";
-import { httpClient } from "@/services/httpClient";
+import { leadsService } from "@/services/LeadsService";
 
 interface PaginacaoOutput<T> {
   total: number;
@@ -64,8 +64,7 @@ export const LeadsPorOrigemModal: React.FC<LeadsPorOrigemModalProps> = ({
     const situacaoConfig = {
       "Novo Lead": {
         variant: "default" as const,
-        className:
-          "bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold shadow-sm",
+        className: "bg-primary text-primary-foreground font-semibold shadow-sm",
       },
       "Em Andamento": {
         variant: "secondary" as const,
@@ -107,7 +106,7 @@ export const LeadsPorOrigemModal: React.FC<LeadsPorOrigemModalProps> = ({
     try {
       setPaginaAtual((prev) => ({ ...prev, [origem]: firstPage }));
       // Busca imediata na API ao clicar na origem
-      const response = await httpClient.getLeadsPorOrigem(origem, {
+      const response = await leadsService.getLeadsPorOrigem(origem, {
         ...(currentFilters || {}),
         pagina: firstPage,
         limite: 10,
@@ -127,7 +126,7 @@ export const LeadsPorOrigemModal: React.FC<LeadsPorOrigemModalProps> = ({
   const handlePageChange = async (origem: string, page: number) => {
     setLoadingPagina(true);
     try {
-      const response = await httpClient.getLeadsPorOrigem(origem, {
+      const response = await leadsService.getLeadsPorOrigem(origem, {
         ...(currentFilters || {}),
         pagina: page,
         limite: 10,
@@ -153,12 +152,12 @@ export const LeadsPorOrigemModal: React.FC<LeadsPorOrigemModalProps> = ({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-7xl max-h-[95vh] overflow-y-auto border-0 shadow-2xl">
-        <DialogHeader className="bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-t-lg -m-6 mb-6 p-6">
+        <DialogHeader className="bg-primary text-primary-foreground rounded-t-lg -m-6 mb-6 p-6">
           <DialogTitle className="text-xl font-semibold flex items-center gap-2">
             <Filter className="h-5 w-5" />
             Leads por Origem
           </DialogTitle>
-          <p className="text-blue-100 text-sm mt-2">
+          <p className="text-muted-foreground text-sm mt-2">
             Total de {totaisPorOrigem.length} origens encontradas
           </p>
         </DialogHeader>
@@ -166,7 +165,7 @@ export const LeadsPorOrigemModal: React.FC<LeadsPorOrigemModalProps> = ({
         <div className="space-y-6">
           {/* Seção de Origens */}
           <div>
-            <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+            <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
               <Users className="h-5 w-5 text-blue-600" />
               Origens Disponíveis
             </h3>
@@ -236,7 +235,7 @@ export const LeadsPorOrigemModal: React.FC<LeadsPorOrigemModalProps> = ({
                   <div className="rounded-lg border border-blue-200 overflow-hidden shadow-sm">
                     <Table>
                       <TableHeader>
-                        <TableRow className="bg-gradient-to-r from-blue-600 to-blue-700 text-white">
+                        <TableRow className="bg-primary text-primary-foreground">
                           <TableHead className="text-white font-semibold">
                             Nome
                           </TableHead>

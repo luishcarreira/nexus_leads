@@ -17,7 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { ILeadTotal, ILeadsFilters } from "@/services/interfaces/ILead";
-import { httpClient } from "@/services/httpClient";
+import { leadsService } from "@/services/LeadsService";
 
 interface PaginacaoOutput<T> {
   total: number;
@@ -79,8 +79,7 @@ export const LeadsTotaisDetailsModal: React.FC<
     const situacaoConfig = {
       "Novo Lead": {
         variant: "default" as const,
-        className:
-          "bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold shadow-sm",
+        className: "bg-primary text-primary-foreground font-semibold shadow-sm",
       },
       "Em Andamento": {
         variant: "secondary" as const,
@@ -144,14 +143,14 @@ export const LeadsTotaisDetailsModal: React.FC<
         lowerTitle.includes("nao transferidos");
 
       if (isTransferidos) {
-        const response = await httpClient.getLeadsTransferidos({
+        const response = await leadsService.getLeadsTransferidos({
           ...(currentFilters || {}),
           pagina: page,
           limite: 10,
         });
         setCurrentLeads(response as unknown as PaginacaoOutput<ILeadTotal>);
       } else if (isNaoTransferidos) {
-        const response = await httpClient.getLeadsNaoTransferidos({
+        const response = await leadsService.getLeadsNaoTransferidos({
           ...(currentFilters || {}),
           pagina: page,
           limite: 10,
@@ -176,14 +175,14 @@ export const LeadsTotaisDetailsModal: React.FC<
     return (
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto border-0 shadow-2xl">
-          <DialogHeader className="bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-t-lg -m-6 mb-6 p-6">
+          <DialogHeader className="bg-primary text-primary-foreground rounded-t-lg -m-6 mb-6 p-6">
             <DialogTitle className="text-xl font-semibold">{title}</DialogTitle>
-            <p className="text-blue-100 text-sm mt-2">
+            <p className="text-muted-foreground text-sm mt-2">
               Total de {total} leads encontrados
             </p>
           </DialogHeader>
           <div className="flex items-center justify-center h-32">
-            <p className="text-gray-500">Carregando dados...</p>
+            <p className="text-muted-foreground">Carregando dados...</p>
           </div>
         </DialogContent>
       </Dialog>
@@ -196,28 +195,28 @@ export const LeadsTotaisDetailsModal: React.FC<
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto border-0 shadow-2xl">
-        <DialogHeader className="bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-t-lg -m-6 mb-6 p-6">
+        <DialogHeader className="bg-primary text-primary-foreground rounded-t-lg -m-6 mb-6 p-6">
           <DialogTitle className="text-xl font-semibold">{title}</DialogTitle>
-          <p className="text-blue-100 text-sm mt-2">
+          <p className="text-muted-foreground text-sm mt-2">
             Total de {total} leads encontrados
           </p>
         </DialogHeader>
 
         {isTableLoading ? (
           <div className="animate-pulse space-y-4">
-            <div className="h-4 bg-gray-200 rounded w-1/4"></div>
+            <div className="h-4 bg-muted rounded w-1/4"></div>
             <div className="space-y-2">
               {Array.from({ length: 5 }).map((_, i) => (
-                <div key={i} className="h-10 bg-gray-200 rounded"></div>
+                <div key={i} className="h-10 bg-muted rounded"></div>
               ))}
             </div>
           </div>
         ) : (
           <>
-            <div className="rounded-lg border border-blue-200 overflow-hidden shadow-sm">
+            <div className="rounded-lg border border-border overflow-hidden shadow-sm">
               <Table>
                 <TableHeader>
-                  <TableRow className="bg-gradient-to-r from-blue-600 to-blue-700 text-white">
+                  <TableRow className="bg-primary text-primary-foreground">
                     <TableHead className="text-white font-semibold">
                       Nome
                     </TableHead>
@@ -255,8 +254,8 @@ export const LeadsTotaisDetailsModal: React.FC<
                     currentLeads.dados.map((lead, index) => (
                       <TableRow
                         key={lead.id}
-                        className={`hover:bg-blue-50 transition-colors ${
-                          index % 2 === 0 ? "bg-white" : "bg-blue-50/30"
+                        className={`hover:bg-accent transition-colors ${
+                          index % 2 === 0 ? "bg-background" : "bg-muted/30"
                         }`}
                       >
                         <TableCell className="font-medium">
@@ -286,7 +285,7 @@ export const LeadsTotaisDetailsModal: React.FC<
                           {lead.procura_para ? (
                             <Badge
                               variant="outline"
-                              className="border-blue-300 text-blue-700 bg-blue-50 font-medium"
+                              className="border-input text-primary bg-primary/10 font-medium"
                             >
                               {lead.procura_para}
                             </Badge>
@@ -329,7 +328,7 @@ export const LeadsTotaisDetailsModal: React.FC<
                   ) : (
                     <TableRow>
                       <TableCell colSpan={10} className="text-center py-8">
-                        <div className="text-gray-500">
+                        <div className="text-muted-foreground">
                           Nenhum lead encontrado.
                         </div>
                       </TableCell>
@@ -342,7 +341,7 @@ export const LeadsTotaisDetailsModal: React.FC<
             {/* Paginação */}
             {currentLeads.total_paginas > 1 && (
               <div className="flex items-center justify-between space-x-2 py-4">
-                <div className="text-sm text-blue-600 font-medium">
+                <div className="text-sm text-muted-foreground font-medium">
                   Página {currentLeads.pagina} de {currentLeads.total_paginas}
                 </div>
 
@@ -352,7 +351,7 @@ export const LeadsTotaisDetailsModal: React.FC<
                     size="sm"
                     onClick={() => handlePageChange(currentLeads.pagina - 1)}
                     disabled={currentLeads.pagina === 1 || internalLoading}
-                    className="border-blue-300 text-blue-700 hover:bg-blue-50 hover:border-blue-400"
+                    className="border-input text-primary hover:bg-accent hover:border-ring"
                   >
                     <ChevronLeft className="h-4 w-4" />
                     Anterior
@@ -381,8 +380,8 @@ export const LeadsTotaisDetailsModal: React.FC<
                             disabled={internalLoading}
                             className={`w-8 h-8 p-0 ${
                               currentLeads.pagina === page
-                                ? "bg-blue-600 hover:bg-blue-700"
-                                : "border-blue-300 text-blue-700 hover:bg-blue-50 hover:border-blue-400"
+                                ? "bg-primary hover:bg-primary/90"
+                                : "border-input text-primary hover:bg-accent hover:border-ring"
                             }`}
                           >
                             {page}
@@ -400,7 +399,7 @@ export const LeadsTotaisDetailsModal: React.FC<
                       currentLeads.pagina === currentLeads.total_paginas ||
                       internalLoading
                     }
-                    className="border-blue-300 text-blue-700 hover:bg-blue-50 hover:border-blue-400"
+                    className="border-input text-primary hover:bg-accent hover:border-ring"
                   >
                     Próximo
                     <ChevronRight className="h-4 w-4" />

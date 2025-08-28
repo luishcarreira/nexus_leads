@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { httpClient } from "@/services/httpClient";
+import { leadsService } from "@/services/LeadsService";
 import {
   ILead,
   ILeadsResponse,
@@ -49,7 +49,7 @@ export const useLeads = (): UseLeadsReturn => {
           limite: itemsPerPage,
         };
 
-        const response: ILeadsResponse = await httpClient.getLeads(
+        const response: ILeadsResponse = await leadsService.getLeads(
           filtersWithPagination
         );
         setLeads(response.data);

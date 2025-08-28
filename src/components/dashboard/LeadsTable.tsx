@@ -217,8 +217,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
     const situacaoConfig = {
       "Novo Lead": {
         variant: "default" as const,
-        className:
-          "bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold shadow-sm",
+        className: "bg-primary text-primary-foreground font-semibold shadow-sm",
       },
       "Em Andamento": {
         variant: "secondary" as const,
@@ -527,10 +526,10 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
     return (
       <Card className="p-6">
         <div className="animate-pulse space-y-4">
-          <div className="h-4 bg-gray-200 rounded w-1/4"></div>
+          <div className="h-4 bg-muted rounded w-1/4"></div>
           <div className="space-y-2">
             {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="h-10 bg-gray-200 rounded"></div>
+              <div key={i} className="h-10 bg-muted rounded"></div>
             ))}
           </div>
         </div>
@@ -540,23 +539,23 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
 
   return (
     <>
-      <Card className="p-6 border-0 shadow-lg bg-gradient-to-br from-white to-blue-50">
+      <Card className="p-6 border-0 shadow-lg bg-card">
         {/* Header da tabela */}
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h3 className="text-2xl font-bold text-blue-900 mb-2">
+            <h3 className="text-2xl font-bold text-foreground mb-2">
               Leads Cadastrados
             </h3>
-            <p className="text-sm text-blue-600">
+            <p className="text-sm text-muted-foreground">
               {total ?? 0} leads encontrados
               {debouncedSearchTerm && (
-                <span className="ml-2 text-green-800 font-semibold bg-green-100 px-2 py-1 rounded-full">
+                <span className="ml-2 text-green-700 dark:text-green-300 font-semibold bg-green-100 dark:bg-green-900/30 px-2 py-1 rounded-full">
                   Filtro local: "{debouncedSearchTerm}" ({sortedLeads.length}{" "}
                   exibidos)
                 </span>
               )}
               {selectedLeads.size > 0 && (
-                <span className="ml-2 text-blue-800 font-semibold bg-blue-100 px-2 py-1 rounded-full">
+                <span className="ml-2 text-primary font-semibold bg-primary/10 px-2 py-1 rounded-full">
                   {selectedLeads.size} selecionado(s)
                 </span>
               )}
@@ -567,7 +566,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
             {/* Botão Novo Lead */}
             <Button
               onClick={() => setIsCreateModalOpen(true)}
-              className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg"
+              className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg"
             >
               <Plus className="h-4 w-4" />
               Novo Lead
@@ -579,7 +578,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                 <DropdownMenuTrigger asChild>
                   <Button
                     variant="outline"
-                    className="flex items-center gap-2 border-blue-300 text-blue-700 hover:bg-blue-50 hover:border-blue-400"
+                    className="flex items-center gap-2 border-input text-primary hover:bg-accent hover:border-ring"
                   >
                     <Users className="h-4 w-4" />
                     Ações em Lote ({selectedLeads.size})
@@ -604,7 +603,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     onClick={() => setSelectedLeads(new Set())}
-                    className="cursor-pointer text-red-600"
+                    className="cursor-pointer text-destructive"
                   >
                     <Square className="mr-2 h-4 w-4" />
                     Limpar Seleção
@@ -614,17 +613,17 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
             )}
 
             <div className="relative">
-              <Search className="absolute left-2 top-2.5 h-4 w-4 text-blue-500" />
+              <Search className="absolute left-2 top-2.5 h-4 w-4 text-primary" />
               <Input
                 placeholder="Buscar leads..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-8 pr-8 w-64 border-blue-200 focus:border-blue-500 focus:ring-blue-500"
+                className="pl-8 pr-8 w-64 border-input focus:border-ring focus:ring-ring"
               />
               {searchTerm && (
                 <button
                   onClick={() => setSearchTerm("")}
-                  className="absolute right-2 top-2.5 h-4 w-4 text-gray-400 hover:text-gray-600"
+                  className="absolute right-2 top-2.5 h-4 w-4 text-muted-foreground hover:text-foreground"
                 >
                   ×
                 </button>
@@ -634,10 +633,10 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
         </div>
 
         {/* Tabela */}
-        <div className="rounded-lg border border-blue-200 overflow-hidden shadow-sm">
+        <div className="rounded-lg border border-border overflow-hidden shadow-sm">
           <Table>
             <TableHeader>
-              <TableRow className="bg-gradient-to-r from-blue-600 to-blue-700 text-white">
+              <TableRow className="bg-primary text-primary-foreground">
                 <TableHead className="w-12 text-white">
                   <Checkbox
                     checked={
@@ -656,7 +655,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                   <Button
                     variant="ghost"
                     onClick={() => handleSort("nome")}
-                    className="h-auto p-0 font-semibold text-white hover:bg-blue-600"
+                    className="h-auto p-0 font-semibold text-primary-foreground hover:bg-primary/90"
                   >
                     Nome
                     {getSortIcon("nome")}
@@ -666,7 +665,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                   <Button
                     variant="ghost"
                     onClick={() => handleSort("email")}
-                    className="h-auto p-0 font-semibold text-white hover:bg-blue-600"
+                    className="h-auto p-0 font-semibold text-primary-foreground hover:bg-primary/90"
                   >
                     Email
                     {getSortIcon("email")}
@@ -679,7 +678,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                   <Button
                     variant="ghost"
                     onClick={() => handleSort("origem")}
-                    className="h-auto p-0 font-semibold text-white hover:bg-blue-600"
+                    className="h-auto p-0 font-semibold text-primary-foreground hover:bg-primary/90"
                   >
                     Origem
                     {getSortIcon("origem")}
@@ -689,7 +688,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                   <Button
                     variant="ghost"
                     onClick={() => handleSort("situacao")}
-                    className="h-auto p-0 font-semibold text-white hover:bg-blue-600"
+                    className="h-auto p-0 font-semibold text-primary-foreground hover:bg-primary/90"
                   >
                     Situação
                     {getSortIcon("situacao")}
@@ -705,7 +704,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                   <Button
                     variant="ghost"
                     onClick={() => handleSort("vendedor")}
-                    className="h-auto p-0 font-semibold text-white hover:bg-blue-600"
+                    className="h-auto p-0 font-semibold text-primary-foreground hover:bg-primary/90"
                   >
                     Vendedor
                     {getSortIcon("vendedor")}
@@ -717,7 +716,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                   <Button
                     variant="ghost"
                     onClick={() => handleSort("etapa")}
-                    className="h-auto p-0 font-semibold text-white hover:bg-blue-600"
+                    className="h-auto p-0 font-semibold text-primary-foreground hover:bg-primary/90"
                   >
                     Etapa
                     {getSortIcon("etapa")}
@@ -727,7 +726,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                   <Button
                     variant="ghost"
                     onClick={() => handleSort("id_cliente")}
-                    className="h-auto p-0 font-semibold text-white hover:bg-blue-600"
+                    className="h-auto p-0 font-semibold text-primary-foreground hover:bg-primary/90"
                   >
                     ID Cliente
                     {getSortIcon("id_cliente")}
@@ -737,7 +736,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                   <Button
                     variant="ghost"
                     onClick={() => handleSort("data_criacao")}
-                    className="h-auto p-0 font-semibold text-white hover:bg-blue-600"
+                    className="h-auto p-0 font-semibold text-primary-foreground hover:bg-primary/90"
                   >
                     Data Criação
                     {getSortIcon("data_criacao")}
@@ -749,8 +748,8 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
               {sortedLeads.map((lead, index) => (
                 <TableRow
                   key={lead.id}
-                  className={`hover:bg-blue-50 transition-colors ${
-                    index % 2 === 0 ? "bg-white" : "bg-blue-50/30"
+                  className={`hover:bg-accent transition-colors ${
+                    index % 2 === 0 ? "bg-background" : "bg-muted/30"
                   }`}
                 >
                   <TableCell>
@@ -821,7 +820,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                     {lead.procura_para ? (
                       <Badge
                         variant="outline"
-                        className="border-blue-300 text-blue-700 bg-blue-50 font-medium"
+                        className="border-input text-primary bg-primary/10 font-medium"
                       >
                         {lead.procura_para}
                       </Badge>
@@ -855,7 +854,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                   <TableCell>
                     <Badge
                       variant="outline"
-                      className="border-green-300 text-green-700 bg-green-50 font-medium"
+                      className="border-input text-green-700 dark:text-green-300 bg-green-50 dark:bg-green-900/30 font-medium"
                     >
                       {lead.etapa || "Não informado"}
                     </Badge>
@@ -874,8 +873,8 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
 
         {/* Paginação */}
         {totalPages > 1 && (
-          <div className="flex items-center justify-between space-x-2 py-6 border-t border-blue-100">
-            <div className="text-sm text-blue-600 font-medium">
+          <div className="flex items-center justify-between space-x-2 py-6 border-t border-border">
+            <div className="text-sm text-muted-foreground font-medium">
               Página {currentPage} de {totalPages} - Total: {total} leads
             </div>
 
@@ -885,7 +884,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                 size="sm"
                 onClick={() => onPageChange?.(currentPage - 1)}
                 disabled={currentPage === 1}
-                className="border-blue-300 text-blue-700 hover:bg-blue-50 hover:border-blue-400"
+                className="border-input text-primary hover:bg-accent hover:border-ring"
               >
                 <ChevronLeft className="h-4 w-4" />
                 Anterior
@@ -904,8 +903,8 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                       onClick={() => onPageChange?.(page)}
                       className={`w-8 h-8 p-0 ${
                         currentPage === page
-                          ? "bg-blue-600 hover:bg-blue-700"
-                          : "border-blue-300 text-blue-700 hover:bg-blue-50 hover:border-blue-400"
+                          ? "bg-primary hover:bg-primary/90"
+                          : "border-input text-primary hover:bg-accent hover:border-ring"
                       }`}
                     >
                       {page}
@@ -919,7 +918,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                 size="sm"
                 onClick={() => onPageChange?.(currentPage + 1)}
                 disabled={currentPage === totalPages}
-                className="border-blue-300 text-blue-700 hover:bg-blue-50 hover:border-blue-400"
+                className="border-input text-primary hover:bg-accent hover:border-ring"
               >
                 Próximo
                 <ChevronRight className="h-4 w-4" />
@@ -942,7 +941,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
         onOpenChange={handleCloseBatchModal}
       >
         <DialogContent className="max-w-md border-0 shadow-2xl">
-          <DialogHeader className="bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-t-lg -m-6 mb-6 p-6">
+          <DialogHeader className="bg-primary text-primary-foreground rounded-t-lg -m-6 mb-6 p-6">
             <DialogTitle className="flex items-center gap-3 text-xl font-semibold">
               <div className="p-2 bg-white/20 rounded-lg">
                 <Users className="h-6 w-6" />
@@ -950,7 +949,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
               {batchAction === "vincular_consultor" && "Vincular Consultor"}
               {batchAction === "vincular_vendedor" && "Vincular Vendedor"}
             </DialogTitle>
-            <p className="text-blue-100 text-sm mt-2">
+            <p className="text-muted-foreground text-sm mt-2">
               {batchAction === "vincular_consultor" &&
                 "Vincular consultor aos leads selecionados"}
               {batchAction === "vincular_vendedor" &&
@@ -959,8 +958,8 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
           </DialogHeader>
 
           <div className="space-y-6">
-            <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-              <p className="text-sm text-blue-800 font-medium">
+            <div className="p-4 bg-accent border border-border rounded-lg">
+              <p className="text-sm text-foreground font-medium">
                 {batchAction === "vincular_consultor" &&
                   `Vincular consultor a ${selectedLeads.size} lead(s) selecionado(s)`}
                 {batchAction === "vincular_vendedor" &&
@@ -970,7 +969,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
 
             {batchAction === "vincular_consultor" && (
               <div className="space-y-3">
-                <label className="text-sm font-semibold text-blue-800">
+                <label className="text-sm font-semibold text-foreground">
                   Selecionar Consultor
                 </label>
                 <Select
@@ -979,7 +978,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                     setSelectedConsultor(parseInt(value))
                   }
                 >
-                  <SelectTrigger className="border-blue-200 focus:border-blue-500 focus:ring-blue-500">
+                  <SelectTrigger className="border-input focus:border-ring focus:ring-ring">
                     <SelectValue placeholder="Escolha um consultor" />
                   </SelectTrigger>
                   <SelectContent>
@@ -1004,7 +1003,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
 
             {batchAction === "vincular_vendedor" && (
               <div className="space-y-3">
-                <label className="text-sm font-semibold text-blue-800">
+                <label className="text-sm font-semibold text-foreground">
                   Selecionar Vendedor
                 </label>
                 <Select
@@ -1013,7 +1012,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                     setSelectedVendedor(parseInt(value))
                   }
                 >
-                  <SelectTrigger className="border-blue-200 focus:border-blue-500 focus:ring-blue-500">
+                  <SelectTrigger className="border-input focus:border-ring focus:ring-ring">
                     <SelectValue placeholder="Escolha um vendedor" />
                   </SelectTrigger>
                   <SelectContent>
@@ -1036,11 +1035,11 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
               </div>
             )}
 
-            <div className="flex justify-end gap-3 pt-6 border-t border-blue-100">
+            <div className="flex justify-end gap-3 pt-6 border-t border-border">
               <Button
                 variant="outline"
                 onClick={handleCloseBatchModal}
-                className="border-blue-300 text-blue-700 hover:bg-blue-50 hover:border-blue-400"
+                className="border-input text-primary hover:bg-accent hover:border-ring"
               >
                 Cancelar
               </Button>
@@ -1052,7 +1051,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                     !selectedConsultor) ||
                   (batchAction === "vincular_vendedor" && !selectedVendedor)
                 }
-                className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg"
+                className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg"
               >
                 Confirmar
               </Button>

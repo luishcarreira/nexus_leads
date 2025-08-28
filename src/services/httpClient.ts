@@ -1,77 +1,31 @@
-import {
-  ILead,
-  ILeadsTotaisFilters,
-  ILeadsFilters,
-  ILeadsResponse,
-  ILeadsTotais,
-  IEtapaLead,
-  ISituacaoLead,
-  IConsultor,
-  ILeadAtividade,
-} from "./interfaces/ILead";
-
-interface PaginacaoLeads {
-  total: number;
-  pagina: number;
-  limite: number;
-  total_paginas: number;
-  dados: ILead[];
-}
-
-interface TotalPorOrigem {
-  origem: string;
-  total: number;
-  leads: PaginacaoLeads;
-}
-
-interface TotaisPorOrigem {
-  total_leads: number;
-  totais_por_origem: TotalPorOrigem[];
-}
-
-interface TotalPorTipoProcura {
-  tipo_procura: string;
-  total: number;
-  leads: PaginacaoLeads;
-}
-
-interface TotaisPorTipoProcura {
-  total_leads: number;
-  totais_por_tipo_procura: TotalPorTipoProcura[];
-}
-
-interface TotaisTransferidos {
-  total_leads: number;
-  transferidos: {
-    total: number;
-    pagina: number;
-    limite: number;
-    total_paginas: number;
-    dados: ILead[];
-  };
-  nao_transferidos: {
-    total: number;
-    pagina: number;
-    limite: number;
-    total_paginas: number;
-    dados: ILead[];
-  };
+export interface RequestConfig {
+  headers?: Record<string, string>;
+  params?: Record<string, any>;
 }
 
 export class HttpClient {
   private baseURL: string;
-  private defaultParams: string;
+  private defaultHeaders: Record<string, string> = {};
+  public defaults: {
+    headers: {
+      common: Record<string, string>;
+    };
+  };
 
   constructor(baseURL: string) {
     this.baseURL = baseURL;
-    this.defaultParams = "";
+    this.defaults = {
+      headers: {
+        common: {},
+      },
+    };
   }
 
   // Função auxiliar para construir query params limpos
-  private buildQueryParams(filters: ILeadsFilters): URLSearchParams {
+  private buildQueryParams(params: Record<string, any>): URLSearchParams {
     const queryParams = new URLSearchParams();
 
-    Object.entries(filters).forEach(([key, value]) => {
+    Object.entries(params).forEach(([key, value]) => {
       if (
         value !== undefined &&
         value !== null &&
@@ -87,16 +41,34 @@ export class HttpClient {
 
   private async request<T>(
     endpoint: string,
-    options: RequestInit = {}
+    options: RequestInit = {},
+    config: RequestConfig = {}
   ): Promise<T> {
-    const url = `${this.baseURL}${endpoint}${
-      endpoint.includes("?") ? "&" : "?"
-    }${this.defaultParams}`;
+    let url = `${this.baseURL}${endpoint}`;
+
+    // Add query parameters if provided
+    if (config.params) {
+      const queryParams = this.buildQueryParams(config.params);
+      if (queryParams.toString()) {
+        url += (endpoint.includes("?") ? "&" : "?") + queryParams.toString();
+      }
+    }
 
     const headers = {
-      "Content-Type": "application/json",
+      ...this.defaults.headers.common,
+      ...this.defaultHeaders,
+      ...config.headers,
       ...options.headers,
     };
+
+    // Only set Content-Type if not already set and data is not FormData or URLSearchParams
+    if (
+      !headers["Content-Type"] &&
+      !(options.body instanceof FormData) &&
+      !(options.body instanceof URLSearchParams)
+    ) {
+      headers["Content-Type"] = "application/json";
+    }
 
     const response = await fetch(url, {
       ...options,
@@ -104,416 +76,92 @@ export class HttpClient {
     });
 
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      const error = new Error(`HTTP error! status: ${response.status}`);
+      (error as any).response = {
+        status: response.status,
+        data: await response.text().catch(() => null),
+      };
+      throw error;
     }
 
     return response.json();
   }
 
-  // Dropdown paginado de cidades
-  async getDropdownCidade(
-    params: {
-      pagina?: number;
-      limite?: number;
-      order_by?: string;
-      order_header?: string;
-      nome?: string;
-    } = {}
-  ): Promise<{ total: number; data: { id: string; descricao: string }[] }> {
-    const query = new URLSearchParams();
-    if (params.pagina) query.append("pagina", params.pagina.toString());
-    if (params.limite) query.append("limite", params.limite.toString());
-    if (params.order_by) query.append("order_by", params.order_by);
-    if (params.order_header) query.append("order_header", params.order_header);
-    if (params.nome) query.append("nome", params.nome);
-
-    return this.request<{
-      total: number;
-      data: { id: string; descricao: string }[];
-    }>(`/cidade/dropdown?${query.toString()}`);
+  // Generic HTTP methods
+  async get<T>(endpoint: string, config?: RequestConfig): Promise<T> {
+    return this.request<T>(endpoint, { method: "GET" }, config);
   }
 
-  // Método para buscar leads com filtros
-  async getLeads(filters: ILeadsFilters = {}): Promise<ILeadsResponse> {
-    try {
-      const queryParams = this.buildQueryParams(filters);
-
-      const response = await this.request<ILeadsResponse>(
-        `/leads?${queryParams.toString()}`
-      );
-      return response;
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  // Método para buscar totais de leads
-  async getLeadsTotais(filters: ILeadsFilters = {}): Promise<ILeadsTotais> {
-    try {
-      const queryParams = this.buildQueryParams(filters);
-
-      const response = await this.request<ILeadsTotais>(
-        `/leads/totais?${queryParams.toString()}`
-      );
-      return response;
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  // Método para buscar etapas do lead
-  async getEtapasLead(): Promise<IEtapaLead[]> {
-    return this.request<IEtapaLead[]>("/etapas-lead/dropdown");
-  }
-
-  // Método para buscar situações do lead
-  async getSituacaoLead(): Promise<ISituacaoLead[]> {
-    return this.request<ISituacaoLead[]>("/situacao-lead/dropdown");
-  }
-
-  // Método para buscar consultores
-  async getConsultores(): Promise<IConsultor[]> {
-    return this.request<IConsultor[]>("/pessoa/representante/dropdown");
-  }
-
-  async getVendedores(): Promise<IConsultor[]> {
-    return this.request<IConsultor[]>("/pessoa/vendedor/dropdown");
-  }
-
-  // Método para buscar dropdown de origens
-  async getDropdownOrigem(): Promise<{ origem: string; total: number }[]> {
-    // Usar endpoint dedicado com cache no backend
-    return this.request<{ origem: string; total: number }[]>(
-      `/leads/dropdown/origem`
-    );
-  }
-
-  // Método para buscar dropdown de tipos de procura
-  async getDropdownTipoProcura(): Promise<
-    { tipo_procura: string; total: number }[]
-  > {
-    // Usar endpoint dedicado com cache no backend
-    return this.request<{ tipo_procura: string; total: number }[]>(
-      `/leads/dropdown/tipo-procura`
-    );
-  }
-
-  // Método para vincular consultor ao lead
-  async vincularConsultorAoLead(
-    idLead: number,
-    idConsultor: number
-  ): Promise<any> {
-    try {
-      const response = await this.request<any>(
-        `/leads/${idLead}/vincular-consultor?id_consultor=${idConsultor}`,
-        {
-          method: "GET",
-        }
-      );
-      return response;
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  // Método para vincular vendedor ao lead
-  async vincularVendedorAoLead(
-    idLead: number,
-    idVendedor: number
-  ): Promise<any> {
-    try {
-      const response = await this.request<any>(
-        `/leads/${idLead}/vincular-vendedor?id_vendedor=${idVendedor}`,
-        {
-          method: "GET",
-        }
-      );
-      return response;
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  async atualizarEtapaSituacaoLead(
-    idLead: number,
-    idEtapa: number,
-    idSituacao: number
-  ): Promise<any> {
-    try {
-      const response = await this.request<any>(
-        `/leads/${idLead}/atualizar-etapa-situacao?id_etapa=${idEtapa}&id_situacao=${idSituacao}`,
-        {
-          method: "PUT",
-        }
-      );
-      return response;
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  // Método para buscar atividades do lead
-  async getLeadAtividades(idLead: number): Promise<ILeadAtividade[]> {
-    try {
-      const response = await this.request<ILeadAtividade[]>(
-        `/leads/${idLead}/atividades`
-      );
-      return response;
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  // Método para buscar ramos de atividade
-  async getRamosAtividade(): Promise<{ codigo: string; descricao: string }[]> {
-    return this.request<{ codigo: string; descricao: string }[]>(
-      "/ramo-atividade/dropdown"
-    );
-  }
-
-  // Método para converter lead em cliente
-  async converterLeadParaCliente(payload: {
-    id_lead: number;
-    nome: string;
-    cpf?: string;
-    cnpj?: string;
-    email: string;
-    telefone: string;
-    fisica_juridica: "F" | "J";
-    instagram?: string;
-    facebook?: string;
-    id_vendedor: number;
-    id_ramo_atividade: string;
-    id_usuario?: string;
-    id_cidade?: string;
-  }): Promise<boolean> {
-    const bodyWithUser = {
-      ...payload,
-      id_usuario:
-        payload.id_usuario || localStorage.getItem("usrcod") || "admin",
-    };
-
-    return this.request<boolean>("/leads/converter-cliente", {
-      method: "POST",
-      body: JSON.stringify(bodyWithUser),
-    });
-  }
-
-  // Método para criar lead rápido
-  async criarLeadRapido(leadData: {
-    nome: string;
-    telefone: string;
-    cidade: string;
-    uf: string;
-    valor_investimento: number | null;
-    tem_ponto: boolean;
-    email?: string | null;
-  }): Promise<boolean> {
-    try {
-      const response = await this.request<boolean>("/leads/criar-rapido", {
+  async post<T>(
+    endpoint: string,
+    data?: any,
+    config?: RequestConfig
+  ): Promise<T> {
+    return this.request<T>(
+      endpoint,
+      {
         method: "POST",
-        body: JSON.stringify(leadData),
-      });
-      return response;
-    } catch (error) {
-      console.error("Erro ao criar lead rápido:", error);
-      throw error;
-    }
-  }
-
-  // Método para buscar totais por origem
-  async getLeadsTotaisPorOrigem(
-    filters: ILeadsFilters = {}
-  ): Promise<TotaisPorOrigem> {
-    // Deprecated old combined endpoint. Reconstructed using new endpoints for backward compatibility.
-    const origens = await this.getOrigensTotais(filters);
-    // For compatibility, we will not prefetch leads per origem here to avoid N+1 requests.
-    return {
-      total_leads: origens.reduce((sum, o) => sum + o.total, 0),
-      totais_por_origem: origens.map((o) => ({
-        origem: o.origem,
-        total: o.total,
-        leads: {
-          total: 0,
-          pagina: 1,
-          limite: filters.limite || 10,
-          total_paginas: 0,
-          dados: [],
-        },
-      })),
-    } as unknown as TotaisPorOrigem; // NOTE: shape matches the old consumer expectations for totals
-  }
-
-  // Método para buscar totais por tipo de procura
-  async getLeadsTotaisPorTipoProcura(
-    filters: ILeadsFilters = {}
-  ): Promise<TotaisPorTipoProcura> {
-    // Deprecated old combined endpoint. Reconstructed using new endpoints for backward compatibility.
-    const tipos = await this.getTiposProcuraTotais(filters);
-    return {
-      total_leads: tipos.reduce((sum, t) => sum + t.total, 0),
-      totais_por_tipo_procura: tipos.map((t) => ({
-        tipo_procura: t.tipo_procura,
-        total: t.total,
-        leads: {
-          total: 0,
-          pagina: 1,
-          limite: filters.limite || 10,
-          total_paginas: 0,
-          dados: [],
-        },
-      })),
-    } as unknown as TotaisPorTipoProcura;
-  }
-
-  // Método para buscar totais de transferidos
-  async getLeadsTotaisTransferidos(
-    filters: ILeadsFilters = {}
-  ): Promise<TotaisTransferidos> {
-    // Deprecated old combined endpoint. Reconstructed using new endpoints for backward compatibility.
-    const [transferidos, nao_transferidos] = await Promise.all([
-      this.getLeadsTransferidos(filters),
-      this.getLeadsNaoTransferidos(filters),
-    ]);
-    return {
-      total_leads: transferidos.total + nao_transferidos.total,
-      transferidos,
-      nao_transferidos,
-    } as unknown as TotaisTransferidos;
-  }
-
-  // Novos endpoints conforme especificação
-  async getOrigensTotais(
-    filters: ILeadsFilters = {}
-  ): Promise<{ origem: string; total: number }[]> {
-    const queryParams = this.buildQueryParams(filters);
-    const raw = await this.request<Array<{ ORIGEM: string; TOTAL: number }>>(
-      `/leads/origens/totais?${queryParams.toString()}`
-    );
-    // Normalizar para chaves minúsculas esperadas no front
-    return raw.map((item) => ({ origem: item.ORIGEM, total: item.TOTAL }));
-  }
-
-  async getLeadsPorOrigem(
-    origem: string,
-    filters: ILeadsFilters = {}
-  ): Promise<{
-    total: number;
-    pagina: number;
-    limite: number;
-    total_paginas: number;
-    dados: ILead[] | any[];
-  }> {
-    const { origem: _omit, ...rest } = filters;
-    const queryParams = this.buildQueryParams(rest);
-    return this.request(
-      `/leads/origens/${encodeURIComponent(origem)}?${queryParams.toString()}`
+        body:
+          data instanceof FormData || data instanceof URLSearchParams
+            ? data
+            : data
+            ? JSON.stringify(data)
+            : undefined,
+      },
+      config
     );
   }
 
-  async getTiposProcuraTotais(
-    filters: ILeadsFilters = {}
-  ): Promise<{ tipo_procura: string; total: number }[]> {
-    const queryParams = this.buildQueryParams(filters);
-    const raw = await this.request<
-      Array<{ TIPO_PROCURA: string; TOTAL: number }>
-    >(`/leads/tipos-procura/totais?${queryParams.toString()}`);
-    return raw.map((item) => ({
-      tipo_procura: item.TIPO_PROCURA,
-      total: item.TOTAL,
-    }));
-  }
-
-  async getLeadsPorTipoProcura(
-    tipoProcura: string,
-    filters: ILeadsFilters = {}
-  ): Promise<{
-    total: number;
-    pagina: number;
-    limite: number;
-    total_paginas: number;
-    dados: ILead[] | any[];
-  }> {
-    const { tipo_procura: _omit, ...rest } = filters;
-    const queryParams = this.buildQueryParams(rest);
-    return this.request(
-      `/leads/tipos-procura/${encodeURIComponent(
-        tipoProcura
-      )}?${queryParams.toString()}`
+  async put<T>(
+    endpoint: string,
+    data?: any,
+    config?: RequestConfig
+  ): Promise<T> {
+    return this.request<T>(
+      endpoint,
+      {
+        method: "PUT",
+        body: data ? JSON.stringify(data) : undefined,
+      },
+      config
     );
   }
 
-  async getLeadsTransferidos(filters: ILeadsFilters = {}): Promise<{
-    total: number;
-    pagina: number;
-    limite: number;
-    total_paginas: number;
-    dados: ILead[] | any[];
-  }> {
-    const queryParams = this.buildQueryParams(filters);
-    return this.request(`/leads/transferidos?${queryParams.toString()}`);
+  async delete<T>(endpoint: string, config?: RequestConfig): Promise<T> {
+    return this.request<T>(endpoint, { method: "DELETE" }, config);
   }
 
-  async getLeadsNaoTransferidos(filters: ILeadsFilters = {}): Promise<{
-    total: number;
-    pagina: number;
-    limite: number;
-    total_paginas: number;
-    dados: ILead[] | any[];
-  }> {
-    const queryParams = this.buildQueryParams(filters);
-    return this.request(`/leads/nao-transferidos?${queryParams.toString()}`);
-  }
-
-  // Totais por vendedor (apenas transferidos), com filtros e paginação
-  async getVendedoresTotais(filters: ILeadsFilters = {}): Promise<{
-    totais_por_vendedor: Array<{
-      id_vendedor: number;
-      vendedor: string;
-      total: number;
-    }>;
-    total_vendedores: number;
-  }> {
-    const queryParams = this.buildQueryParams(filters);
-    return this.request(`/leads/vendedores/totais?${queryParams.toString()}`);
-  }
-
-  // Totais de tipos de procura por vendedor específico
-  async getTotaisTiposProcuraPorVendedor(
-    idVendedor: number,
-    filters: ILeadsFilters = {}
-  ): Promise<{ tipo_procura: string; total: number }[]> {
-    const queryParams = this.buildQueryParams(filters);
-    const raw = await this.request<
-      Array<{ TIPO_PROCURA: string; TOTAL: number }>
-    >(
-      `/leads/vendedores/${idVendedor}/tipos-procura/totais?${queryParams.toString()}`
-    );
-    return raw.map((item) => ({
-      tipo_procura: item.TIPO_PROCURA,
-      total: item.TOTAL,
-    }));
-  }
-
-  // Listar leads por vendedor com filtros (inclui tipo_procura)
-  async getLeadsPorVendedor(
-    idVendedor: number,
-    filters: ILeadsFilters = {}
-  ): Promise<{
-    total: number;
-    pagina: number;
-    limite: number;
-    total_paginas: number;
-    dados: ILead[] | any[];
-  }> {
-    const { id_vendedor: _omit, ...rest } = filters;
-    const queryParams = this.buildQueryParams(rest);
-    return this.request(
-      `/leads/vendedores/${encodeURIComponent(
-        idVendedor
-      )}?${queryParams.toString()}`
+  async patch<T>(
+    endpoint: string,
+    data?: any,
+    config?: RequestConfig
+  ): Promise<T> {
+    return this.request<T>(
+      endpoint,
+      {
+        method: "PATCH",
+        body: data ? JSON.stringify(data) : undefined,
+      },
+      config
     );
   }
+
+  // Interceptors para compatibilidade com axios-like behavior
+  interceptors = {
+    response: {
+      use: (
+        onFulfilled: (response: any) => any,
+        onRejected: (error: any) => any
+      ) => {
+        // Para simplicidade, vamos apenas retornar um ID fictício
+        // Em uma implementação real, você manteria uma lista de interceptors
+        return Math.random();
+      },
+      eject: (id: number) => {
+        // Remove interceptor
+      },
+    },
+  };
 }
 
 export const httpClient = new HttpClient(

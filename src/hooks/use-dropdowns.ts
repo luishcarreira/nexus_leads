@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { httpClient } from "@/services/httpClient";
+import { leadsService } from "@/services/LeadsService";
 import {
   IEtapaLead,
   ISituacaoLead,
@@ -40,11 +40,11 @@ export const useDropdowns = (): UseDropdownsReturn => {
         vendedoresData,
         ramosData,
       ] = await Promise.all([
-        httpClient.getEtapasLead(),
-        httpClient.getSituacaoLead(),
-        httpClient.getConsultores(),
-        httpClient.getVendedores(),
-        httpClient.getRamosAtividade(),
+        leadsService.getEtapasLead(),
+        leadsService.getSituacaoLead(),
+        leadsService.getConsultores(),
+        leadsService.getVendedores(),
+        leadsService.getRamosAtividade(),
       ]);
 
       setEtapas(etapasData);
@@ -78,11 +78,11 @@ export const useDropdowns = (): UseDropdownsReturn => {
           vendedoresData,
           ramosData,
         ] = await Promise.all([
-          httpClient.getEtapasLead(),
-          httpClient.getSituacaoLead(),
-          httpClient.getConsultores(),
-          httpClient.getVendedores(),
-          httpClient.getRamosAtividade(),
+          leadsService.getEtapasLead(),
+          leadsService.getSituacaoLead(),
+          leadsService.getConsultores(),
+          leadsService.getVendedores(),
+          leadsService.getRamosAtividade(),
         ]);
 
         setEtapas(etapasData);

@@ -8,11 +8,13 @@ export const useNavigation = () => {
   useEffect(() => {
     // Determinar item ativo baseado na rota atual
     const path = location.pathname;
-    
+
     if (path === "/") {
       setActiveItem("dashboard");
     } else if (path.startsWith("/leads")) {
       setActiveItem("leads");
+    } else if (path.startsWith("/pipeline")) {
+      setActiveItem("pipeline");
     } else if (path.startsWith("/sales")) {
       setActiveItem("sales");
     } else if (path.startsWith("/reports")) {
@@ -36,4 +38,4 @@ export const useNavigation = () => {
     activeItem,
     isActive,
   };
-}; 
+};

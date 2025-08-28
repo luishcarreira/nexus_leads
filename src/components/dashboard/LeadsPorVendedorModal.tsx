@@ -24,7 +24,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { httpClient } from "@/services/httpClient";
+import { leadsService } from "@/services/LeadsService";
 import {
   ILeadTotal,
   ILeadsFilters,
@@ -85,7 +85,7 @@ export const LeadsPorVendedorModal: React.FC<LeadsPorVendedorModalProps> = ({
       setLoading(true);
       try {
         const response: IVendedoresTotais =
-          await httpClient.getVendedoresTotais({
+          await leadsService.getVendedoresTotais({
             ...(currentFilters || {}),
             pagina: 1,
             limite: 25,
@@ -98,7 +98,7 @@ export const LeadsPorVendedorModal: React.FC<LeadsPorVendedorModalProps> = ({
     };
     const fetchTipos = async () => {
       try {
-        const lista = await httpClient.getTiposProcuraTotais({
+        const lista = await leadsService.getTiposProcuraTotais({
           ...(currentFilters || {}),
         });
         setTiposProcura(lista || []);
@@ -124,8 +124,7 @@ export const LeadsPorVendedorModal: React.FC<LeadsPorVendedorModalProps> = ({
     const situacaoConfig = {
       "Novo Lead": {
         variant: "default" as const,
-        className:
-          "bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold shadow-sm",
+        className: "bg-primary text-primary-foreground font-semibold shadow-sm",
       },
       "Em Andamento": {
         variant: "secondary" as const,
@@ -181,7 +180,7 @@ export const LeadsPorVendedorModal: React.FC<LeadsPorVendedorModalProps> = ({
 
     try {
       // Buscar leads do vendedor
-      const leadsResponse = await httpClient.getLeadsPorVendedor(idVendedor, {
+      const leadsResponse = await leadsService.getLeadsPorVendedor(idVendedor, {
         ...(currentFilters || {}),
         ...(selectedTipoProcura ? { tipo_procura: selectedTipoProcura } : {}),
         pagina: firstPage,
@@ -189,7 +188,7 @@ export const LeadsPorVendedorModal: React.FC<LeadsPorVendedorModalProps> = ({
       });
 
       // Buscar totais detalhados de tipos de procura para este vendedor
-      const tiposResponse = await httpClient.getTotaisTiposProcuraPorVendedor(
+      const tiposResponse = await leadsService.getTotaisTiposProcuraPorVendedor(
         idVendedor,
         {
           ...(currentFilters || {}),
@@ -210,7 +209,7 @@ export const LeadsPorVendedorModal: React.FC<LeadsPorVendedorModalProps> = ({
   const handlePageChange = async (idVendedor: number, page: number) => {
     setLoadingPagina(true);
     try {
-      const response = await httpClient.getLeadsPorVendedor(idVendedor, {
+      const response = await leadsService.getLeadsPorVendedor(idVendedor, {
         ...(currentFilters || {}),
         ...(selectedTipoProcura ? { tipo_procura: selectedTipoProcura } : {}),
         pagina: page,
@@ -232,7 +231,7 @@ export const LeadsPorVendedorModal: React.FC<LeadsPorVendedorModalProps> = ({
     if (vendedorSelecionado) {
       setLoadingPagina(true);
       try {
-        const response = await httpClient.getLeadsPorVendedor(
+        const response = await leadsService.getLeadsPorVendedor(
           vendedorSelecionado,
           {
             ...(currentFilters || {}),

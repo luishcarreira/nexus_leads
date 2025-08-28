@@ -22,7 +22,7 @@ import {
   ITotalPorTipoProcuraDetalhado,
   ILeadsFilters,
 } from "@/services/interfaces/ILead";
-import { httpClient } from "@/services/httpClient";
+import { leadsService } from "@/services/LeadsService";
 
 interface PaginacaoOutput<T> {
   total: number;
@@ -66,8 +66,7 @@ export const LeadsPorTipoProcuraModal: React.FC<
     const situacaoConfig = {
       "Novo Lead": {
         variant: "default" as const,
-        className:
-          "bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold shadow-sm",
+        className: "bg-primary text-primary-foreground font-semibold shadow-sm",
       },
       "Em Andamento": {
         variant: "secondary" as const,
@@ -119,7 +118,7 @@ export const LeadsPorTipoProcuraModal: React.FC<
     try {
       setPaginaAtual((prev) => ({ ...prev, [tipoProcura]: firstPage }));
       // Busca imediata na API ao clicar no tipo de procura
-      const response = await httpClient.getLeadsPorTipoProcura(tipoProcura, {
+      const response = await leadsService.getLeadsPorTipoProcura(tipoProcura, {
         ...(currentFilters || {}),
         pagina: firstPage,
         limite: 10,
@@ -144,7 +143,7 @@ export const LeadsPorTipoProcuraModal: React.FC<
   const handlePageChange = async (tipoProcura: string, page: number) => {
     setLoadingPagina(true);
     try {
-      const response = await httpClient.getLeadsPorTipoProcura(tipoProcura, {
+      const response = await leadsService.getLeadsPorTipoProcura(tipoProcura, {
         ...(currentFilters || {}),
         pagina: page,
         limite: 10,

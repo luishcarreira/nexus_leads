@@ -172,17 +172,17 @@ const Index = () => {
 
   if (initialLoading) {
     return (
-      <div className="min-h-screen bg-dashboard-bg flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Carregando dados...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-muted-foreground">Carregando dados...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-dashboard-bg p-6">
+    <div className="min-h-screen bg-background p-6">
       <div className="container mx-auto">
         {/* Seção de Filtros */}
         <FilterSection
@@ -195,7 +195,7 @@ const Index = () => {
           <Button
             variant="ghost"
             onClick={() => setShowTotais(!showTotais)}
-            className="flex items-center gap-2 text-blue-700 hover:text-blue-800 hover:bg-blue-50 px-4 py-2 rounded-lg transition-colors"
+            className="flex items-center gap-2 text-primary hover:text-primary/80 hover:bg-accent px-4 py-2 rounded-lg transition-colors"
           >
             <BarChart3 className="h-5 w-5" />
             <span className="font-medium">
@@ -209,7 +209,7 @@ const Index = () => {
           </Button>
 
           {showTotais && totaisError && (
-            <div className="text-sm text-red-600 bg-red-50 px-3 py-1 rounded-md">
+            <div className="text-sm text-destructive bg-destructive/10 px-3 py-1 rounded-md">
               Erro ao carregar totais: {totaisError}
             </div>
           )}

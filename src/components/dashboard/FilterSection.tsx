@@ -15,7 +15,7 @@ import {
 import { DatePicker } from "@/components/ui/date-picker";
 import { cn } from "@/lib/utils";
 import { useDropdowns } from "@/hooks/use-dropdowns";
-import { httpClient } from "@/services/httpClient";
+import { leadsService } from "@/services/LeadsService";
 import type { DateRange as DayPickerDateRange } from "react-day-picker";
 
 // Using DayPicker's DateRange type for compatibility with DatePicker component
@@ -83,8 +83,8 @@ export const FilterSection: React.FC<FilterProps> = ({
       setLoadingDropdowns(true);
       try {
         const [origensData, tiposProcuraData] = await Promise.all([
-          httpClient.getDropdownOrigem(),
-          httpClient.getDropdownTipoProcura(),
+          leadsService.getDropdownOrigem(),
+          leadsService.getDropdownTipoProcura(),
         ]);
         setOrigens(origensData);
         setTiposProcura(tiposProcuraData);
@@ -234,7 +234,7 @@ export const FilterSection: React.FC<FilterProps> = ({
     return (
       <div className="relative" ref={dropdownRef}>
         <div
-          className="min-h-[40px] border border-blue-200 rounded-md px-3 py-2 bg-white cursor-pointer hover:border-blue-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+          className="min-h-[40px] border border-input rounded-md px-3 py-2 bg-background cursor-pointer hover:border-accent-foreground focus:border-ring focus:ring-1 focus:ring-ring transition-colors"
           onClick={() => setIsOpen(!isOpen)}
         >
           {selected && selected.length > 0 ? (
@@ -242,11 +242,11 @@ export const FilterSection: React.FC<FilterProps> = ({
               {selected.slice(0, 2).map((item) => (
                 <span
                   key={item}
-                  className="bg-blue-100 text-blue-700 px-2 py-1 rounded-md text-xs font-medium flex items-center gap-1"
+                  className="bg-primary/10 text-primary px-2 py-1 rounded-md text-xs font-medium flex items-center gap-1"
                 >
                   {getSelectedLabel(item)}
                   <X
-                    className="h-3 w-3 cursor-pointer hover:text-blue-900"
+                    className="h-3 w-3 cursor-pointer hover:text-primary/80"
                     onClick={(e) => {
                       e.stopPropagation();
                       onChange(item);
@@ -255,7 +255,7 @@ export const FilterSection: React.FC<FilterProps> = ({
                 </span>
               ))}
               {selected.length > 2 && (
-                <span className="bg-blue-50 text-blue-600 px-2 py-1 rounded-md text-xs font-medium">
+                <span className="bg-accent text-accent-foreground px-2 py-1 rounded-md text-xs font-medium">
                   +{selected.length - 2} mais
                 </span>
               )}
@@ -266,16 +266,16 @@ export const FilterSection: React.FC<FilterProps> = ({
         </div>
 
         {isOpen && (
-          <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-white border border-blue-200 rounded-md shadow-lg">
+          <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-popover border border-border rounded-md shadow-lg">
             <div className="p-3">
               <div className="flex items-center justify-between mb-3">
                 <div className="relative flex-1">
-                  <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+                  <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
                   <Input
                     placeholder="Buscar..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-9 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                    className="pl-9 border-input focus:border-ring focus:ring-ring"
                     onClick={(e) => e.stopPropagation()}
                   />
                 </div>
@@ -287,7 +287,7 @@ export const FilterSection: React.FC<FilterProps> = ({
                       e.stopPropagation();
                       selected.forEach((item) => onChange(item));
                     }}
-                    className="ml-2 text-xs text-red-600 hover:text-red-700 hover:bg-red-50"
+                    className="ml-2 text-xs text-destructive hover:text-destructive/80 hover:bg-destructive/10"
                   >
                     Limpar
                   </Button>
@@ -303,34 +303,34 @@ export const FilterSection: React.FC<FilterProps> = ({
                       <div
                         key={value}
                         className={cn(
-                          "flex items-center space-x-3 p-2 hover:bg-blue-50 cursor-pointer rounded-lg transition-colors",
+                          "flex items-center space-x-3 p-2 hover:bg-accent cursor-pointer rounded-lg transition-colors",
                           selected.includes(value) &&
-                            "bg-blue-100 border border-blue-200"
+                            "bg-accent border border-border"
                         )}
                         onClick={() => onChange(value)}
                       >
                         <Checkbox
                           checked={selected.includes(value)}
-                          className="text-blue-600 border-blue-300"
+                          className="text-primary border-input"
                         />
                         <span
                           className={cn(
                             "text-sm flex-1",
                             selected.includes(value)
-                              ? "text-blue-700 font-medium"
-                              : "text-gray-700"
+                              ? "text-primary font-medium"
+                              : "text-foreground"
                           )}
                         >
                           {label}
                         </span>
                         {selected.includes(value) && (
-                          <div className="w-2 h-2 bg-blue-500 rounded-full" />
+                          <div className="w-2 h-2 bg-primary rounded-full" />
                         )}
                       </div>
                     );
                   })
                 ) : (
-                  <div className="text-center py-4 text-gray-500 text-sm">
+                  <div className="text-center py-4 text-muted-foreground text-sm">
                     {searchTerm
                       ? "Nenhum resultado encontrado"
                       : "Nenhuma opção disponível"}
@@ -339,13 +339,13 @@ export const FilterSection: React.FC<FilterProps> = ({
               </div>
 
               {selected.length >= maxLimit && (
-                <div className="text-xs text-orange-600 p-2 border-t border-gray-200 mt-2 bg-orange-50 rounded">
+                <div className="text-xs text-orange-600 dark:text-orange-400 p-2 border-t border-border mt-2 bg-orange-50 dark:bg-orange-950/20 rounded">
                   ⚠️ Máximo de {maxLimit} seleções permitidas
                 </div>
               )}
 
               {selected.length > 0 && (
-                <div className="text-xs text-gray-500 p-2 border-t border-gray-200 mt-2">
+                <div className="text-xs text-muted-foreground p-2 border-t border-border mt-2">
                   {selected.length} item(s) selecionado(s)
                 </div>
               )}
@@ -357,12 +357,12 @@ export const FilterSection: React.FC<FilterProps> = ({
   };
 
   return (
-    <Card className="p-6 mb-6 border-0 shadow-lg bg-gradient-to-br from-white to-blue-50">
+    <Card className="p-6 mb-6 border-0 shadow-lg bg-card">
       <div className="space-y-6">
         {/* Filtros principais */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
           <div className="space-y-2">
-            <Label className="text-blue-800 font-medium">
+            <Label className="text-foreground font-medium">
               Período de Criação
             </Label>
             <DatePicker
@@ -375,7 +375,7 @@ export const FilterSection: React.FC<FilterProps> = ({
           </div>
 
           <div className="space-y-2">
-            <Label className="text-blue-800 font-medium">Situação</Label>
+            <Label className="text-foreground font-medium">Situação</Label>
             {dropdownsLoading ? (
               <div className="flex items-center justify-center h-10 border rounded-md">
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -385,7 +385,9 @@ export const FilterSection: React.FC<FilterProps> = ({
               </div>
             ) : dropdownsError ? (
               <div className="h-10 border rounded-md flex items-center justify-center">
-                <span className="text-sm text-red-500">Erro ao carregar</span>
+                <span className="text-sm text-destructive">
+                  Erro ao carregar
+                </span>
               </div>
             ) : (
               <MultiSelect
@@ -407,7 +409,7 @@ export const FilterSection: React.FC<FilterProps> = ({
           </div>
 
           <div className="space-y-2">
-            <Label className="text-blue-800 font-medium">Origem</Label>
+            <Label className="text-foreground font-medium">Origem</Label>
             {loadingDropdowns ? (
               <div className="flex items-center justify-center h-10 border rounded-md">
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -422,7 +424,7 @@ export const FilterSection: React.FC<FilterProps> = ({
                   setFilters((prev) => ({ ...prev, origem: value }))
                 }
               >
-                <SelectTrigger className="border-blue-200 focus:border-blue-500 focus:ring-blue-500">
+                <SelectTrigger className="border-input focus:border-ring focus:ring-ring">
                   <SelectValue placeholder="Selecionar origem" />
                 </SelectTrigger>
                 <SelectContent>
@@ -437,7 +439,9 @@ export const FilterSection: React.FC<FilterProps> = ({
           </div>
 
           <div className="space-y-2">
-            <Label className="text-blue-800 font-medium">Tipo de Procura</Label>
+            <Label className="text-foreground font-medium">
+              Tipo de Procura
+            </Label>
             {loadingDropdowns ? (
               <div className="flex items-center justify-center h-10 border rounded-md">
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -452,7 +456,7 @@ export const FilterSection: React.FC<FilterProps> = ({
                   setFilters((prev) => ({ ...prev, tipoProcura: value }))
                 }
               >
-                <SelectTrigger className="border-blue-200 focus:border-blue-500 focus:ring-blue-500">
+                <SelectTrigger className="border-input focus:border-ring focus:ring-ring">
                   <SelectValue placeholder="Selecionar tipo" />
                 </SelectTrigger>
                 <SelectContent>
@@ -470,7 +474,7 @@ export const FilterSection: React.FC<FilterProps> = ({
           </div>
 
           <div className="space-y-2">
-            <Label className="text-blue-800 font-medium">Etapas</Label>
+            <Label className="text-foreground font-medium">Etapas</Label>
             {dropdownsLoading ? (
               <div className="flex items-center justify-center h-10 border rounded-md">
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -480,7 +484,9 @@ export const FilterSection: React.FC<FilterProps> = ({
               </div>
             ) : dropdownsError ? (
               <div className="h-10 border rounded-md flex items-center justify-center">
-                <span className="text-sm text-red-500">Erro ao carregar</span>
+                <span className="text-sm text-destructive">
+                  Erro ao carregar
+                </span>
               </div>
             ) : (
               <MultiSelect
@@ -503,11 +509,11 @@ export const FilterSection: React.FC<FilterProps> = ({
         </div>
 
         {/* Botão para mostrar filtros avançados */}
-        <div className="flex justify-between items-center pt-6 border-t border-blue-200">
+        <div className="flex justify-between items-center pt-6 border-t border-border">
           <Button
             variant="ghost"
             onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-            className="text-blue-700 hover:text-blue-800 hover:bg-blue-50"
+            className="text-primary hover:text-primary/80 hover:bg-accent"
           >
             <Filter className="mr-2 h-4 w-4" />
             {showAdvancedFilters ? "Ocultar filtros" : "Mostrar mais filtros"}
@@ -516,7 +522,7 @@ export const FilterSection: React.FC<FilterProps> = ({
           <div className="flex gap-2">
             <Button
               onClick={applyFilters}
-              className="bg-blue-600 hover:bg-blue-700 text-white"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground"
             >
               Aplicar Filtros
             </Button>
@@ -559,7 +565,7 @@ export const FilterSection: React.FC<FilterProps> = ({
                 // Aplicar filtros limpos imediatamente
                 onFiltersChange(emptyFilters);
               }}
-              className="border-blue-300 text-blue-700 hover:bg-blue-50 hover:border-blue-400"
+              className="border-input text-primary hover:bg-accent hover:border-ring"
             >
               Limpar Filtros
             </Button>
@@ -568,45 +574,45 @@ export const FilterSection: React.FC<FilterProps> = ({
 
         {/* Filtros avançados */}
         {showAdvancedFilters && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pt-6 border-t border-blue-200">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pt-6 border-t border-border">
             <div className="space-y-2">
-              <Label className="text-blue-800 font-medium">Nome</Label>
+              <Label className="text-foreground font-medium">Nome</Label>
               <Input
                 placeholder="Buscar por nome"
                 value={filters.nome}
                 onChange={(e) =>
                   setFilters((prev) => ({ ...prev, nome: e.target.value }))
                 }
-                className="border-blue-200 focus:border-blue-500 focus:ring-blue-500"
+                className="border-input focus:border-ring focus:ring-ring"
               />
             </div>
 
             <div className="space-y-2">
-              <Label className="text-blue-800 font-medium">Email</Label>
+              <Label className="text-foreground font-medium">Email</Label>
               <Input
                 placeholder="Buscar por email"
                 value={filters.email}
                 onChange={(e) =>
                   setFilters((prev) => ({ ...prev, email: e.target.value }))
                 }
-                className="border-blue-200 focus:border-blue-500 focus:ring-blue-500"
+                className="border-input focus:border-ring focus:ring-ring"
               />
             </div>
 
             <div className="space-y-2">
-              <Label className="text-blue-800 font-medium">Telefone</Label>
+              <Label className="text-foreground font-medium">Telefone</Label>
               <Input
                 placeholder="Buscar por telefone"
                 value={filters.telefone}
                 onChange={(e) =>
                   setFilters((prev) => ({ ...prev, telefone: e.target.value }))
                 }
-                className="border-blue-200 focus:border-blue-500 focus:ring-blue-500"
+                className="border-input focus:border-ring focus:ring-ring"
               />
             </div>
 
             <div className="space-y-2">
-              <Label className="text-blue-800 font-medium">
+              <Label className="text-foreground font-medium">
                 Período da Próxima Agenda
               </Label>
               <DatePicker
@@ -619,7 +625,7 @@ export const FilterSection: React.FC<FilterProps> = ({
             </div>
 
             <div className="space-y-2">
-              <Label className="text-blue-800 font-medium">Consultor</Label>
+              <Label className="text-foreground font-medium">Consultor</Label>
               {dropdownsLoading ? (
                 <div className="flex items-center justify-center h-10 border rounded-md">
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -629,7 +635,9 @@ export const FilterSection: React.FC<FilterProps> = ({
                 </div>
               ) : dropdownsError ? (
                 <div className="h-10 border rounded-md flex items-center justify-center">
-                  <span className="text-sm text-red-500">Erro ao carregar</span>
+                  <span className="text-sm text-destructive">
+                    Erro ao carregar
+                  </span>
                 </div>
               ) : (
                 <MultiSelect
@@ -651,7 +659,7 @@ export const FilterSection: React.FC<FilterProps> = ({
             </div>
 
             <div className="space-y-2">
-              <Label className="text-blue-800 font-medium">Vendedor</Label>
+              <Label className="text-foreground font-medium">Vendedor</Label>
               {dropdownsLoading ? (
                 <div className="flex items-center justify-center h-10 border rounded-md">
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -661,7 +669,9 @@ export const FilterSection: React.FC<FilterProps> = ({
                 </div>
               ) : dropdownsError ? (
                 <div className="h-10 border rounded-md flex items-center justify-center">
-                  <span className="text-sm text-red-500">Erro ao carregar</span>
+                  <span className="text-sm text-destructive">
+                    Erro ao carregar
+                  </span>
                 </div>
               ) : (
                 <MultiSelect
@@ -683,7 +693,7 @@ export const FilterSection: React.FC<FilterProps> = ({
             </div>
 
             <div className="space-y-2">
-              <Label className="text-blue-800 font-medium">UF</Label>
+              <Label className="text-foreground font-medium">UF</Label>
               <MultiSelect
                 options={ufs.map((uf) => ({ label: uf, value: uf }))}
                 selected={selectedUFs}
@@ -704,11 +714,11 @@ export const FilterSection: React.FC<FilterProps> = ({
                     apenasSemConsultor: !!checked,
                   }))
                 }
-                className="text-blue-600 border-blue-300"
+                className="text-primary border-input"
               />
               <Label
                 htmlFor="apenasSemConsultor"
-                className="text-blue-800 font-medium"
+                className="text-foreground font-medium"
               >
                 Apenas sem Consultor
               </Label>

@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ILead } from "@/services/interfaces/ILead";
 import { ILeadAtividade } from "@/services/interfaces/ILead";
-import { httpClient } from "@/services/httpClient";
+import { leadsService } from "@/services/LeadsService";
 import {
   Calendar,
   Clock,
@@ -45,7 +45,7 @@ export const LeadAtividadesModal: React.FC<LeadAtividadesModalProps> = ({
     setError(null);
 
     try {
-      const atividadesData = await httpClient.getLeadAtividades(lead.id);
+      const atividadesData = await leadsService.getLeadAtividades(lead.id);
       setAtividades(atividadesData);
     } catch (err) {
       setError("Erro ao carregar atividades do lead");

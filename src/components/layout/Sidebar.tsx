@@ -3,7 +3,17 @@ import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useNavigation } from "@/hooks/use-navigation";
+import { useAuth } from "@/contexts/AuthContext";
+import { ThemeSwitcher } from "@/components/ThemeSwitcher";
 import {
   ChevronDown,
   ChevronRight,
@@ -14,6 +24,8 @@ import {
   FileText,
   UserCheck,
   TrendingUp,
+  LogOut,
+  User,
 } from "lucide-react";
 
 interface MenuItem {
@@ -33,90 +45,38 @@ const menuItems: MenuItem[] = [
     id: "dashboard",
     label: "Dashboard",
     icon: Home,
-    href: "/",
+    href: "/dashboard",
   },
   {
     id: "leads",
     label: "Leads",
     icon: Users,
     href: "/leads",
-    subItems: [
-      {
-        id: "leads-list",
-        label: "Lista de Leads",
-        icon: FileText,
-        href: "/leads",
-      },
-      {
-        id: "leads-create",
-        label: "Novo Lead",
-        icon: UserCheck,
-        href: "/leads/create",
-      },
-      {
-        id: "leads-import",
-        label: "Importar Leads",
-        icon: FileText,
-        href: "/leads/import",
-      },
-    ],
   },
   {
-    id: "reports",
-    label: "Relatórios",
-    icon: BarChart3,
-    subItems: [
-      {
-        id: "reports-sales",
-        label: "Relatório de Vendas",
-        icon: BarChart3,
-        href: "/reports/sales",
-      },
-      {
-        id: "reports-leads",
-        label: "Relatório de Leads",
-        icon: Users,
-        href: "/reports/leads",
-      },
-      {
-        id: "reports-performance",
-        label: "Performance",
-        icon: TrendingUp,
-        href: "/reports/performance",
-      },
-    ],
+    id: "pipeline",
+    label: "Pipeline",
+    icon: TrendingUp,
+    href: "/pipeline",
   },
-
+  {
+    id: "users",
+    label: "Usuários",
+    icon: Users,
+    href: "/users",
+  },
   {
     id: "settings",
     label: "Configurações",
     icon: Settings,
-    subItems: [
-      {
-        id: "settings-profile",
-        label: "Perfil",
-        icon: UserCheck,
-        href: "/settings/profile",
-      },
-      {
-        id: "settings-users",
-        label: "Usuários",
-        icon: Users,
-        href: "/settings/users",
-      },
-      {
-        id: "settings-system",
-        label: "Sistema",
-        icon: Settings,
-        href: "/settings/system",
-      },
-    ],
+    href: "/settings",
   },
 ];
 
 export const Sidebar: React.FC<SidebarProps> = ({ className }) => {
   const navigate = useNavigate();
   const { isActive } = useNavigation();
+  const { user, logout } = useAuth();
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
 
   const toggleExpanded = (itemId: string) => {
@@ -212,12 +172,52 @@ export const Sidebar: React.FC<SidebarProps> = ({ className }) => {
         </nav>
       </ScrollArea>
 
-      {/* Footer */}
+      {/* User Menu & Theme Switcher */}
       <div className="p-4 border-t border-border">
-        <div className="text-xs text-muted-foreground text-center">
-          <p>© 2024 Nexus Leads</p>
-          <p className="mt-1">v1.0.0</p>
+        <div className="flex items-center justify-between mb-4">
+          <ThemeSwitcher />
         </div>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="w-full justify-start p-2 h-auto">
+              <div className="flex items-center space-x-3">
+                <Avatar className="h-8 w-8">
+                  <AvatarImage src="" />
+                  <AvatarFallback>
+                    {user?.nome
+                      ?.split(" ")
+                      .map((n) => n[0])
+                      .join("") || "U"}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1 text-left">
+                  <p className="text-sm font-medium">
+                    {user?.nome || "Usuário"}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {user?.cargo || "Cargo não definido"}
+                  </p>
+                </div>
+              </div>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuItem onClick={() => navigate("/profile")}>
+              <User className="mr-2 h-4 w-4" />
+              Perfil
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => navigate("/settings")}>
+              <Settings className="mr-2 h-4 w-4" />
+              Configurações
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={logout}>
+              <LogOut className="mr-2 h-4 w-4" />
+              Sair
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </div>
   );

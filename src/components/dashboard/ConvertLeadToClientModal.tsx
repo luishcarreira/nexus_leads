@@ -19,7 +19,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { ILead } from "@/services/interfaces/ILead";
 import { useDropdowns } from "@/hooks/use-dropdowns";
 import { User, Building2, Loader2, MapPin, Search, X } from "lucide-react";
-import { httpClient } from "@/services/httpClient";
+import { leadsService } from "@/services/LeadsService";
 
 interface ConvertLeadToClientData {
   tipo: "fisica" | "juridica";
@@ -76,7 +76,7 @@ export const ConvertLeadToClientModal: React.FC<
   const fetchCidades = async (page = 1) => {
     setLoadingCidades(true);
     try {
-      const res = await httpClient.getDropdownCidade({
+      const res = await leadsService.getDropdownCidade({
         pagina: page,
         limite: cidadePageSize,
         order_by: "CIDNOM",
@@ -198,7 +198,7 @@ export const ConvertLeadToClientModal: React.FC<
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto border-0 shadow-2xl">
-          <DialogHeader className="bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-t-lg -m-6 mb-6 p-6">
+          <DialogHeader className="bg-primary text-primary-foreground rounded-t-lg -m-6 mb-6 p-6">
             <DialogTitle className="flex items-center gap-3 text-xl font-semibold">
               <div className="p-2 bg-white/20 rounded-lg">
                 <User className="h-6 w-6" />
@@ -493,7 +493,7 @@ export const ConvertLeadToClientModal: React.FC<
               <Button
                 type="submit"
                 disabled={loading || dropdownsLoading}
-                className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg"
+                className="bg-primary hover:bg-primary/90 text-white shadow-lg"
               >
                 {loading ? (
                   <>
@@ -512,7 +512,7 @@ export const ConvertLeadToClientModal: React.FC<
       {/* Modal de Seleção de Cidade */}
       <Dialog open={isCidadeModalOpen} onOpenChange={setIsCidadeModalOpen}>
         <DialogContent className="max-w-2xl border-0 shadow-2xl">
-          <DialogHeader className="bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-t-lg -m-6 mb-6 p-6">
+          <DialogHeader className="bg-primary text-primary-foreground rounded-t-lg -m-6 mb-6 p-6">
             <DialogTitle className="text-lg font-semibold">
               Selecionar Cidade
             </DialogTitle>
