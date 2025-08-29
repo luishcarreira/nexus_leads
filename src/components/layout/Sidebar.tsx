@@ -60,6 +60,12 @@ const menuItems: MenuItem[] = [
     href: "/pipeline",
   },
   {
+    id: "clientes",
+    label: "Clientes",
+    icon: UserCheck,
+    href: "/clientes",
+  },
+  {
     id: "users",
     label: "Usuários",
     icon: Users,

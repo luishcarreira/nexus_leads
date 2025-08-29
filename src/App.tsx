@@ -14,6 +14,7 @@ import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Index from "./pages/Index";
 import Users from "./pages/Users";
+import Clientes from "./pages/Clientes";
 import NotFound from "./pages/NotFound";
 import Pipeline from "./pages/Pipeline";
 
@@ -78,6 +79,14 @@ const App = () => {
                     element={
                       <ProtectedRoute>
                         <Pipeline />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/clientes"
+                    element={
+                      <ProtectedRoute>
+                        <Clientes />
                       </ProtectedRoute>
                     }
                   />

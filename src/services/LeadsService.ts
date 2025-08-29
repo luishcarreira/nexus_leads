@@ -380,11 +380,30 @@ export class LeadsService {
     totais_por_vendedor: Array<{
       id_vendedor: number;
       vendedor: string;
-      total: number;
+      total: number; // total de leads (mapeado de total_leads)
+      valor_cotacoes_abertas?: number; // em centavos
     }>;
     total_vendedores: number;
   }> {
-    return httpClient.get("/leads/vendedores/totais", { params: filters });
+    const raw = await httpClient.get<{
+      totais_por_vendedor: Array<{
+        id_vendedor: number;
+        vendedor: string;
+        total: number;
+        valor_cotacoes_abertas?: number;
+      }>;
+      total_vendedores: number;
+    }>("/leads/vendedores/totais", { params: filters });
+
+    return {
+      totais_por_vendedor: raw.totais_por_vendedor.map((v) => ({
+        id_vendedor: v.id_vendedor,
+        vendedor: v.vendedor,
+        total: v.total,
+        valor_cotacoes_abertas: v.valor_cotacoes_abertas,
+      })),
+      total_vendedores: raw.total_vendedores,
+    };
   }
 
   // Totais de tipos de procura por vendedor específico
@@ -419,6 +438,45 @@ export class LeadsService {
       `/leads/vendedores/${encodeURIComponent(idVendedor)}`,
       { params: rest }
     );
+  }
+
+  // Totais por situação (status) para um vendedor específico
+  async getTotaisStatusPorVendedor(
+    idVendedor: number,
+    filters: ILeadsFilters = {}
+  ): Promise<{
+    id_vendedor: number;
+    vendedor: string;
+    totais_por_situacao: Array<{
+      situacao: string;
+      total: number; // mapeado de total_leads
+      valor_cotacoes_abertas?: number; // em centavos
+    }>;
+    total_situacoes: number;
+  }> {
+    const raw = await httpClient.get<{
+      id_vendedor: number;
+      vendedor: string;
+      totais_por_situacao: Array<{
+        situacao: string;
+        total_leads: number;
+        valor_cotacoes_abertas?: number;
+      }>;
+      total_situacoes: number;
+    }>(`/leads/vendedores/${encodeURIComponent(idVendedor)}/status/totais`, {
+      params: filters,
+    });
+
+    return {
+      id_vendedor: raw.id_vendedor,
+      vendedor: raw.vendedor,
+      totais_por_situacao: raw.totais_por_situacao.map((s) => ({
+        situacao: s.situacao,
+        total: s.total_leads,
+        valor_cotacoes_abertas: s.valor_cotacoes_abertas,
+      })),
+      total_situacoes: raw.total_situacoes,
+    };
   }
 }
 

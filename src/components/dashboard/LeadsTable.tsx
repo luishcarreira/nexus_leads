@@ -68,6 +68,7 @@ import { LeadDetailsModal } from "./LeadDetailsModal";
 import { useToast } from "@/hooks/use-toast";
 
 interface LeadsTableProps {
+  title: string;
   leads: ILead[];
   total?: number; // total retornado pela API
   currentPage: number;
@@ -81,6 +82,7 @@ interface LeadsTableProps {
 type SortDirection = "asc" | "desc" | null;
 
 export const LeadsTable: React.FC<LeadsTableProps> = ({
+  title,
   leads,
   total,
   currentPage,
@@ -543,9 +545,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
         {/* Header da tabela */}
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h3 className="text-2xl font-bold text-foreground mb-2">
-              Leads Cadastrados
-            </h3>
+            <h3 className="text-2xl font-bold text-foreground mb-2">{title}</h3>
             <p className="text-sm text-muted-foreground">
               {total ?? 0} leads encontrados
               {debouncedSearchTerm && (
