@@ -15,6 +15,7 @@ import { LeadsTotaisDetailsModal } from "./LeadsTotaisDetailsModal";
 import { LeadsPorOrigemModal } from "./LeadsPorOrigemModal";
 import { LeadsPorTipoProcuraModal } from "./LeadsPorTipoProcuraModal";
 import { LeadsPorVendedorModal } from "./LeadsPorVendedorModal";
+import { LeadsNaoTransferidosPorOrigemModal } from "./LeadsNaoTransferidosPorOrigemModal";
 import {
   ILeadTotal,
   ILeadsTotaisDetalhados,
@@ -78,6 +79,12 @@ export const SummaryCards: React.FC<SummaryCardsProps> = ({
     isOpen: false,
   });
 
+  const [naoTransferidosModalConfig, setNaoTransferidosModalConfig] = useState<{
+    isOpen: boolean;
+  }>({
+    isOpen: false,
+  });
+
   const handleCardClick = (
     type: "origem" | "tipoProcura" | "transferidos" | "naoTransferidos",
     title: string,
@@ -107,14 +114,16 @@ export const SummaryCards: React.FC<SummaryCardsProps> = ({
       return;
     }
 
+    // Para não transferidos, abrir modal agrupado por origem
+    if (type === "naoTransferidos") {
+      setNaoTransferidosModalConfig({ isOpen: true });
+      return;
+    }
+
     let leads: PaginacaoOutput<ILeadTotal>;
     let total: number;
 
     switch (type) {
-      case "naoTransferidos":
-        leads = data.nao_transferidos;
-        total = data.nao_transferidos.total;
-        break;
       default:
         return;
     }
@@ -363,6 +372,15 @@ export const SummaryCards: React.FC<SummaryCardsProps> = ({
         onClose={() =>
           setVendedorModalConfig((prev) => ({ ...prev, isOpen: false }))
         }
+        currentFilters={currentFilters}
+      />
+
+      <LeadsNaoTransferidosPorOrigemModal
+        isOpen={naoTransferidosModalConfig.isOpen}
+        onClose={() =>
+          setNaoTransferidosModalConfig((prev) => ({ ...prev, isOpen: false }))
+        }
+        loading={loading}
         currentFilters={currentFilters}
       />
     </>
