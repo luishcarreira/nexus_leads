@@ -308,6 +308,7 @@ export class HttpClient {
     valor_investimento: number | null;
     tem_ponto: boolean;
     email?: string | null;
+    origem?: string;
   }): Promise<boolean> {
     try {
       const response = await this.request<boolean>("/leads/criar-rapido", {

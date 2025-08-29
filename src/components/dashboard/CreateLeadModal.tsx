@@ -31,6 +31,7 @@ export interface CreateLeadData {
   email: string;
   cidade: string;
   uf: string;
+  origem: string;
   valor_investimento_previsto: string;
   tem_ponto: boolean;
   situacao: number;
@@ -46,6 +47,7 @@ export interface CriarLeadRapidoData {
   valor_investimento: number | null;
   tem_ponto: boolean;
   email?: string | null;
+  origem?: string;
 }
 
 export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({
@@ -60,6 +62,7 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({
     email: "",
     cidade: "",
     uf: "",
+    origem: "",
     valor_investimento_previsto: "",
     tem_ponto: false,
     situacao: 1, // Novo Lead
@@ -181,6 +184,7 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({
       email: "",
       cidade: "",
       uf: "",
+      origem: "",
       valor_investimento_previsto: "",
       tem_ponto: false,
       situacao: 1,
@@ -255,6 +259,7 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({
       valor_investimento: valorNumerico,
       tem_ponto: temPontoApi === "S" ? true : false,
       email: formData.email?.trim() ? formData.email.trim() : null,
+      origem: formData.origem?.trim() ? formData.origem.trim() : undefined,
     };
   };
 
@@ -346,6 +351,16 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({
               </SelectContent>
             </Select>
             {errors.uf && <p className="text-sm text-red-500">{errors.uf}</p>}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="origem">Origem (opcional)</Label>
+            <Input
+              id="origem"
+              value={formData.origem}
+              onChange={(e) => handleInputChange("origem", e.target.value)}
+              placeholder="Ex: Google, Instagram, Indicação..."
+            />
           </div>
 
           <div className="space-y-2">
