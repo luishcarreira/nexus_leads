@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 // Interface para os filtros da interface
 interface UIFilters {
   creationDateRange?: { from?: Date; to?: Date } | undefined;
+  creationHourRange?: { from?: string; to?: string } | undefined;
   situacoes?: string[];
   etapas?: string[];
   origem?: string;
@@ -70,6 +71,14 @@ const Index = () => {
       apiFilters.data_criacao_fim = formatDateForAPI(
         filters.creationDateRange.to
       );
+    }
+
+    // Filtro por hora de criação (HH:mm)
+    if (filters.creationHourRange?.from) {
+      apiFilters.hora_criacao_inicio = filters.creationHourRange.from;
+    }
+    if (filters.creationHourRange?.to) {
+      apiFilters.hora_criacao_fim = filters.creationHourRange.to;
     }
 
     // Filtro por situações

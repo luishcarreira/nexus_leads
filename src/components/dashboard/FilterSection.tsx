@@ -43,6 +43,9 @@ export const FilterSection: React.FC<FilterProps> = ({
   const [nextAgendaDateRange, setNextAgendaDateRange] = useState<
     DayPickerDateRange | undefined
   >(undefined);
+  const [creationHourRange, setCreationHourRange] = useState<
+    { from?: string; to?: string } | undefined
+  >(undefined);
   const [selectedSituacoes, setSelectedSituacoes] = useState<string[]>([]);
   const [selectedEtapas, setSelectedEtapas] = useState<string[]>([]);
   const [selectedConsultores, setSelectedConsultores] = useState<string[]>([]);
@@ -113,6 +116,7 @@ export const FilterSection: React.FC<FilterProps> = ({
   const applyFilters = useCallback(() => {
     const allFilters = {
       creationDateRange,
+      creationHourRange,
       nextAgendaDateRange,
       situacoes: selectedSituacoes,
       etapas: selectedEtapas,
@@ -124,6 +128,7 @@ export const FilterSection: React.FC<FilterProps> = ({
     onFiltersChange(allFilters);
   }, [
     creationDateRange,
+    creationHourRange,
     nextAgendaDateRange,
     selectedSituacoes,
     selectedEtapas,
@@ -141,6 +146,9 @@ export const FilterSection: React.FC<FilterProps> = ({
 
     if (currentFilters.creationDateRange) {
       setCreationDateRange(currentFilters.creationDateRange);
+    }
+    if (currentFilters.creationHourRange) {
+      setCreationHourRange(currentFilters.creationHourRange);
     }
     if (currentFilters.nextAgendaDateRange) {
       setNextAgendaDateRange(currentFilters.nextAgendaDateRange);
@@ -437,36 +445,31 @@ export const FilterSection: React.FC<FilterProps> = ({
           </div>
 
           <div className="space-y-2">
-            <Label className="text-blue-800 font-medium">Tipo de Procura</Label>
-            {loadingDropdowns ? (
-              <div className="flex items-center justify-center h-10 border rounded-md">
-                <Loader2 className="h-4 w-4 animate-spin" />
-                <span className="ml-2 text-sm text-muted-foreground">
-                  Carregando...
-                </span>
-              </div>
-            ) : (
-              <Select
-                value={filters.tipoProcura}
-                onValueChange={(value) =>
-                  setFilters((prev) => ({ ...prev, tipoProcura: value }))
+            <Label className="text-blue-800 font-medium">Hora de Criação</Label>
+            <div className="grid grid-cols-2 gap-2">
+              <Input
+                type="time"
+                value={creationHourRange?.from || ""}
+                onChange={(e) =>
+                  setCreationHourRange((prev) => ({
+                    ...prev,
+                    from: e.target.value,
+                  }))
                 }
-              >
-                <SelectTrigger className="border-blue-200 focus:border-blue-500 focus:ring-blue-500">
-                  <SelectValue placeholder="Selecionar tipo" />
-                </SelectTrigger>
-                <SelectContent>
-                  {tiposProcura.map((tipo) => (
-                    <SelectItem
-                      key={tipo.tipo_procura}
-                      value={tipo.tipo_procura}
-                    >
-                      {tipo.tipo_procura} ({tipo.total})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
+                className="border-blue-200 focus:border-blue-500 focus:ring-blue-500"
+              />
+              <Input
+                type="time"
+                value={creationHourRange?.to || ""}
+                onChange={(e) =>
+                  setCreationHourRange((prev) => ({
+                    ...prev,
+                    to: e.target.value,
+                  }))
+                }
+                className="border-blue-200 focus:border-blue-500 focus:ring-blue-500"
+              />
+            </div>
           </div>
 
           <div className="space-y-2">
@@ -525,6 +528,7 @@ export const FilterSection: React.FC<FilterProps> = ({
               onClick={() => {
                 const emptyFilters = {
                   creationDateRange: {}, // Enviar None (sem datas)
+                  creationHourRange: {},
                   nextAgendaDateRange: {},
                   situacoes: [],
                   etapas: [],
@@ -541,6 +545,7 @@ export const FilterSection: React.FC<FilterProps> = ({
 
                 // Limpar estado local
                 setCreationDateRange(undefined); // Enviar None (sem datas)
+                setCreationHourRange(undefined);
                 setNextAgendaDateRange(undefined);
                 setSelectedSituacoes([]);
                 setSelectedEtapas([]);
@@ -569,6 +574,40 @@ export const FilterSection: React.FC<FilterProps> = ({
         {/* Filtros avançados */}
         {showAdvancedFilters && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pt-6 border-t border-blue-200">
+            <div className="space-y-2">
+              <Label className="text-blue-800 font-medium">
+                Tipo de Procura
+              </Label>
+              {loadingDropdowns ? (
+                <div className="flex items-center justify-center h-10 border rounded-md">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span className="ml-2 text-sm text-muted-foreground">
+                    Carregando...
+                  </span>
+                </div>
+              ) : (
+                <Select
+                  value={filters.tipoProcura}
+                  onValueChange={(value) =>
+                    setFilters((prev) => ({ ...prev, tipoProcura: value }))
+                  }
+                >
+                  <SelectTrigger className="border-blue-200 focus:border-blue-500 focus:ring-blue-500">
+                    <SelectValue placeholder="Selecionar tipo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {tiposProcura.map((tipo) => (
+                      <SelectItem
+                        key={tipo.tipo_procura}
+                        value={tipo.tipo_procura}
+                      >
+                        {tipo.tipo_procura} ({tipo.total})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </div>
             <div className="space-y-2">
               <Label className="text-blue-800 font-medium">Nome</Label>
               <Input
