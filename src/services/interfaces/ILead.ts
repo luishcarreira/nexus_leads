@@ -39,6 +39,8 @@ export interface ILeadsFilters {
   nome?: string;
   data_criacao_inicio?: string;
   data_criacao_fim?: string;
+  hora_criacao_inicio?: string;
+  hora_criacao_fim?: string;
   situacao?: string;
   origem?: string;
   tipo_procura?: string;
@@ -120,6 +122,8 @@ export interface ILeadsTotaisDetalhados {
 export interface ILeadsTotaisFilters {
   data_criacao_inicio?: string;
   data_criacao_fim?: string;
+  hora_criacao_inicio?: string;
+  hora_criacao_fim?: string;
   pagina?: number;
   limite?: number;
   origem?: string;

@@ -228,6 +228,7 @@ export class LeadsService {
     valor_investimento: number | null;
     tem_ponto: boolean;
     email?: string | null;
+    origem?: string;
   }): Promise<boolean> {
     try {
       return await httpClient.post<boolean>("/leads/criar-rapido", leadData);
