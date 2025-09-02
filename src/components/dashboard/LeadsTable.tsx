@@ -38,6 +38,7 @@ import {
   Plus,
   Users,
   UserCheck,
+  MessageSquare,
   Edit,
   ArrowUpDown,
   ArrowUp,
@@ -132,6 +133,11 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
   const [selectedLeadForConversion, setSelectedLeadForConversion] =
     useState<ILead | null>(null);
   const [isConvertingToClient, setIsConvertingToClient] = useState(false);
+
+  // Estado para inclusão no Chatguru
+  const [includingChatguruId, setIncludingChatguruId] = useState<number | null>(
+    null
+  );
 
   // Debounce para o termo de busca
   useEffect(() => {
@@ -275,11 +281,40 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
         setSelectedLeadForAtividades(lead);
         setIsAtividadesModalOpen(true);
         break;
+      case "include_chatguru":
+        handleIncludeInChatguru(lead);
+        break;
       case "convert_to_client":
         setSelectedLeadForConversion(lead);
         setIsConvertToClientModalOpen(true);
         break;
       default:
+    }
+  };
+
+  const handleIncludeInChatguru = async (lead: ILead) => {
+    try {
+      setIncludingChatguruId(lead.id);
+      await leadsService.incluirLeadNoChatguru(lead.id);
+
+      toast({
+        title: "Incluído no Chatguru",
+        description: `O lead "${lead.nome}" foi incluído com sucesso no Chatguru.`,
+        variant: "default",
+      });
+
+      if (onDataChanged) {
+        onDataChanged();
+      }
+    } catch (error) {
+      toast({
+        title: "Erro ao incluir no Chatguru",
+        description:
+          "Não foi possível incluir o lead no Chatguru. Tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setIncludingChatguruId(null);
     }
   };
 
@@ -790,6 +825,16 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                         >
                           <FileText className="mr-2 h-4 w-4" />
                           Ver Atividades
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => handleAction("include_chatguru", lead)}
+                          className="cursor-pointer"
+                          disabled={includingChatguruId === lead.id}
+                        >
+                          <MessageSquare className="mr-2 h-4 w-4" />
+                          {includingChatguruId === lead.id
+                            ? "Incluindo no Chatguru..."
+                            : "Incluir no Chatguru"}
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem

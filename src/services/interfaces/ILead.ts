@@ -53,6 +53,7 @@ export interface ILeadsFilters {
   order_by?: string;
   order_header?: string;
   transferido?: boolean | null; // Campo para filtrar transferidos/não transferidos
+  somente_leads_convertidos?: boolean; // Novo filtro para Clientes
 }
 
 // Interfaces para os totais de leads

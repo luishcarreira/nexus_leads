@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { BarChart3, ChevronDown, ChevronUp } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { LeadsTable } from "@/components/dashboard/LeadsTable";
+import { ClientsTable } from "@/components/dashboard/ClientsTable";
 import { format } from "date-fns";
 import {
   ChartContainer,
@@ -127,16 +127,31 @@ const Clientes: React.FC = () => {
           ...filters,
           pagina: page,
           limite,
+          somente_leads_convertidos: true,
         });
+
+        console.log("response.data", response.data);
         setConvertedLeads(response.data.filter((l) => !!l.id_cliente) || []);
         setConvertedTotal(
           response.data.filter((l) => !!l.id_cliente).length || 0
         );
+        console.log(
+          "response.data.filter((l) => !!l.id_cliente).length",
+          response.data.filter((l) => !!l.id_cliente).length
+        );
         setConvertedCurrentPage(page);
         setConvertedTotalPages(
-          Math.max(1, Math.ceil((response.total || 0) / limite))
+          Math.max(
+            1,
+            Math.ceil(
+              (response.data.filter((l) => !!l.id_cliente).length || 0) / limite
+            )
+          )
         );
-        lastConvertedFiltersRef.current = { ...filters };
+        lastConvertedFiltersRef.current = {
+          ...filters,
+          somente_leads_convertidos: true,
+        };
       } finally {
         setConvertedLoading(false);
       }
@@ -147,8 +162,6 @@ const Clientes: React.FC = () => {
   const applyGridFilters = React.useCallback(
     (base: ILeadsFilters, overrides?: Partial<ILeadsFilters>) => {
       const merged: ILeadsFilters = { ...base };
-      if (!isAdmin && user?.id_vendedor_vinculado)
-        merged.id_vendedor = user.id_vendedor_vinculado;
       if (selectedVendorId) merged.id_vendedor = selectedVendorId;
       if (statusSelected) merged.situacao = statusSelected;
       // Buscar apenas convertidos na grid de Clientes
@@ -159,8 +172,6 @@ const Clientes: React.FC = () => {
       });
     },
     [
-      isAdmin,
-      user?.id_vendedor_vinculado,
       selectedVendorId,
       statusSelected,
       fetchConvertedLeads,
@@ -174,14 +185,11 @@ const Clientes: React.FC = () => {
         (async () => applyGridFilters(api))(),
         (async () => fetchTotais(api))(),
         (async () => {
-          if (isAdmin) {
-            const res = await leadsService.getVendedoresTotais({
-              ...api,
-              transferido: true,
-            });
-            console.log("res - vendedores totais", res.totais_por_vendedor);
-            setVendedoresTotais(res.totais_por_vendedor || []);
-          }
+          const res = await leadsService.getVendedoresTotais({
+            ...api,
+            transferido: true,
+          });
+          setVendedoresTotais(res.totais_por_vendedor || []);
         })(),
       ]);
       setCurrentFilters(newFilters);
@@ -197,21 +205,15 @@ const Clientes: React.FC = () => {
       },
     };
     const api = convertFiltersToAPI(defaultFilters);
-    // Default vendor for seller view
-    if (!isAdmin && user?.id_vendedor_vinculado) {
-      setSelectedVendorId(user.id_vendedor_vinculado);
-    }
+
     (async () => {
       await applyGridFilters(api);
       await fetchTotais(api);
-      if (isAdmin) {
-        const res = await leadsService.getVendedoresTotais({
-          ...api,
-          transferido: true,
-        });
-        console.log("res - vendedores totais", res);
-        setVendedoresTotais(res.totais_por_vendedor || []);
-      }
+      const res = await leadsService.getVendedoresTotais({
+        ...api,
+        transferido: true,
+      });
+      setVendedoresTotais(res.totais_por_vendedor || []);
       setCurrentFilters(defaultFilters);
     })();
   }, []);
@@ -221,15 +223,8 @@ const Clientes: React.FC = () => {
     if (!convertedLoading && !totaisLoading) setInitialLoading(false);
   }, [convertedLoading, totaisLoading]);
 
-  // Charts data (admin only)
+  // Charts data
   const barData = React.useMemo(() => {
-    if (!isAdmin)
-      return [] as Array<{
-        id_vendedor: number;
-        name: string;
-        total: number;
-        valor: number;
-      }>;
     console.log(vendedoresTotais);
     return vendedoresTotais.map((v) => ({
       id_vendedor: v.id_vendedor,
@@ -237,10 +232,10 @@ const Clientes: React.FC = () => {
       total: v.total,
       valor: (v.valor_cotacoes_abertas || 0) / 100,
     }));
-  }, [isAdmin, vendedoresTotais]);
+  }, [vendedoresTotais]);
 
   const pieData = React.useMemo(() => {
-    if (!isAdmin || !totais)
+    if (!totais)
       return [] as Array<{ name: string; value: number }>;
     const all = [
       ...(totais.transferidos?.dados || []),
@@ -255,7 +250,7 @@ const Clientes: React.FC = () => {
       name,
       value,
     }));
-  }, [isAdmin, totais]);
+  }, [totais]);
 
   const selectedVendor = React.useMemo(
     () =>
@@ -308,394 +303,331 @@ const Clientes: React.FC = () => {
 
         {showTotais && (
           <>
-            {/* Role-based cards */}
-            {isAdmin ? (
-              <>
-                {!selectedVendorId && (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-                    {vendedoresTotais.map((v) => (
-                      <Card
-                        key={v.id_vendedor}
-                        className="border-0 shadow-lg hover:shadow-xl cursor-pointer"
-                        onClick={() => {
-                          setSelectedVendorId(v.id_vendedor);
-                          setStatusSelected(null);
-                          const api = convertFiltersToAPI(currentFilters);
-                          applyGridFilters(api);
-                          // Buscar drill-down por status
-                          (async () => {
-                            const s =
-                              await leadsService.getTotaisStatusPorVendedor(
-                                v.id_vendedor,
-                                { ...api, transferido: true }
-                              );
-                            setStatusTotais(s.totais_por_situacao || []);
-                          })();
-                        }}
-                      >
-                        <CardHeader className="pb-3">
-                          <CardTitle className="text-sm font-semibold">
-                            {v.vendedor}
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="text-3xl font-bold">
-                            {v.total ?? 0}
-                          </div>
-                          <div className="text-sm font-medium mt-1">
-                            R{"$ "}
-                            {(
-                              Number(v.valor_cotacoes_abertas ?? 0) / 100
-                            ).toLocaleString("pt-BR", {
-                              minimumFractionDigits: 2,
-                            })}
-                          </div>
-                          <p className="text-xs text-muted-foreground">
-                            Leads transferidos
-                          </p>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                )}
-
-                {selectedVendorId && (
-                  <>
-                    <div className="mb-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2 text-sm">
-                          <Button
-                            variant="ghost"
-                            className="h-7 px-2 text-muted-foreground hover:text-foreground"
-                            onClick={() => {
-                              setSelectedVendorId(null);
-                              setStatusSelected(null);
-                              setStatusTotais([]);
-                              const api = convertFiltersToAPI(currentFilters);
-                              applyGridFilters(api, {});
-                            }}
-                          >
-                            Vendedores
-                          </Button>
-                          <span className="text-muted-foreground">/</span>
-                          <Badge variant="outline" className="text-foreground">
-                            {selectedVendor?.vendedor || "Vendedor"}
-                          </Badge>
-                          {statusSelected && (
-                            <>
-                              <span className="text-muted-foreground">/</span>
-                              <Badge
-                                variant="secondary"
-                                className="flex items-center gap-2"
-                              >
-                                {statusSelected}
-                                <button
-                                  onClick={() => {
-                                    const api =
-                                      convertFiltersToAPI(currentFilters);
-                                    setStatusSelected(null);
-                                    applyGridFilters({
-                                      ...api,
-                                      situacao: undefined,
-                                    });
-                                  }}
-                                  className="ml-1 text-xs opacity-70 hover:opacity-100"
-                                  aria-label="Limpar status"
-                                >
-                                  ×
-                                </button>
-                              </Badge>
-                            </>
-                          )}
-                        </div>
-                        <Button
-                          variant="outline"
-                          className="border-input"
-                          onClick={() => {
-                            setSelectedVendorId(null);
-                            setStatusSelected(null);
-                            setStatusTotais([]);
-                            const api = convertFiltersToAPI(currentFilters);
-                            applyGridFilters(api, {});
-                          }}
-                        >
-                          Voltar
-                        </Button>
-                      </div>
-                      {selectedVendor && (
-                        <div className="flex items-center gap-6 text-sm text-muted-foreground">
-                          <div>
-                            Leads:{" "}
-                            <span className="font-semibold text-foreground">
-                              {selectedVendor.total.toLocaleString()}
-                            </span>
-                          </div>
-                          <div>
-                            Cotações abertas:{" "}
-                            <span className="font-semibold text-foreground">
-                              R${" "}
-                              {(
-                                Number(
-                                  selectedVendor.valor_cotacoes_abertas ?? 0
-                                ) / 100
-                              ).toLocaleString("pt-BR", {
-                                minimumFractionDigits: 2,
-                              })}
-                            </span>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-                      <Card
-                        key="__todos__"
-                        className={`border-0 shadow-lg hover:shadow-xl cursor-pointer ${
-                          statusSelected === null ? "ring-2 ring-primary" : ""
-                        }`}
-                        onClick={() => {
-                          const api = convertFiltersToAPI(currentFilters);
-                          setStatusSelected(null);
-                          applyGridFilters({ ...api, situacao: undefined });
-                        }}
-                      >
-                        <CardHeader className="pb-3">
-                          <CardTitle className="text-sm font-semibold">
-                            Todos os status
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="text-3xl font-bold">
-                            {(selectedVendor?.total ?? 0).toLocaleString()}
-                          </div>
-                          <p className="text-xs text-muted-foreground">Leads</p>
-                        </CardContent>
-                      </Card>
-                      {statusTotais.map(
-                        ({ situacao, total, valor_cotacoes_abertas }) => (
-                          <Card
-                            key={situacao}
-                            className={`border-0 shadow-lg hover:shadow-xl cursor-pointer ${
-                              statusSelected === situacao
-                                ? "ring-2 ring-primary"
-                                : ""
-                            }`}
-                            onClick={() => {
-                              const newStatus =
-                                statusSelected === situacao ? null : situacao;
-                              setStatusSelected(newStatus);
-                              const api = convertFiltersToAPI(currentFilters);
-                              const filters: ILeadsFilters = {
-                                ...api,
-                                situacao: newStatus || undefined,
-                              };
-                              applyGridFilters(filters);
-                            }}
-                          >
-                            <CardHeader className="pb-3">
-                              <CardTitle className="text-sm font-semibold">
-                                {situacao}
-                              </CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                              <div className="text-3xl font-bold">
-                                {(total ?? 0).toLocaleString()}
-                              </div>
-                              <div className="text-sm font-medium mt-1">
-                                R{"$ "}
-                                {(
-                                  Number(valor_cotacoes_abertas ?? 0) / 100
-                                ).toLocaleString("pt-BR", {
-                                  minimumFractionDigits: 2,
-                                })}
-                              </div>
-                              <p className="text-xs text-muted-foreground">
-                                Leads
-                              </p>
-                            </CardContent>
-                          </Card>
-                        )
-                      )}
-                    </div>
-                  </>
-                )}
-
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-                  <div className="p-4 rounded-lg border border-border bg-card shadow">
-                    <h3 className="text-sm font-semibold mb-3">
-                      Total de leads por vendedor
-                    </h3>
-                    <ChartContainer
-                      config={{
-                        total: { label: "Leads", color: "hsl(var(--primary))" },
-                        valor: {
-                          label: "Cotações (R$)",
-                          color: "hsl(var(--muted-foreground))",
-                        },
-                      }}
-                      className="h-80"
-                    >
-                      <BarChart data={barData}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="name" />
-                        <YAxis yAxisId="left" />
-                        <YAxis yAxisId="right" orientation="right" />
-                        <ChartTooltip
-                          content={
-                            <ChartTooltipContent
-                              formatter={(value, name) => (
-                                <>
-                                  <span className="text-muted-foreground">
-                                    {name}
-                                  </span>
-                                  <span className="font-mono font-medium tabular-nums text-foreground ml-2">
-                                    {typeof value === "number" &&
-                                    name === "Cotações (R$)"
-                                      ? value.toLocaleString("pt-BR", {
-                                          minimumFractionDigits: 2,
-                                        })
-                                      : Number(value).toLocaleString()}
-                                  </span>
-                                </>
-                              )}
-                            />
-                          }
-                        />
-                        <Legend />
-                        <Bar
-                          yAxisId="left"
-                          dataKey="total"
-                          name="Leads"
-                          fill="var(--color-total)"
-                          onClick={(data) => {
-                            if (
-                              !data ||
-                              typeof (data as any).payload?.id_vendedor !==
-                                "number"
-                            )
-                              return;
-                            const api = convertFiltersToAPI(currentFilters);
-                            setSelectedVendorId(
-                              (data as any).payload.id_vendedor
-                            );
-                            setStatusSelected(null);
-                            applyGridFilters(api);
-                            (async () => {
-                              const s =
-                                await leadsService.getTotaisStatusPorVendedor(
-                                  (data as any).payload.id_vendedor,
-                                  { ...api, transferido: true }
-                                );
-                              setStatusTotais(s.totais_por_situacao || []);
-                            })();
-                          }}
-                        />
-                        <Bar
-                          yAxisId="right"
-                          dataKey="valor"
-                          name="Cotações (R$)"
-                          fill="var(--color-valor)"
-                        />
-                      </BarChart>
-                    </ChartContainer>
-                  </div>
-
-                  <div className="p-4 rounded-lg border border-border bg-card shadow">
-                    <h3 className="text-sm font-semibold mb-3">
-                      Distribuição por status
-                    </h3>
-                    <ChartContainer
-                      config={{
-                        value: { label: "Leads", color: "hsl(var(--primary))" },
-                      }}
-                      className="h-80"
-                    >
-                      <PieChart>
-                        <ChartTooltip content={<ChartTooltipContent />} />
-                        <Legend />
-                        <Pie
-                          data={pieData}
-                          dataKey="value"
-                          nameKey="name"
-                          outerRadius={110}
-                          label
-                        >
-                          {pieData.map((_, idx) => (
-                            <Cell
-                              key={idx}
-                              fill={`hsl(${(idx * 57) % 360}, 70%, 55%)`}
-                            />
-                          ))}
-                        </Pie>
-                      </PieChart>
-                    </ChartContainer>
-                  </div>
-                </div>
-              </>
-            ) : (
-              // Vendedor view: cards by status
+            {/* Cards de vendedores */}
+            {!selectedVendorId && (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-                <Card className="border-0 shadow-lg">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-sm font-semibold">
-                      Total Transferidos para você
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-3xl font-bold">
-                      {total.toLocaleString()}
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      No período filtrado
-                    </p>
-                  </CardContent>
-                </Card>
-                {Array.from(
-                  new Map<string, number>(
-                    Object.entries(
-                      leads.reduce((acc: Record<string, number>, l) => {
-                        const k = l.situacao || "Sem status";
-                        acc[k] = (acc[k] || 0) + 1;
-                        return acc;
-                      }, {})
-                    )
-                  ).entries()
-                ).map(([status, count]) => (
+                {vendedoresTotais.map((v) => (
                   <Card
-                    key={status}
-                    className={`border-0 shadow-lg hover:shadow-xl cursor-pointer ${
-                      statusSelected === status ? "ring-2 ring-primary" : ""
-                    }`}
+                    key={v.id_vendedor}
+                    className="border-0 shadow-lg hover:shadow-xl cursor-pointer"
                     onClick={() => {
-                      const newStatus =
-                        statusSelected === status ? null : status;
-                      setStatusSelected(newStatus);
+                      setSelectedVendorId(v.id_vendedor);
+                      setStatusSelected(null);
                       const api = convertFiltersToAPI(currentFilters);
-                      const filters: ILeadsFilters = {
-                        ...api,
-                        situacao: newStatus || undefined,
-                      };
-                      applyGridFilters(filters);
+                      applyGridFilters(api);
+                      // Buscar drill-down por status
+                      (async () => {
+                        const s =
+                          await leadsService.getTotaisStatusPorVendedor(
+                            v.id_vendedor,
+                            { ...api, transferido: true }
+                          );
+                        setStatusTotais(s.totais_por_situacao || []);
+                      })();
                     }}
                   >
                     <CardHeader className="pb-3">
                       <CardTitle className="text-sm font-semibold">
-                        {status}
+                        {v.vendedor}
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
                       <div className="text-3xl font-bold">
-                        {count.toLocaleString()}
+                        {v.total ?? 0}
                       </div>
-                      <p className="text-xs text-muted-foreground">Leads</p>
+                      <div className="text-sm font-medium mt-1">
+                        R{"$ "}
+                        {(
+                          Number(v.valor_cotacoes_abertas ?? 0) / 100
+                        ).toLocaleString("pt-BR", {
+                          minimumFractionDigits: 2,
+                        })}
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Leads transferidos
+                      </p>
                     </CardContent>
                   </Card>
                 ))}
               </div>
             )}
+
+            {selectedVendorId && (
+              <>
+                <div className="mb-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2 text-sm">
+                      <Button
+                        variant="ghost"
+                        className="h-7 px-2 text-muted-foreground hover:text-foreground"
+                        onClick={() => {
+                          setSelectedVendorId(null);
+                          setStatusSelected(null);
+                          setStatusTotais([]);
+                          const api = convertFiltersToAPI(currentFilters);
+                          applyGridFilters(api, {});
+                        }}
+                      >
+                        Vendedores
+                      </Button>
+                      <span className="text-muted-foreground">/</span>
+                      <Badge variant="outline" className="text-foreground">
+                        {selectedVendor?.vendedor || "Vendedor"}
+                      </Badge>
+                      {statusSelected && (
+                        <>
+                          <span className="text-muted-foreground">/</span>
+                          <Badge
+                            variant="secondary"
+                            className="flex items-center gap-2"
+                          >
+                            {statusSelected}
+                            <button
+                              onClick={() => {
+                                const api =
+                                  convertFiltersToAPI(currentFilters);
+                                setStatusSelected(null);
+                                applyGridFilters({
+                                  ...api,
+                                  situacao: undefined,
+                                });
+                              }}
+                              className="ml-1 text-xs opacity-70 hover:opacity-100"
+                              aria-label="Limpar status"
+                            >
+                              ×
+                            </button>
+                          </Badge>
+                        </>
+                      )}
+                    </div>
+                    <Button
+                      variant="outline"
+                      className="border-input"
+                      onClick={() => {
+                        setSelectedVendorId(null);
+                        setStatusSelected(null);
+                        setStatusTotais([]);
+                        const api = convertFiltersToAPI(currentFilters);
+                        applyGridFilters(api, {});
+                      }}
+                    >
+                      Voltar
+                    </Button>
+                  </div>
+                  {selectedVendor && (
+                    <div className="flex items-center gap-6 text-sm text-muted-foreground">
+                      <div>
+                        Leads:{" "}
+                        <span className="font-semibold text-foreground">
+                          {selectedVendor.total.toLocaleString()}
+                        </span>
+                      </div>
+                      <div>
+                        Cotações abertas:{" "}
+                        <span className="font-semibold text-foreground">
+                          R${" "}
+                          {(
+                            Number(
+                              selectedVendor.valor_cotacoes_abertas ?? 0
+                            ) / 100
+                          ).toLocaleString("pt-BR", {
+                            minimumFractionDigits: 2,
+                          })}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+                  <Card
+                    key="__todos__"
+                    className={`border-0 shadow-lg hover:shadow-xl cursor-pointer ${
+                      statusSelected === null ? "ring-2 ring-primary" : ""
+                    }`}
+                    onClick={() => {
+                      const api = convertFiltersToAPI(currentFilters);
+                      setStatusSelected(null);
+                      applyGridFilters({ ...api, situacao: undefined });
+                    }}
+                  >
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-sm font-semibold">
+                        Todos os status
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-3xl font-bold">
+                        {(selectedVendor?.total ?? 0).toLocaleString()}
+                      </div>
+                      <p className="text-xs text-muted-foreground">Leads</p>
+                    </CardContent>
+                  </Card>
+                  {statusTotais.map(
+                    ({ situacao, total, valor_cotacoes_abertas }) => (
+                      <Card
+                        key={situacao}
+                        className={`border-0 shadow-lg hover:shadow-xl cursor-pointer ${
+                          statusSelected === situacao
+                            ? "ring-2 ring-primary"
+                            : ""
+                        }`}
+                        onClick={() => {
+                          const newStatus =
+                            statusSelected === situacao ? null : situacao;
+                          setStatusSelected(newStatus);
+                          const api = convertFiltersToAPI(currentFilters);
+                          const filters: ILeadsFilters = {
+                            ...api,
+                            situacao: newStatus || undefined,
+                          };
+                          applyGridFilters(filters);
+                        }}
+                      >
+                        <CardHeader className="pb-3">
+                          <CardTitle className="text-sm font-semibold">
+                            {situacao}
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="text-3xl font-bold">
+                            {(total ?? 0).toLocaleString()}
+                          </div>
+                          <div className="text-sm font-medium mt-1">
+                            R{"$ "}
+                            {(
+                              Number(valor_cotacoes_abertas ?? 0) / 100
+                            ).toLocaleString("pt-BR", {
+                              minimumFractionDigits: 2,
+                            })}
+                          </div>
+                          <p className="text-xs text-muted-foreground">
+                            Leads
+                          </p>
+                        </CardContent>
+                      </Card>
+                    )
+                  )}
+                </div>
+              </>
+            )}
+
+            {/* Gráficos */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+              <div className="p-4 rounded-lg border border-border bg-card shadow">
+                <h3 className="text-sm font-semibold mb-3">
+                  Total de leads por vendedor
+                </h3>
+                <ChartContainer
+                  config={{
+                    total: { label: "Leads", color: "hsl(var(--primary))" },
+                    valor: {
+                      label: "Cotações (R$)",
+                      color: "hsl(var(--muted-foreground))",
+                    },
+                  }}
+                  className="h-80"
+                >
+                  <BarChart data={barData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="name" />
+                    <YAxis yAxisId="left" />
+                    <YAxis yAxisId="right" orientation="right" />
+                    <ChartTooltip
+                      content={
+                        <ChartTooltipContent
+                          formatter={(value, name) => (
+                            <>
+                              <span className="text-muted-foreground">
+                                {name}
+                              </span>
+                              <span className="font-mono font-medium tabular-nums text-foreground ml-2">
+                                {typeof value === "number" &&
+                                name === "Cotações (R$)"
+                                  ? value.toLocaleString("pt-BR", {
+                                      minimumFractionDigits: 2,
+                                    })
+                                  : Number(value).toLocaleString()}
+                              </span>
+                            </>
+                          )}
+                        />
+                      }
+                    />
+                    <Legend />
+                    <Bar
+                      yAxisId="left"
+                      dataKey="total"
+                      name="Leads"
+                      fill="var(--color-total)"
+                      onClick={(data) => {
+                        if (
+                          !data ||
+                          typeof (data as any).payload?.id_vendedor !==
+                            "number"
+                        )
+                          return;
+                        const api = convertFiltersToAPI(currentFilters);
+                        setSelectedVendorId(
+                          (data as any).payload.id_vendedor
+                        );
+                        setStatusSelected(null);
+                        applyGridFilters(api);
+                        (async () => {
+                          const s =
+                            await leadsService.getTotaisStatusPorVendedor(
+                              (data as any).payload.id_vendedor,
+                              { ...api, transferido: true }
+                            );
+                          setStatusTotais(s.totais_por_situacao || []);
+                        })();
+                      }}
+                    />
+                    <Bar
+                      yAxisId="right"
+                      dataKey="valor"
+                      name="Cotações (R$)"
+                      fill="var(--color-valor)"
+                    />
+                  </BarChart>
+                </ChartContainer>
+              </div>
+
+              <div className="p-4 rounded-lg border border-border bg-card shadow">
+                <h3 className="text-sm font-semibold mb-3">
+                  Distribuição por status
+                </h3>
+                <ChartContainer
+                  config={{
+                    value: { label: "Leads", color: "hsl(var(--primary))" },
+                  }}
+                  className="h-80"
+                >
+                  <PieChart>
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                    <Legend />
+                    <Pie
+                      data={pieData}
+                      dataKey="value"
+                      nameKey="name"
+                      outerRadius={110}
+                      label
+                    >
+                      {pieData.map((_, idx) => (
+                        <Cell
+                          key={idx}
+                          fill={`hsl(${(idx * 57) % 360}, 70%, 55%)`}
+                        />
+                      ))}
+                    </Pie>
+                  </PieChart>
+                </ChartContainer>
+              </div>
+            </div>
           </>
         )}
 
-        <LeadsTable
+        <ClientsTable
           title="Clientes Transferidos"
           leads={convertedLeads}
           total={convertedTotal}

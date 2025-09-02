@@ -376,6 +376,19 @@ export class LeadsService {
     return httpClient.get("/leads/nao-transferidos", { params: filters });
   }
 
+  // Incluir lead no Chatguru
+  async incluirLeadNoChatguru(idLead: number): Promise<any> {
+    try {
+      return await httpClient.post<any>(
+        "/leads/incluir-no-chatguru",
+        undefined,
+        { params: { id_lead: idLead } }
+      );
+    } catch (error) {
+      throw error;
+    }
+  }
+
   // Totais por vendedor (apenas transferidos), com filtros e paginação
   async getVendedoresTotais(filters: ILeadsFilters = {}): Promise<{
     totais_por_vendedor: Array<{
