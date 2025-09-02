@@ -171,11 +171,7 @@ const Clientes: React.FC = () => {
         limite: convertedItemsPerPage,
       });
     },
-    [
-      selectedVendorId,
-      statusSelected,
-      fetchConvertedLeads,
-    ]
+    [selectedVendorId, statusSelected, fetchConvertedLeads]
   );
 
   const handleFiltersChange = React.useCallback(
@@ -235,8 +231,7 @@ const Clientes: React.FC = () => {
   }, [vendedoresTotais]);
 
   const pieData = React.useMemo(() => {
-    if (!totais)
-      return [] as Array<{ name: string; value: number }>;
+    if (!totais) return [] as Array<{ name: string; value: number }>;
     const all = [
       ...(totais.transferidos?.dados || []),
       ...(totais.nao_transferidos?.dados || []),
@@ -317,11 +312,10 @@ const Clientes: React.FC = () => {
                       applyGridFilters(api);
                       // Buscar drill-down por status
                       (async () => {
-                        const s =
-                          await leadsService.getTotaisStatusPorVendedor(
-                            v.id_vendedor,
-                            { ...api, transferido: true }
-                          );
+                        const s = await leadsService.getTotaisStatusPorVendedor(
+                          v.id_vendedor,
+                          { ...api, transferido: true }
+                        );
                         setStatusTotais(s.totais_por_situacao || []);
                       })();
                     }}
@@ -332,9 +326,7 @@ const Clientes: React.FC = () => {
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className="text-3xl font-bold">
-                        {v.total ?? 0}
-                      </div>
+                      <div className="text-3xl font-bold">{v.total ?? 0}</div>
                       <div className="text-sm font-medium mt-1">
                         R{"$ "}
                         {(
@@ -384,8 +376,7 @@ const Clientes: React.FC = () => {
                             {statusSelected}
                             <button
                               onClick={() => {
-                                const api =
-                                  convertFiltersToAPI(currentFilters);
+                                const api = convertFiltersToAPI(currentFilters);
                                 setStatusSelected(null);
                                 applyGridFilters({
                                   ...api,
@@ -428,9 +419,8 @@ const Clientes: React.FC = () => {
                         <span className="font-semibold text-foreground">
                           R${" "}
                           {(
-                            Number(
-                              selectedVendor.valor_cotacoes_abertas ?? 0
-                            ) / 100
+                            Number(selectedVendor.valor_cotacoes_abertas ?? 0) /
+                            100
                           ).toLocaleString("pt-BR", {
                             minimumFractionDigits: 2,
                           })}
@@ -501,9 +491,7 @@ const Clientes: React.FC = () => {
                               minimumFractionDigits: 2,
                             })}
                           </div>
-                          <p className="text-xs text-muted-foreground">
-                            Leads
-                          </p>
+                          <p className="text-xs text-muted-foreground">Leads</p>
                         </CardContent>
                       </Card>
                     )
@@ -563,14 +551,11 @@ const Clientes: React.FC = () => {
                       onClick={(data) => {
                         if (
                           !data ||
-                          typeof (data as any).payload?.id_vendedor !==
-                            "number"
+                          typeof (data as any).payload?.id_vendedor !== "number"
                         )
                           return;
                         const api = convertFiltersToAPI(currentFilters);
-                        setSelectedVendorId(
-                          (data as any).payload.id_vendedor
-                        );
+                        setSelectedVendorId((data as any).payload.id_vendedor);
                         setStatusSelected(null);
                         applyGridFilters(api);
                         (async () => {
