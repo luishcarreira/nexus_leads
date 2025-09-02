@@ -76,6 +76,14 @@ const Clientes: React.FC = () => {
   const [statusSelected, setStatusSelected] = React.useState<string | null>(
     null
   );
+  // Estado local para grid de convertidos (transferidos)
+  const [convertedLeads, setConvertedLeads] = React.useState<any[]>([]);
+  const [convertedTotal, setConvertedTotal] = React.useState(0);
+  const [convertedCurrentPage, setConvertedCurrentPage] = React.useState(1);
+  const [convertedTotalPages, setConvertedTotalPages] = React.useState(1);
+  const [convertedLoading, setConvertedLoading] = React.useState(false);
+  const convertedItemsPerPage = 25;
+  const lastConvertedFiltersRef = React.useRef<ILeadsFilters>({});
   const [vendedoresTotais, setVendedoresTotais] = React.useState<
     Array<{
       id_vendedor: number;
@@ -108,6 +116,34 @@ const Clientes: React.FC = () => {
     fetchDetalhesNaoTransferidos,
   } = useLeadsTotais();
 
+  // Buscar convertidos via endpoint geral (mantém campos como id_cliente)
+  const fetchConvertedLeads = React.useCallback(
+    async (filters: ILeadsFilters = {}) => {
+      try {
+        setConvertedLoading(true);
+        const page = filters.pagina ?? 1;
+        const limite = filters.limite ?? convertedItemsPerPage;
+        const response = await leadsService.getLeads({
+          ...filters,
+          pagina: page,
+          limite,
+        });
+        setConvertedLeads(response.data.filter((l) => !!l.id_cliente) || []);
+        setConvertedTotal(
+          response.data.filter((l) => !!l.id_cliente).length || 0
+        );
+        setConvertedCurrentPage(page);
+        setConvertedTotalPages(
+          Math.max(1, Math.ceil((response.total || 0) / limite))
+        );
+        lastConvertedFiltersRef.current = { ...filters };
+      } finally {
+        setConvertedLoading(false);
+      }
+    },
+    []
+  );
+
   const applyGridFilters = React.useCallback(
     (base: ILeadsFilters, overrides?: Partial<ILeadsFilters>) => {
       const merged: ILeadsFilters = { ...base };
@@ -115,16 +151,19 @@ const Clientes: React.FC = () => {
         merged.id_vendedor = user.id_vendedor_vinculado;
       if (selectedVendorId) merged.id_vendedor = selectedVendorId;
       if (statusSelected) merged.situacao = statusSelected;
-      // Clientes page: listar apenas leads transferidos (com id_cliente)
-      merged.transferido = true;
-      fetchLeads({ ...merged, pagina: 1 });
+      // Buscar apenas convertidos na grid de Clientes
+      fetchConvertedLeads({
+        ...merged,
+        pagina: 1,
+        limite: convertedItemsPerPage,
+      });
     },
     [
       isAdmin,
       user?.id_vendedor_vinculado,
       selectedVendorId,
       statusSelected,
-      fetchLeads,
+      fetchConvertedLeads,
     ]
   );
 
@@ -179,8 +218,8 @@ const Clientes: React.FC = () => {
 
   const [initialLoading, setInitialLoading] = React.useState(true);
   React.useEffect(() => {
-    if (!loading && !totaisLoading) setInitialLoading(false);
-  }, [loading, totaisLoading]);
+    if (!convertedLoading && !totaisLoading) setInitialLoading(false);
+  }, [convertedLoading, totaisLoading]);
 
   // Charts data (admin only)
   const barData = React.useMemo(() => {
@@ -658,20 +697,36 @@ const Clientes: React.FC = () => {
 
         <LeadsTable
           title="Clientes Transferidos"
-          leads={leads.filter((l) => !!l.id_cliente)}
-          total={total}
-          currentPage={currentPage}
-          totalPages={totalPages}
-          loading={loading}
-          onPageChange={setPage}
+          leads={convertedLeads}
+          total={convertedTotal}
+          currentPage={convertedCurrentPage}
+          totalPages={convertedTotalPages}
+          loading={convertedLoading}
+          onPageChange={(page) => {
+            setConvertedCurrentPage(page);
+            const last = lastConvertedFiltersRef.current || {};
+            fetchConvertedLeads({
+              ...last,
+              pagina: page,
+              limite: convertedItemsPerPage,
+            });
+          }}
           onLeadCreated={() => {
             const api = convertFiltersToAPI(currentFilters);
-            fetchLeads({ ...api, transferido: true });
+            fetchConvertedLeads({
+              ...api,
+              pagina: 1,
+              limite: convertedItemsPerPage,
+            });
             fetchTotais(api);
           }}
           onDataChanged={() => {
             const api = convertFiltersToAPI(currentFilters);
-            fetchLeads({ ...api, transferido: true });
+            fetchConvertedLeads({
+              ...api,
+              pagina: convertedCurrentPage,
+              limite: convertedItemsPerPage,
+            });
             fetchTotais(api);
           }}
         />

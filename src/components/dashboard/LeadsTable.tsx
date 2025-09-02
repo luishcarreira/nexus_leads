@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Table,
   TableBody,
@@ -33,19 +33,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
-  ChevronDown,
-  ChevronUp,
   MoreHorizontal,
   Plus,
   Users,
   UserCheck,
-  UserX,
   Edit,
-  Activity,
-  UserPlus,
-  Loader2,
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
@@ -66,6 +59,7 @@ import { LeadAtividadesModal } from "./LeadAtividadesModal";
 import { ConvertLeadToClientModal } from "./ConvertLeadToClientModal";
 import { LeadDetailsModal } from "./LeadDetailsModal";
 import { useToast } from "@/hooks/use-toast";
+import { leadsService } from "@/services/LeadsService";
 
 interface LeadsTableProps {
   title: string;
@@ -327,7 +321,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
           if (selectedConsultor) {
             // Vincular consultor a todos os leads selecionados
             const promises = Array.from(selectedLeads).map((leadId) =>
-              httpClient.vincularConsultorAoLead(leadId, selectedConsultor)
+              leadsService.vincularConsultorAoLead(leadId, selectedConsultor)
             );
             await Promise.all(promises);
 
@@ -346,7 +340,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
           if (selectedVendedor) {
             // Vincular vendedor a todos os leads selecionados
             const promises = Array.from(selectedLeads).map((leadId) =>
-              httpClient.vincularVendedorAoLead(leadId, selectedVendedor)
+              leadsService.vincularVendedorAoLead(leadId, selectedVendedor)
             );
             await Promise.all(promises);
 
@@ -395,7 +389,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
     setIsCreatingLead(true);
     try {
       // Chamar o endpoint de criação rápida
-      const response = await httpClient.criarLeadRapido(leadData);
+      const response = await leadsService.criarLeadRapido(leadData);
 
       // Fechar modal e limpar estado
       setIsCreateModalOpen(false);
@@ -432,7 +426,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
 
     setIsUpdatingStatus(true);
     try {
-      await httpClient.atualizarEtapaSituacaoLead(
+      await leadsService.atualizarEtapaSituacaoLead(
         selectedLeadForUpdate.id,
         idEtapa,
         idSituacao
@@ -493,7 +487,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
         payload.cnpj = clientData.documento.replace(/\D/g, "");
       }
 
-      await httpClient.converterLeadParaCliente(payload);
+      await leadsService.converterLeadParaCliente(payload);
 
       // Fechar modal e limpar estado
       setIsConvertToClientModalOpen(false);
