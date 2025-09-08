@@ -20,7 +20,7 @@ import { useToast } from "@/hooks/use-toast";
 
 const loginSchema = z.object({
   // email: z.string().email("Digite um e-mail válido"),
-  usuario: z.string().min(1, "Digite seu usuário"),
+  username: z.string().min(1, "Digite seu usuário"),
   password: z.string().min(1, "Digite sua senha"),
 });
 
@@ -47,7 +47,7 @@ const Login: React.FC = () => {
   const onSubmit = async (data: LoginFormData) => {
     try {
       setIsLoading(true);
-      await login(data.usuario, data.password);
+      await login(data.username, data.password);
 
       toast({
         title: "Login realizado com sucesso!",
@@ -91,18 +91,18 @@ const Login: React.FC = () => {
           <CardContent>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="usuario">Usuário</Label>
+                <Label htmlFor="username">Usuário</Label>
                 <Input
-                  id="usuario"
+                  id="username"
                   type="text"
                   placeholder="Digite seu usuário"
-                  {...register("usuario")}
+                  {...register("username")}
                   disabled={isLoading}
                 />
-                {errors.usuario && (
+                {errors.username && (
                   <Alert variant="destructive">
                     <AlertDescription>
-                      {errors.usuario.message}
+                      {errors.username.message}
                     </AlertDescription>
                   </Alert>
                 )}

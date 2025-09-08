@@ -34,9 +34,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const validateToken = async (token: string) => {
     try {
-      // Set the token in the http client
-      httpClient.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-
       // You might want to call a /me endpoint to validate the token
       // For now, we'll assume the token is valid if it exists
       // const response = await httpClient.get('/auth/me');
@@ -59,7 +56,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       console.error("Token validation failed:", error);
       localStorage.removeItem("authToken");
       localStorage.removeItem("refreshToken");
-      delete httpClient.defaults.headers.common["Authorization"];
     } finally {
       setIsLoading(false);
     }
@@ -96,9 +92,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       localStorage.setItem("authToken", token);
       localStorage.setItem("refreshToken", newRefreshToken);
 
-      // Set authorization header
-      httpClient.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-
       // Set user data
       setUser(userData);
     } catch (error) {
@@ -113,7 +106,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setUser(null);
     localStorage.removeItem("authToken");
     localStorage.removeItem("refreshToken");
-    delete httpClient.defaults.headers.common["Authorization"];
   };
 
   const refreshToken = async () => {
@@ -134,7 +126,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       localStorage.setItem("authToken", token);
       localStorage.setItem("refreshToken", newRefreshToken);
-      httpClient.defaults.headers.common["Authorization"] = `Bearer ${token}`;
     } catch (error) {
       console.error("Token refresh failed:", error);
       logout();
@@ -164,4 +155,13 @@ export const useAuth = () => {
     throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
+};
+
+// Função para logout forçado (usado pelos interceptors)
+export const forceLogout = () => {
+  localStorage.removeItem("authToken");
+  localStorage.removeItem("refreshToken");
+  localStorage.removeItem("auth_token");
+  // Redireciona para login
+  window.location.href = "/login";
 };
