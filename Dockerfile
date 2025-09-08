@@ -14,6 +14,8 @@ RUN \
 # Copia o restante do código
 COPY . .
 
+COPY .env .env
+
 # Builda o projeto para produção
 RUN npm run build
 
