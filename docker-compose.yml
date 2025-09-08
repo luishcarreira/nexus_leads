@@ -6,8 +6,6 @@ services:
       - "3006:8085"
     environment:
       - VITE_API_URL=https://apihomol.nexusvitally.com.br
-      - VITE_API_USERNAME=admin
-      - VITE_API_PASSWORD=admin123
     networks:
       - nexusnet
 

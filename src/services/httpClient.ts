@@ -3,7 +3,8 @@ import { forceLogout } from "@/contexts/AuthContext";
 
 class HttpClient {
   private instance = axios.create({
-    baseURL: import.meta.env.VITE_API_URL || "http://localhost:8001",
+    baseURL:
+      import.meta.env.VITE_API_URL || "https://apihomol.nexusvitally.com.br",
   });
 
   constructor() {
