@@ -4,8 +4,10 @@ services:
     container_name: nexus_leads
     ports:
       - "3006:8085"
-    env_file:
-      - .env
+    environment:
+      - VITE_API_URL=https://apihomol.nexusvitally.com.br
+      - VITE_API_USERNAME=admin
+      - VITE_API_PASSWORD=admin123
     networks:
       - nexusnet
 
