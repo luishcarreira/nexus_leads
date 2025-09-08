@@ -26,6 +26,8 @@ import {
   TrendingUp,
   LogOut,
   User,
+  FileBarChart,
+  AlertTriangle,
 } from "lucide-react";
 
 interface MenuItem {
@@ -64,6 +66,19 @@ const menuItems: MenuItem[] = [
     label: "Clientes",
     icon: UserCheck,
     href: "/clientes",
+  },
+  {
+    id: "reports",
+    label: "Relatórios",
+    icon: FileBarChart,
+    subItems: [
+      {
+        id: "motivos-perda",
+        label: "Motivos de Perda",
+        icon: AlertTriangle,
+        href: "/relatorios/motivos-perda",
+      },
+    ],
   },
   {
     id: "users",

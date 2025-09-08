@@ -191,3 +191,91 @@ export interface IVendedoresTotais {
   totais_por_vendedor: ITotalPorVendedor[];
   total_vendedores: number;
 }
+
+// Interface para leads convertidos em clientes (relatório de motivos de perda)
+export interface ILeadConvertidoCliente {
+  pessoa_codigo?: number;
+  pessoa_status?: string;
+  pessoa_data_cadastro?: string;
+  pessoa_razao_social?: string;
+  pessoa_nome_fantasia?: string;
+  pessoa_telefone?: string;
+  pessoa_email?: string;
+  pessoa_endereco?: string;
+  pessoa_complemento?: string;
+  pessoa_bairro?: string;
+  pessoa_cidade?: string;
+  pessoa_uf?: string;
+  pessoa_fisica_juridica?: string;
+  pessoa_cnpj?: string;
+  operador_id?: number;
+  operador_nome?: string;
+  representante_id?: number;
+  representante_nome?: string;
+  cliente_dt_ultima_fatura?: string;
+  consultor_id?: number;
+  consultor_nome?: string;
+  pessoa_pes_sts?: string;
+  pessoa_aniversario?: string;
+  cliente_data_proxima_ligacao?: string;
+  data_ultimo_pedido?: string;
+  vendas_qtd_notas_periodo?: number;
+  vendas_total_periodo?: number;
+  total_vendas_ultimos_365?: number;
+  qtd_pedidos_365?: number;
+  status_cliente_vendas?: string;
+  qtd_pedidos_ano_2?: number;
+  valor_pedidos_ano_2?: number;
+  qtd_pedidos_ano_1?: number;
+  valor_pedidos_ano_1?: number;
+  qtd_pedidos_ano?: number;
+  valor_pedidos_ano?: number;
+  ultimo_pedido_venda?: number;
+  valor_ultimo_pedido?: number;
+  data_prev_fecha?: string;
+  procura_para?: string;
+  data_aquisicao?: string;
+  tem_projeto_academia?: string;
+  melhor_horario_contato?: string;
+  como_contactar?: string;
+  data_hora_criacao?: string;
+  source_name?: string;
+  motivo_perda?: string;
+}
+
+export interface ILeadsConvertidosClientesResponse {
+  data: ILeadConvertidoCliente[];
+  total: number;
+}
+
+export interface ILeadsConvertidosClientesFilters {
+  pessoa_codigo?: number;
+  pessoa_status?: string;
+  pessoa_data_cadastro_inicio?: string;
+  pessoa_data_cadastro_fim?: string;
+  pessoa_razao_social?: string;
+  pessoa_nome_fantasia?: string;
+  pessoa_telefone?: string;
+  pessoa_email?: string;
+  pessoa_cidade?: string;
+  pessoa_uf?: string;
+  pessoa_cnpj?: string;
+  operador_id?: number;
+  representante_id?: number;
+  consultor_id?: number;
+  pessoa_aniversario_inicio?: string;
+  pessoa_aniversario_fim?: string;
+  procura_para?: string;
+  source_name?: string;
+  motivo_perda?: string;
+  pagina?: number;
+  limite?: number;
+  order_by?: string;
+  order_header?: string;
+}
+
+// Interface para dropdown de motivos de perda
+export interface IMotivoPerda {
+  id: number;
+  descricao: string;
+}

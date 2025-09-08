@@ -15,16 +15,12 @@ export const useNavigation = () => {
       setActiveItem("leads");
     } else if (path.startsWith("/pipeline")) {
       setActiveItem("pipeline");
-    } else if (path.startsWith("/sales")) {
-      setActiveItem("sales");
-    } else if (path.startsWith("/reports")) {
+    } else if (path.startsWith("/clientes")) {
+      setActiveItem("clientes");
+    } else if (path.startsWith("/relatorios")) {
       setActiveItem("reports");
-    } else if (path.startsWith("/calendar")) {
-      setActiveItem("calendar");
-    } else if (path.startsWith("/communications")) {
-      setActiveItem("communications");
-    } else if (path.startsWith("/companies")) {
-      setActiveItem("companies");
+    } else if (path.startsWith("/users")) {
+      setActiveItem("users");
     } else if (path.startsWith("/settings")) {
       setActiveItem("settings");
     } else {

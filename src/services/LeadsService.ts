@@ -8,6 +8,9 @@ import {
   ISituacaoLead,
   IConsultor,
   ILeadAtividade,
+  ILeadsConvertidosClientesResponse,
+  ILeadsConvertidosClientesFilters,
+  IMotivoPerda,
 } from "./interfaces/ILead";
 
 interface PaginacaoLeads {
@@ -491,6 +494,27 @@ export class LeadsService {
       })),
       total_situacoes: raw.total_situacoes,
     };
+  }
+
+  // Método para buscar leads convertidos em clientes (relatório de motivos de perda)
+  async getLeadsConvertidosClientes(
+    filters: ILeadsConvertidosClientesFilters = {}
+  ): Promise<ILeadsConvertidosClientesResponse> {
+    try {
+      return await httpClient.get<ILeadsConvertidosClientesResponse>(
+        "/leads/convertidos-clientes",
+        {
+          params: filters,
+        }
+      );
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  // Método para buscar dropdown de motivos de perda
+  async getDropdownMotivosPerda(): Promise<IMotivoPerda[]> {
+    return httpClient.get<IMotivoPerda[]>("/leads/dropdown/motivos-perda");
   }
 }
 

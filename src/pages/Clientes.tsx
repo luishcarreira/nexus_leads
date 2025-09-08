@@ -6,7 +6,12 @@ import { useLeadsTotais } from "@/hooks/use-leads-totais";
 import { ILeadsFilters } from "@/services/interfaces/ILead";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { BarChart3, ChevronDown, ChevronUp } from "lucide-react";
+import {
+  BarChart3,
+  ChevronDown,
+  ChevronUp,
+  PieChart as PieChartIcon,
+} from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ClientsTable } from "@/components/dashboard/ClientsTable";
 import { format } from "date-fns";
@@ -26,6 +31,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { leadsService } from "@/services/LeadsService";
 
 type UIFilters = {
@@ -500,114 +506,167 @@ const Clientes: React.FC = () => {
               </>
             )}
 
-            {/* Gráficos */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-              <div className="p-4 rounded-lg border border-border bg-card shadow">
-                <h3 className="text-sm font-semibold mb-3">
-                  Total de leads por vendedor
-                </h3>
-                <ChartContainer
-                  config={{
-                    total: { label: "Leads", color: "hsl(var(--primary))" },
-                    valor: {
-                      label: "Cotações (R$)",
-                      color: "hsl(var(--muted-foreground))",
-                    },
-                  }}
-                  className="h-80"
-                >
-                  <BarChart data={barData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="name" />
-                    <YAxis yAxisId="left" />
-                    <YAxis yAxisId="right" orientation="right" />
-                    <ChartTooltip
-                      content={
-                        <ChartTooltipContent
-                          formatter={(value, name) => (
-                            <>
-                              <span className="text-muted-foreground">
-                                {name}
-                              </span>
-                              <span className="font-mono font-medium tabular-nums text-foreground ml-2">
-                                {typeof value === "number" &&
-                                name === "Cotações (R$)"
-                                  ? value.toLocaleString("pt-BR", {
-                                      minimumFractionDigits: 2,
-                                    })
-                                  : Number(value).toLocaleString()}
-                              </span>
-                            </>
-                          )}
-                        />
-                      }
-                    />
-                    <Legend />
-                    <Bar
-                      yAxisId="left"
-                      dataKey="total"
-                      name="Leads"
-                      fill="var(--color-total)"
-                      onClick={(data) => {
-                        if (
-                          !data ||
-                          typeof (data as any).payload?.id_vendedor !== "number"
-                        )
-                          return;
-                        const api = convertFiltersToAPI(currentFilters);
-                        setSelectedVendorId((data as any).payload.id_vendedor);
-                        setStatusSelected(null);
-                        applyGridFilters(api);
-                        (async () => {
-                          const s =
-                            await leadsService.getTotaisStatusPorVendedor(
-                              (data as any).payload.id_vendedor,
-                              { ...api, transferido: true }
-                            );
-                          setStatusTotais(s.totais_por_situacao || []);
-                        })();
-                      }}
-                    />
-                    <Bar
-                      yAxisId="right"
-                      dataKey="valor"
-                      name="Cotações (R$)"
-                      fill="var(--color-valor)"
-                    />
-                  </BarChart>
-                </ChartContainer>
-              </div>
-
-              <div className="p-4 rounded-lg border border-border bg-card shadow">
-                <h3 className="text-sm font-semibold mb-3">
-                  Distribuição por status
-                </h3>
-                <ChartContainer
-                  config={{
-                    value: { label: "Leads", color: "hsl(var(--primary))" },
-                  }}
-                  className="h-80"
-                >
-                  <PieChart>
-                    <ChartTooltip content={<ChartTooltipContent />} />
-                    <Legend />
-                    <Pie
-                      data={pieData}
-                      dataKey="value"
-                      nameKey="name"
-                      outerRadius={110}
-                      label
+            {/* Gráficos em Tabs */}
+            <div className="mb-6">
+              <Tabs defaultValue="vendedores" className="w-full">
+                <div className="flex flex-col lg:flex-row gap-4">
+                  {/* Tabs laterais */}
+                  <TabsList className="flex flex-col lg:flex-col h-auto lg:w-40 bg-muted/50 p-1">
+                    <TabsTrigger
+                      value="vendedores"
+                      className="w-full justify-start data-[state=active]:bg-background data-[state=active]:shadow-sm"
                     >
-                      {pieData.map((_, idx) => (
-                        <Cell
-                          key={idx}
-                          fill={`hsl(${(idx * 57) % 360}, 70%, 55%)`}
-                        />
-                      ))}
-                    </Pie>
-                  </PieChart>
-                </ChartContainer>
-              </div>
+                      <BarChart3 className="h-4 w-4 mr-2" />
+                      Por Vendedor
+                    </TabsTrigger>
+                    <TabsTrigger
+                      value="status"
+                      className="w-full justify-start data-[state=active]:bg-background data-[state=active]:shadow-sm"
+                    >
+                      <PieChartIcon className="h-4 w-4 mr-2" />
+                      Por Status
+                    </TabsTrigger>
+                  </TabsList>
+
+                  {/* Conteúdo das tabs */}
+                  <div className="flex-1">
+                    <TabsContent value="vendedores" className="mt-0">
+                      <div className="p-4 rounded-lg border border-border bg-card shadow">
+                        <h3 className="text-sm font-semibold mb-3">
+                          Total de leads por vendedor
+                        </h3>
+                        <ChartContainer
+                          config={{
+                            total: {
+                              label: "Leads",
+                              color: "hsl(var(--primary))",
+                            },
+                            valor: {
+                              label: "Cotações (R$)",
+                              color: "hsl(var(--muted-foreground))",
+                            },
+                          }}
+                          className="h-[500px] w-full"
+                        >
+                          <BarChart
+                            data={barData}
+                            margin={{
+                              top: 20,
+                              right: 30,
+                              left: 20,
+                              bottom: 60,
+                            }}
+                          >
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis
+                              dataKey="name"
+                              angle={-45}
+                              textAnchor="end"
+                              height={80}
+                              interval={0}
+                              fontSize={12}
+                            />
+                            <YAxis yAxisId="left" />
+                            <YAxis yAxisId="right" orientation="right" />
+                            <ChartTooltip
+                              content={
+                                <ChartTooltipContent
+                                  formatter={(value, name) => (
+                                    <>
+                                      <span className="text-muted-foreground">
+                                        {name}
+                                      </span>
+                                      <span className="font-mono font-medium tabular-nums text-foreground ml-2">
+                                        {typeof value === "number" &&
+                                        name === "Cotações (R$)"
+                                          ? value.toLocaleString("pt-BR", {
+                                              minimumFractionDigits: 2,
+                                            })
+                                          : Number(value).toLocaleString()}
+                                      </span>
+                                    </>
+                                  )}
+                                />
+                              }
+                            />
+                            <Legend />
+                            <Bar
+                              yAxisId="left"
+                              dataKey="total"
+                              name="Leads"
+                              fill="var(--color-total)"
+                              onClick={(data) => {
+                                if (
+                                  !data ||
+                                  typeof (data as any).payload?.id_vendedor !==
+                                    "number"
+                                )
+                                  return;
+                                const api = convertFiltersToAPI(currentFilters);
+                                setSelectedVendorId(
+                                  (data as any).payload.id_vendedor
+                                );
+                                setStatusSelected(null);
+                                applyGridFilters(api);
+                                (async () => {
+                                  const s =
+                                    await leadsService.getTotaisStatusPorVendedor(
+                                      (data as any).payload.id_vendedor,
+                                      { ...api, transferido: true }
+                                    );
+                                  setStatusTotais(s.totais_por_situacao || []);
+                                })();
+                              }}
+                            />
+                            <Bar
+                              yAxisId="right"
+                              dataKey="valor"
+                              name="Cotações (R$)"
+                              fill="var(--color-valor)"
+                            />
+                          </BarChart>
+                        </ChartContainer>
+                      </div>
+                    </TabsContent>
+
+                    <TabsContent value="status" className="mt-0">
+                      <div className="p-4 rounded-lg border border-border bg-card shadow">
+                        <h3 className="text-sm font-semibold mb-3">
+                          Distribuição por status
+                        </h3>
+                        <ChartContainer
+                          config={{
+                            value: {
+                              label: "Leads",
+                              color: "hsl(var(--primary))",
+                            },
+                          }}
+                          className="h-[500px] w-full"
+                        >
+                          <PieChart>
+                            <ChartTooltip content={<ChartTooltipContent />} />
+                            <Legend />
+                            <Pie
+                              data={pieData}
+                              dataKey="value"
+                              nameKey="name"
+                              outerRadius={140}
+                              label
+                            >
+                              {pieData.map((_, idx) => (
+                                <Cell
+                                  key={idx}
+                                  fill={`hsl(${(idx * 57) % 360}, 70%, 55%)`}
+                                />
+                              ))}
+                            </Pie>
+                          </PieChart>
+                        </ChartContainer>
+                      </div>
+                    </TabsContent>
+                  </div>
+                </div>
+              </Tabs>
             </div>
           </>
         )}
