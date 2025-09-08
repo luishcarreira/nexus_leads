@@ -4,6 +4,8 @@ services:
     container_name: nexus_leads
     ports:
       - "3006:8085"
+    env_file:
+      - .env
     networks:
       - nexusnet
 
