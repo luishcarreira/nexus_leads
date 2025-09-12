@@ -33,6 +33,9 @@ import {
 } from "recharts";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { leadsService } from "@/services/LeadsService";
+import { clientsService } from "@/services/ClientsService";
+import { useClients } from "@/hooks/use-clients";
+import { useClientsVendedores } from "@/hooks/use-clients-vendedores";
 
 type UIFilters = {
   creationDateRange?: { from?: Date; to?: Date } | undefined;
@@ -82,25 +85,28 @@ const Clientes: React.FC = () => {
   const [statusSelected, setStatusSelected] = React.useState<string | null>(
     null
   );
-  // Estado local para grid de convertidos (transferidos)
-  const [convertedLeads, setConvertedLeads] = React.useState<any[]>([]);
-  const [convertedTotal, setConvertedTotal] = React.useState(0);
-  const [convertedCurrentPage, setConvertedCurrentPage] = React.useState(1);
-  const [convertedTotalPages, setConvertedTotalPages] = React.useState(1);
-  const [convertedLoading, setConvertedLoading] = React.useState(false);
-  const convertedItemsPerPage = 25;
-  const lastConvertedFiltersRef = React.useRef<ILeadsFilters>({});
-  const [vendedoresTotais, setVendedoresTotais] = React.useState<
-    Array<{
-      id_vendedor: number;
-      vendedor: string;
-      total: number;
-      valor_cotacoes_abertas?: number;
-    }>
-  >([]);
-  const [statusTotais, setStatusTotais] = React.useState<
-    Array<{ situacao: string; total: number; valor_cotacoes_abertas?: number }>
-  >([]);
+
+  // Hooks específicos para clientes
+  const {
+    clients: convertedLeads,
+    total: convertedTotal,
+    currentPage: convertedCurrentPage,
+    totalPages: convertedTotalPages,
+    loading: convertedLoading,
+    fetchClients,
+    setPage: setConvertedPage,
+    lastFilters: lastClientFilters,
+  } = useClients(25);
+
+  const {
+    vendedores: vendedoresTotais,
+    statusVendedor: statusTotais,
+    loading: vendedoresLoading,
+    fetchVendedores,
+    fetchStatusPorVendedor,
+    lastFilters: lastVendedoresFilters,
+  } = useClientsVendedores();
+
   const isAdmin = user?.tipo === "admin";
 
   const {
@@ -122,53 +128,6 @@ const Clientes: React.FC = () => {
     fetchDetalhesNaoTransferidos,
   } = useLeadsTotais();
 
-  // Buscar convertidos via endpoint geral (mantém campos como id_cliente)
-  const fetchConvertedLeads = React.useCallback(
-    async (filters: ILeadsFilters = {}) => {
-      try {
-        setConvertedLoading(true);
-        const page = filters.pagina ?? 1;
-        const limite = filters.limite ?? convertedItemsPerPage;
-        const response = await leadsService.getLeads({
-          ...filters,
-          pagina: page,
-          limite,
-          somente_leads_convertidos: true,
-        });
-
-        // Confiar no backend para retornar apenas convertidos e o total correto
-        setConvertedLeads(response.data || []);
-        setConvertedTotal(response.total ?? 0);
-        setConvertedCurrentPage(page);
-        setConvertedTotalPages(
-          Math.max(1, Math.ceil(((response.total ?? 0) as number) / limite))
-        );
-        lastConvertedFiltersRef.current = {
-          ...filters,
-          somente_leads_convertidos: true,
-        };
-      } finally {
-        setConvertedLoading(false);
-      }
-    },
-    []
-  );
-
-  const applyGridFilters = React.useCallback(
-    (base: ILeadsFilters, overrides?: Partial<ILeadsFilters>) => {
-      const merged: ILeadsFilters = { ...base, ...overrides };
-      if (selectedVendorId) merged.id_vendedor = selectedVendorId;
-      if (statusSelected) merged.situacao = statusSelected;
-      // Buscar apenas convertidos na grid de Clientes
-      fetchConvertedLeads({
-        ...merged,
-        pagina: 1,
-        limite: convertedItemsPerPage,
-      });
-    },
-    [selectedVendorId, statusSelected, fetchConvertedLeads]
-  );
-
   const handleFiltersChange = React.useCallback(
     async (newFilters: UIFilters) => {
       const api = convertFiltersToAPI(newFilters);
@@ -176,22 +135,18 @@ const Clientes: React.FC = () => {
       // Reset seleções quando filtros mudam
       setSelectedVendorId(null);
       setStatusSelected(null);
-      setStatusTotais([]);
 
       await Promise.all([
-        (async () => applyGridFilters(api))(),
-        (async () => fetchTotais(api))(),
-        (async () => {
-          const res = await leadsService.getVendedoresTotais({
-            ...api,
-            transferido: true,
-          });
-          setVendedoresTotais(res.totais_por_vendedor || []);
-        })(),
+        // Buscar clientes com novos filtros
+        fetchClients(api),
+        // Buscar totais gerais
+        fetchTotais(api),
+        // Buscar vendedores de clientes
+        fetchVendedores(api),
       ]);
       setCurrentFilters(newFilters);
     },
-    [applyGridFilters, fetchTotais]
+    [fetchClients, fetchTotais, fetchVendedores]
   );
 
   React.useEffect(() => {
@@ -206,15 +161,9 @@ const Clientes: React.FC = () => {
     const initializeData = async () => {
       try {
         await Promise.all([
-          applyGridFilters(api),
+          fetchClients(api),
           fetchTotais(api),
-          (async () => {
-            const res = await leadsService.getVendedoresTotais({
-              ...api,
-              transferido: true,
-            });
-            setVendedoresTotais(res.totais_por_vendedor || []);
-          })(),
+          fetchVendedores(api),
         ]);
         setCurrentFilters(defaultFilters);
       } catch (error) {
@@ -223,7 +172,7 @@ const Clientes: React.FC = () => {
     };
 
     initializeData();
-  }, [applyGridFilters, fetchTotais]);
+  }, [fetchClients, fetchTotais, fetchVendedores]);
 
   const [initialLoading, setInitialLoading] = React.useState(true);
   React.useEffect(() => {
@@ -233,10 +182,28 @@ const Clientes: React.FC = () => {
   // Sincronizar filtros quando selectedVendorId ou statusSelected mudam
   React.useEffect(() => {
     if (currentFilters && Object.keys(currentFilters).length > 0) {
-      const api = convertFiltersToAPI(currentFilters);
-      applyGridFilters(api);
+      // Usar os últimos filtros efetivamente enviados à API para preservar datas
+      const base = lastClientFilters;
+      const api =
+        base && Object.keys(base).length > 0
+          ? base
+          : convertFiltersToAPI(currentFilters);
+
+      // Aplicar filtros diretamente sem usar fetchClients para evitar loop
+      const merged = { ...api };
+      if (selectedVendorId && !merged.hasOwnProperty("id_vendedor")) {
+        merged.id_vendedor = selectedVendorId;
+      }
+      if (statusSelected && !merged.hasOwnProperty("situacao")) {
+        merged.situacao = statusSelected;
+      }
+
+      fetchClients({
+        ...merged,
+        pagina: 1,
+      });
     }
-  }, [selectedVendorId, statusSelected, currentFilters, applyGridFilters]);
+  }, [selectedVendorId, statusSelected, currentFilters, fetchClients]);
 
   // Charts data
   const barData = React.useMemo(() => {
@@ -413,7 +380,11 @@ const Clientes: React.FC = () => {
                                 )
                                   return;
 
-                                const api = convertFiltersToAPI(currentFilters);
+                                const base = lastClientFilters;
+                                const api =
+                                  base && Object.keys(base).length > 0
+                                    ? base
+                                    : convertFiltersToAPI(currentFilters);
                                 const vendorId = (data as any).payload
                                   .id_vendedor;
 
@@ -421,33 +392,24 @@ const Clientes: React.FC = () => {
                                 if (selectedVendorId === vendorId) {
                                   setSelectedVendorId(null);
                                   setStatusSelected(null);
-                                  setStatusTotais([]);
-                                  applyGridFilters(api);
+                                  fetchClients({
+                                    ...api,
+                                    id_vendedor: undefined,
+                                    situacao: undefined,
+                                    pagina: 1,
+                                  });
                                 } else {
                                   // Seleciona o vendedor
                                   setSelectedVendorId(vendorId);
                                   setStatusSelected(null);
-                                  setStatusTotais([]);
-                                  applyGridFilters(api);
+                                  fetchClients({
+                                    ...api,
+                                    id_vendedor: vendorId,
+                                    pagina: 1,
+                                  });
 
                                   // Buscar drill-down por status
-                                  (async () => {
-                                    try {
-                                      const s =
-                                        await leadsService.getTotaisStatusPorVendedor(
-                                          vendorId,
-                                          { ...api, transferido: true }
-                                        );
-                                      setStatusTotais(
-                                        s.totais_por_situacao || []
-                                      );
-                                    } catch (error) {
-                                      console.error(
-                                        "Erro ao buscar status do vendedor:",
-                                        error
-                                      );
-                                    }
-                                  })();
+                                  fetchStatusPorVendedor(vendorId, api);
                                 }
                               }}
                             />
@@ -514,37 +476,34 @@ const Clientes: React.FC = () => {
                         : ""
                     }`}
                     onClick={() => {
-                      const api = convertFiltersToAPI(currentFilters);
+                      const base = lastClientFilters;
+                      const api =
+                        base && Object.keys(base).length > 0
+                          ? base
+                          : convertFiltersToAPI(currentFilters);
 
                       // Se já está selecionado, deseleciona
                       if (selectedVendorId === v.id_vendedor) {
                         setSelectedVendorId(null);
                         setStatusSelected(null);
-                        setStatusTotais([]);
-                        applyGridFilters(api);
+                        fetchClients({
+                          ...api,
+                          id_vendedor: undefined,
+                          situacao: undefined,
+                          pagina: 1,
+                        });
                       } else {
                         // Seleciona o vendedor
                         setSelectedVendorId(v.id_vendedor);
                         setStatusSelected(null);
-                        setStatusTotais([]);
-                        applyGridFilters(api);
+                        fetchClients({
+                          ...api,
+                          id_vendedor: v.id_vendedor,
+                          pagina: 1,
+                        });
 
                         // Buscar drill-down por status
-                        (async () => {
-                          try {
-                            const s =
-                              await leadsService.getTotaisStatusPorVendedor(
-                                v.id_vendedor,
-                                { ...api, transferido: true }
-                              );
-                            setStatusTotais(s.totais_por_situacao || []);
-                          } catch (error) {
-                            console.error(
-                              "Erro ao buscar status do vendedor:",
-                              error
-                            );
-                          }
-                        })();
+                        fetchStatusPorVendedor(v.id_vendedor, api);
                       }
                     }}
                   >
@@ -583,9 +542,17 @@ const Clientes: React.FC = () => {
                         onClick={() => {
                           setSelectedVendorId(null);
                           setStatusSelected(null);
-                          setStatusTotais([]);
-                          const api = convertFiltersToAPI(currentFilters);
-                          applyGridFilters(api, {});
+                          const base = lastClientFilters;
+                          const api =
+                            base && Object.keys(base).length > 0
+                              ? base
+                              : convertFiltersToAPI(currentFilters);
+                          fetchClients({
+                            ...api,
+                            id_vendedor: undefined,
+                            situacao: undefined,
+                            pagina: 1,
+                          });
                         }}
                       >
                         Vendedores
@@ -604,11 +571,16 @@ const Clientes: React.FC = () => {
                             {statusSelected}
                             <button
                               onClick={() => {
-                                const api = convertFiltersToAPI(currentFilters);
+                                const base = lastClientFilters;
+                                const api =
+                                  base && Object.keys(base).length > 0
+                                    ? base
+                                    : convertFiltersToAPI(currentFilters);
                                 setStatusSelected(null);
-                                applyGridFilters({
+                                fetchClients({
                                   ...api,
                                   situacao: undefined,
+                                  pagina: 1,
                                 });
                               }}
                               className="ml-1 text-xs opacity-70 hover:opacity-100"
@@ -626,9 +598,17 @@ const Clientes: React.FC = () => {
                       onClick={() => {
                         setSelectedVendorId(null);
                         setStatusSelected(null);
-                        setStatusTotais([]);
-                        const api = convertFiltersToAPI(currentFilters);
-                        applyGridFilters(api, {});
+                        const base = lastClientFilters;
+                        const api =
+                          base && Object.keys(base).length > 0
+                            ? base
+                            : convertFiltersToAPI(currentFilters);
+                        fetchClients({
+                          ...api,
+                          id_vendedor: undefined,
+                          situacao: undefined,
+                          pagina: 1,
+                        });
                       }}
                     >
                       Voltar
@@ -664,7 +644,11 @@ const Clientes: React.FC = () => {
                       statusSelected === null ? "ring-2 ring-primary" : ""
                     }`}
                     onClick={() => {
-                      const api = convertFiltersToAPI(currentFilters);
+                      const base = lastClientFilters;
+                      const api =
+                        base && Object.keys(base).length > 0
+                          ? base
+                          : convertFiltersToAPI(currentFilters);
 
                       // Se já está selecionado (null), não faz nada
                       if (statusSelected === null) {
@@ -673,7 +657,11 @@ const Clientes: React.FC = () => {
 
                       // Deseleciona o status
                       setStatusSelected(null);
-                      applyGridFilters({ ...api, situacao: undefined });
+                      fetchClients({
+                        ...api,
+                        situacao: undefined,
+                        pagina: 1,
+                      });
                     }}
                   >
                     <CardHeader className="pb-3">
@@ -698,16 +686,29 @@ const Clientes: React.FC = () => {
                             : ""
                         }`}
                         onClick={() => {
-                          const api = convertFiltersToAPI(currentFilters);
+                          const base = lastClientFilters;
+                          const api =
+                            base && Object.keys(base).length > 0
+                              ? base
+                              : convertFiltersToAPI(currentFilters);
 
                           // Se já está selecionado, deseleciona
                           if (statusSelected === situacao) {
                             setStatusSelected(null);
-                            applyGridFilters({ ...api, situacao: undefined });
+                            fetchClients({
+                              ...api,
+                              situacao: undefined,
+                              pagina: 1,
+                            });
                           } else {
                             // Seleciona o status
                             setStatusSelected(situacao);
-                            applyGridFilters({ ...api, situacao });
+                            fetchClients({
+                              ...api,
+                              situacao,
+                              id_vendedor: selectedVendorId || undefined,
+                              pagina: 1,
+                            });
                           }
                         }}
                       >
@@ -743,29 +744,21 @@ const Clientes: React.FC = () => {
             status: statusSelected,
           }}
           onPageChange={(page) => {
-            setConvertedCurrentPage(page);
-            const last = lastConvertedFiltersRef.current || {};
-            fetchConvertedLeads({
-              ...last,
-              pagina: page,
-              limite: convertedItemsPerPage,
-            });
+            setConvertedPage(page);
           }}
           onLeadCreated={() => {
             const api = convertFiltersToAPI(currentFilters);
-            fetchConvertedLeads({
+            fetchClients({
               ...api,
               pagina: 1,
-              limite: convertedItemsPerPage,
             });
             fetchTotais(api);
           }}
           onDataChanged={() => {
             const api = convertFiltersToAPI(currentFilters);
-            fetchConvertedLeads({
+            fetchClients({
               ...api,
               pagina: convertedCurrentPage,
-              limite: convertedItemsPerPage,
             });
             fetchTotais(api);
           }}
