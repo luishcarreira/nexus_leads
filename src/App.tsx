@@ -35,73 +35,85 @@ const App = () => {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider defaultTheme="system" storageKey="nexus-leads-theme">
+      <ThemeProvider defaultTheme="light" storageKey="nexus-leads-theme">
         <AuthProvider>
           <TooltipProvider>
             <Toaster />
             <Sonner />
             <BrowserRouter>
-              <Layout>
-                <Routes>
-                  {/* Public Routes */}
-                  <Route path="/login" element={<Login />} />
+              <Routes>
+                {/* Public Routes */}
+                <Route path="/login" element={<Login />} />
 
-                  {/* Protected Routes */}
-                  <Route
-                    path="/"
-                    element={<Navigate to="/dashboard" replace />}
-                  />
-                  <Route
-                    path="/dashboard"
-                    element={
+                {/* Protected Routes */}
+                <Route
+                  path="/"
+                  element={<Navigate to="/dashboard" replace />}
+                />
+                <Route
+                  path="/dashboard"
+                  element={
+                    <Layout sidebar={true}>
                       <ProtectedRoute>
                         <Dashboard />
                       </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/leads"
-                    element={
+                    </Layout>
+                  }
+                />
+                <Route
+                  path="/leads"
+                  element={
+                    <Layout sidebar={true}>
                       <ProtectedRoute>
                         <Index />
                       </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/users"
-                    element={
+                    </Layout>
+                  }
+                />
+                <Route
+                  path="/users"
+                  element={
+                    <Layout sidebar={true}>
                       <ProtectedRoute>
                         <Users />
                       </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/pipeline"
-                    element={
+                    </Layout>
+                  }
+                />
+                <Route
+                  path="/pipeline"
+                  element={
+                    <Layout sidebar={true}>
                       <ProtectedRoute>
                         <Pipeline />
                       </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/clientes"
-                    element={
+                    </Layout>
+                  }
+                />
+                <Route
+                  path="/clientes"
+                  element={
+                    <Layout sidebar={false}>
                       <ProtectedRoute>
                         <Clientes />
                       </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/relatorios/motivos-perda"
-                    element={
+                    </Layout>
+                  }
+                />
+                <Route
+                  path="/relatorios/motivos-perda"
+                  element={
+                    <Layout sidebar={true}>
                       <ProtectedRoute>
                         <RelatorioMotivosPerda />
                       </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/settings"
-                    element={
+                    </Layout>
+                  }
+                />
+                <Route
+                  path="/settings"
+                  element={
+                    <Layout sidebar={true}>
                       <ProtectedRoute>
                         <div className="flex-1 space-y-8 p-8">
                           <div>
@@ -114,13 +126,20 @@ const App = () => {
                           </div>
                         </div>
                       </ProtectedRoute>
-                    }
-                  />
+                    </Layout>
+                  }
+                />
 
-                  {/* Catch-all route */}
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </Layout>
+                {/* Catch-all route */}
+                <Route
+                  path="*"
+                  element={
+                    <Layout sidebar={true}>
+                      <NotFound />
+                    </Layout>
+                  }
+                />
+              </Routes>
             </BrowserRouter>
           </TooltipProvider>
         </AuthProvider>

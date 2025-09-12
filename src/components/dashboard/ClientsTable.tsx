@@ -9,21 +9,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Card } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -35,29 +21,14 @@ import {
 import { Input } from "@/components/ui/input";
 import {
   MoreHorizontal,
-  Plus,
-  Users,
-  UserCheck,
-  MessageSquare,
-  Edit,
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
-  Square,
   Search,
   Eye,
   Target,
-  FileText,
   ChevronLeft,
   ChevronRight,
-  Building2,
-  Phone,
-  Mail,
-  MapPin,
-  Calendar,
-  DollarSign,
-  TrendingUp,
-  User,
   ShoppingCart,
   Receipt,
   Activity,
@@ -65,15 +36,17 @@ import {
   UserCheck2,
   Contact,
   MessageCircle,
+  MessageSquare,
   ClipboardList,
 } from "lucide-react";
 import { ILead } from "@/services/interfaces/ILead";
 import { useDropdowns } from "@/hooks/use-dropdowns";
-import { CreateLeadModal, CriarLeadRapidoData } from "./CreateLeadModal";
+// import { CreateLeadModal, CriarLeadRapidoData } from "./CreateLeadModal";
 import { UpdateLeadStatusModal } from "./UpdateLeadStatusModal";
 import { LeadAtividadesModal } from "./LeadAtividadesModal";
 import { ConvertLeadToClientModal } from "./ConvertLeadToClientModal";
 import { LeadDetailsModal } from "./LeadDetailsModal";
+import { PedidosClienteModal } from "./PedidosClienteModal";
 import { useToast } from "@/hooks/use-toast";
 import { leadsService } from "@/services/LeadsService";
 
@@ -87,6 +60,10 @@ interface ClientsTableProps {
   onPageChange?: (page: number) => void;
   onLeadCreated?: () => void;
   onDataChanged?: () => void;
+  currentFilters?: {
+    vendorId?: number | null;
+    status?: string | null;
+  };
 }
 
 type SortDirection = "asc" | "desc" | null;
@@ -101,6 +78,7 @@ export const ClientsTable: React.FC<ClientsTableProps> = ({
   onPageChange,
   onLeadCreated,
   onDataChanged,
+  currentFilters,
 }) => {
   const { toast } = useToast();
   const {
@@ -118,19 +96,13 @@ export const ClientsTable: React.FC<ClientsTableProps> = ({
   const [sortDirection, setSortDirection] = useState<SortDirection>(null);
   const [selectedLead, setSelectedLead] = useState<ILead | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isPedidosModalOpen, setIsPedidosModalOpen] = useState(false);
+  const [clientePedidosContext, setClientePedidosContext] = useState<{
+    idCliente: number | null;
+    nome: string | null;
+  }>({ idCliente: null, nome: null });
 
-  // Estados para seleção múltipla e ações em lote
-  const [selectedLeads, setSelectedLeads] = useState<Set<number>>(new Set());
-  const [isBatchActionModalOpen, setIsBatchActionModalOpen] = useState(false);
-  const [batchAction, setBatchAction] = useState<string>("");
-  const [selectedConsultor, setSelectedConsultor] = useState<number | null>(
-    null
-  );
-  const [selectedVendedor, setSelectedVendedor] = useState<number | null>(null);
-
-  // Estados para criação de lead
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [isCreatingLead, setIsCreatingLead] = useState(false);
+  // Removidos: seleção em lote e criação rápida de lead
 
   // Estados para atualização de status
   const [isUpdateStatusModalOpen, setIsUpdateStatusModalOpen] = useState(false);
@@ -294,16 +266,16 @@ export const ClientsTable: React.FC<ClientsTableProps> = ({
         setSelectedLeadForAtividades(lead);
         setIsAtividadesModalOpen(true);
         break;
-      case "include_chatguru":
-        handleIncludeInChatguru(lead);
-        break;
       case "convert_to_client":
         setSelectedLeadForConversion(lead);
         setIsConvertToClientModalOpen(true);
         break;
       case "pedidos_venda":
-        // Implementar visualização de pedidos de venda
-        console.log("Visualizar pedidos de venda para:", lead.nome);
+        setClientePedidosContext({
+          idCliente: lead.id_cliente || null,
+          nome: lead.nome,
+        });
+        setIsPedidosModalOpen(true);
         break;
       case "notas_fiscais":
         // Implementar visualização de notas fiscais
@@ -322,8 +294,36 @@ export const ClientsTable: React.FC<ClientsTableProps> = ({
         console.log("Visualizar contatos para:", lead.nome);
         break;
       case "chamar_zap":
-        // Implementar chamada no WhatsApp
-        console.log("Chamar no WhatsApp:", lead.nome);
+        // Abrir conversa no WhatsApp com o telefone do lead
+        try {
+          const raw = (lead.telefone_tratado || lead.telefone || "").toString();
+          const digits = raw.replace(/\D/g, "");
+
+          if (!digits) {
+            toast({
+              title: "Telefone não disponível",
+              description:
+                "Este cliente não possui telefone válido para WhatsApp.",
+              variant: "destructive",
+            });
+            return;
+          }
+
+          let phone = digits.replace(/^0+/, "");
+          if (!phone.startsWith("55") && phone.length <= 11) {
+            phone = `55${phone}`;
+          }
+
+          const text = encodeURIComponent(`Olá ${lead.nome}, tudo bem?`);
+          const url = `https://wa.me/${phone}?text=${text}`;
+          window.open(url, "_blank", "noopener,noreferrer");
+        } catch (e) {
+          toast({
+            title: "Não foi possível abrir o WhatsApp",
+            description: "Tente novamente ou verifique o número do cliente.",
+            variant: "destructive",
+          });
+        }
         break;
       case "cotacoes_abertas":
         // Implementar visualização de cotações em aberto
@@ -333,155 +333,12 @@ export const ClientsTable: React.FC<ClientsTableProps> = ({
     }
   };
 
-  const handleIncludeInChatguru = async (lead: ILead) => {
-    try {
-      setIncludingChatguruId(lead.id);
-      await leadsService.incluirLeadNoChatguru(lead.id);
-
-      toast({
-        title: "Incluído no Chatguru",
-        description: `O cliente "${lead.nome}" foi incluído com sucesso no Chatguru.`,
-        variant: "default",
-      });
-
-      if (onDataChanged) {
-        onDataChanged();
-      }
-    } catch (error) {
-      toast({
-        title: "Erro ao incluir no Chatguru",
-        description:
-          "Não foi possível incluir o cliente no Chatguru. Tente novamente.",
-        variant: "destructive",
-      });
-    } finally {
-      setIncludingChatguruId(null);
-    }
-  };
-
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setSelectedLead(null);
   };
 
-  // Funções para seleção múltipla
-  const handleSelectLead = (leadId: number) => {
-    const newSelected = new Set(selectedLeads);
-    if (newSelected.has(leadId)) {
-      newSelected.delete(leadId);
-    } else {
-      newSelected.add(leadId);
-    }
-    setSelectedLeads(newSelected);
-  };
-
-  const handleSelectAll = () => {
-    if (selectedLeads.size === sortedLeads.length) {
-      setSelectedLeads(new Set());
-    } else {
-      setSelectedLeads(new Set(sortedLeads.map((lead) => lead.id)));
-    }
-  };
-
-  const handleBatchAction = (action: string) => {
-    setBatchAction(action);
-    setIsBatchActionModalOpen(true);
-  };
-
-  const handleExecuteBatchAction = async () => {
-    if (selectedLeads.size === 0) return;
-
-    try {
-      switch (batchAction) {
-        case "vincular_consultor":
-          if (selectedConsultor) {
-            const promises = Array.from(selectedLeads).map((leadId) =>
-              leadsService.vincularConsultorAoLead(leadId, selectedConsultor)
-            );
-            await Promise.all(promises);
-
-            const consultorNome =
-              consultores.find((c) => c.codigo === selectedConsultor)?.nome ||
-              "Consultor";
-            toast({
-              title: "Consultor vinculado com sucesso!",
-              description: `${selectedLeads.size} cliente(s) vinculado(s) ao consultor ${consultorNome}.`,
-              variant: "default",
-            });
-          }
-          break;
-        case "vincular_vendedor":
-          if (selectedVendedor) {
-            const promises = Array.from(selectedLeads).map((leadId) =>
-              leadsService.vincularVendedorAoLead(leadId, selectedVendedor)
-            );
-            await Promise.all(promises);
-
-            const vendedorNome =
-              vendedores.find((v) => v.codigo === selectedVendedor)?.nome ||
-              "Vendedor";
-            toast({
-              title: "Vendedor vinculado com sucesso!",
-              description: `${selectedLeads.size} cliente(s) vinculado(s) ao vendedor ${vendedorNome}.`,
-              variant: "default",
-            });
-          }
-          break;
-        default:
-      }
-
-      setSelectedLeads(new Set());
-      setBatchAction("");
-      setSelectedConsultor(null);
-      setSelectedVendedor(null);
-      setIsBatchActionModalOpen(false);
-
-      if (onDataChanged) {
-        onDataChanged();
-      }
-    } catch (error) {
-      toast({
-        title: "Erro na ação em lote",
-        description: "Não foi possível executar a ação. Tente novamente.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleCloseBatchModal = () => {
-    setIsBatchActionModalOpen(false);
-    setBatchAction("");
-    setSelectedConsultor(null);
-    setSelectedVendedor(null);
-  };
-
-  const handleCreateLead = async (leadData: CriarLeadRapidoData) => {
-    setIsCreatingLead(true);
-    try {
-      const response = await leadsService.criarLeadRapido(leadData);
-
-      setIsCreateModalOpen(false);
-      setIsCreatingLead(false);
-
-      if (onLeadCreated) {
-        onLeadCreated();
-      }
-
-      toast({
-        title: "Lead criado com sucesso!",
-        description: `O lead "${leadData.nome}" foi criado e adicionado à lista.`,
-        variant: "default",
-      });
-    } catch (error) {
-      setIsCreatingLead(false);
-
-      toast({
-        title: "Erro ao criar lead",
-        description: "Não foi possível criar o lead. Tente novamente.",
-        variant: "destructive",
-      });
-    }
-  };
+  // Removidos: seleção em lote e criação rápida de lead
 
   const handleUpdateLeadStatus = async (
     idEtapa: number,
@@ -599,62 +456,28 @@ export const ClientsTable: React.FC<ClientsTableProps> = ({
             <h3 className="text-2xl font-bold text-foreground mb-2">{title}</h3>
             <p className="text-sm text-muted-foreground">
               {total ?? 0} clientes encontrados
+              {currentFilters?.vendorId && (
+                <span className="ml-2 text-blue-700 dark:text-blue-300 font-semibold bg-blue-100 dark:bg-blue-900/30 px-2 py-1 rounded-full">
+                  Vendedor filtrado
+                </span>
+              )}
+              {currentFilters?.status && (
+                <span className="ml-2 text-purple-700 dark:text-purple-300 font-semibold bg-purple-100 dark:bg-purple-900/30 px-2 py-1 rounded-full">
+                  Status: {currentFilters.status}
+                </span>
+              )}
               {debouncedSearchTerm && (
                 <span className="ml-2 text-green-700 dark:text-green-300 font-semibold bg-green-100 dark:bg-green-900/30 px-2 py-1 rounded-full">
                   Filtro local: "{debouncedSearchTerm}" ({sortedLeads.length}{" "}
                   exibidos)
                 </span>
               )}
-              {selectedLeads.size > 0 && (
-                <span className="ml-2 text-primary font-semibold bg-primary/10 px-2 py-1 rounded-full">
-                  {selectedLeads.size} selecionado(s)
-                </span>
-              )}
+              {/* Indicador de seleção em lote removido */}
             </p>
           </div>
 
           <div className="flex items-center gap-3">
-            {/* Botão Novo Lead */}
-            <Button
-              onClick={() => setIsCreateModalOpen(true)}
-              className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg"
-            >
-              <Plus className="h-4 w-4" />
-              Novo Lead
-            </Button>
-
-            {/* Ações em lote */}
-            {selectedLeads.size > 0 && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className="flex items-center gap-2 border-input text-primary hover:bg-accent hover:border-ring"
-                  >
-                    <Users className="h-4 w-4" />
-                    Ações em Lote ({selectedLeads.size})
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuLabel>Ações Disponíveis</DropdownMenuLabel>
-                  <DropdownMenuItem
-                    onClick={() => handleBatchAction("vincular_consultor")}
-                    className="cursor-pointer"
-                  >
-                    <Users className="mr-2 h-4 w-4" />
-                    Vincular Consultor
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    onClick={() => setSelectedLeads(new Set())}
-                    className="cursor-pointer text-destructive"
-                  >
-                    <Square className="mr-2 h-4 w-4" />
-                    Limpar Seleção
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
+            {/* Botões removidos: Novo Lead e Ações em lote */}
 
             <div className="relative">
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-primary" />
@@ -679,19 +502,9 @@ export const ClientsTable: React.FC<ClientsTableProps> = ({
         {/* Tabela */}
         <div className="rounded-lg border border-border overflow-hidden shadow-sm">
           <Table>
-            <TableHeader>
-              <TableRow className="bg-primary text-primary-foreground">
-                <TableHead className="w-12 text-white">
-                  <Checkbox
-                    checked={
-                      selectedLeads.size === sortedLeads.length &&
-                      sortedLeads.length > 0
-                    }
-                    onCheckedChange={handleSelectAll}
-                    aria-label="Selecionar todos"
-                    className="text-white border-white"
-                  />
-                </TableHead>
+            <TableHeader className="bg-primary">
+              <TableRow>
+                {/* Coluna de seleção removida */}
                 <TableHead className="text-white font-semibold">
                   Ações
                 </TableHead>
@@ -699,9 +512,8 @@ export const ClientsTable: React.FC<ClientsTableProps> = ({
                   <Button
                     variant="ghost"
                     onClick={() => handleSort("nome")}
-                    className="h-auto p-0 font-semibold text-primary-foreground hover:bg-primary/90"
+                    className="h-auto p-0 font-semibold text-white hover:bg-transparent focus-visible:ring-0"
                   >
-                    <User className="mr-2 h-4 w-4" />
                     Nome
                     {getSortIcon("nome")}
                   </Button>
@@ -710,24 +522,21 @@ export const ClientsTable: React.FC<ClientsTableProps> = ({
                   <Button
                     variant="ghost"
                     onClick={() => handleSort("email")}
-                    className="h-auto p-0 font-semibold text-primary-foreground hover:bg-primary/90"
+                    className="h-auto p-0 font-semibold text-white hover:bg-transparent focus-visible:ring-0"
                   >
-                    <Mail className="mr-2 h-4 w-4" />
                     Email
                     {getSortIcon("email")}
                   </Button>
                 </TableHead>
                 <TableHead className="text-white font-semibold">
-                  <Phone className="mr-2 h-4 w-4" />
                   Telefone
                 </TableHead>
                 <TableHead className="text-white">
                   <Button
                     variant="ghost"
                     onClick={() => handleSort("origem")}
-                    className="h-auto p-0 font-semibold text-primary-foreground hover:bg-primary/90"
+                    className="h-auto p-0 font-semibold text-white hover:bg-transparent focus-visible:ring-0"
                   >
-                    <Target className="mr-2 h-4 w-4" />
                     Origem
                     {getSortIcon("origem")}
                   </Button>
@@ -736,43 +545,35 @@ export const ClientsTable: React.FC<ClientsTableProps> = ({
                   <Button
                     variant="ghost"
                     onClick={() => handleSort("situacao")}
-                    className="h-auto p-0 font-semibold text-primary-foreground hover:bg-primary/90"
+                    className="h-auto p-0 font-semibold text-white hover:bg-transparent focus-visible:ring-0"
                   >
-                    <TrendingUp className="mr-2 h-4 w-4" />
                     Situação
                     {getSortIcon("situacao")}
                   </Button>
                 </TableHead>
                 <TableHead className="text-white font-semibold">
-                  <Building2 className="mr-2 h-4 w-4" />
                   Procura Para
                 </TableHead>
                 <TableHead className="text-white font-semibold">
-                  <Users className="mr-2 h-4 w-4" />
                   Consultor
                 </TableHead>
                 <TableHead className="text-white">
                   <Button
                     variant="ghost"
                     onClick={() => handleSort("vendedor")}
-                    className="h-auto p-0 font-semibold text-primary-foreground hover:bg-primary/90"
+                    className="h-auto p-0 font-semibold text-white hover:bg-transparent focus-visible:ring-0"
                   >
-                    <UserCheck className="mr-2 h-4 w-4" />
                     Vendedor
                     {getSortIcon("vendedor")}
                   </Button>
                 </TableHead>
-                <TableHead className="text-white font-semibold">
-                  <MapPin className="mr-2 h-4 w-4" />
-                  UF
-                </TableHead>
+                <TableHead className="text-white font-semibold">UF</TableHead>
                 <TableHead className="text-white">
                   <Button
                     variant="ghost"
                     onClick={() => handleSort("etapa")}
-                    className="h-auto p-0 font-semibold text-primary-foreground hover:bg-primary/90"
+                    className="h-auto p-0 font-semibold text-white hover:bg-transparent focus-visible:ring-0"
                   >
-                    <Target className="mr-2 h-4 w-4" />
                     Etapa
                     {getSortIcon("etapa")}
                   </Button>
@@ -781,9 +582,8 @@ export const ClientsTable: React.FC<ClientsTableProps> = ({
                   <Button
                     variant="ghost"
                     onClick={() => handleSort("id_cliente")}
-                    className="h-auto p-0 font-semibold text-primary-foreground hover:bg-primary/90"
+                    className="h-auto p-0 font-semibold text-white hover:bg-transparent focus-visible:ring-0"
                   >
-                    <DollarSign className="mr-2 h-4 w-4" />
                     ID Cliente
                     {getSortIcon("id_cliente")}
                   </Button>
@@ -792,9 +592,8 @@ export const ClientsTable: React.FC<ClientsTableProps> = ({
                   <Button
                     variant="ghost"
                     onClick={() => handleSort("data_criacao")}
-                    className="h-auto p-0 font-semibold text-primary-foreground hover:bg-primary/90"
+                    className="h-auto p-0 font-semibold text-white hover:bg-transparent focus-visible:ring-0"
                   >
-                    <Calendar className="mr-2 h-4 w-4" />
                     Data Criação
                     {getSortIcon("data_criacao")}
                   </Button>
@@ -809,13 +608,7 @@ export const ClientsTable: React.FC<ClientsTableProps> = ({
                     index % 2 === 0 ? "bg-background" : "bg-muted/30"
                   }`}
                 >
-                  <TableCell>
-                    <Checkbox
-                      checked={selectedLeads.has(lead.id)}
-                      onCheckedChange={() => handleSelectLead(lead.id)}
-                      aria-label={`Selecionar ${lead.nome}`}
-                    />
-                  </TableCell>
+                  {/* Coluna de seleção removida */}
                   <TableCell>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -908,21 +701,11 @@ export const ClientsTable: React.FC<ClientsTableProps> = ({
 
                         {/* Ações de comunicação */}
                         <DropdownMenuItem
-                          onClick={() => handleAction("include_chatguru", lead)}
-                          className="cursor-pointer"
-                          disabled={includingChatguruId === lead.id}
-                        >
-                          <MessageSquare className="mr-2 h-4 w-4" />
-                          {includingChatguruId === lead.id
-                            ? "Incluindo no Chatguru..."
-                            : "Incluir no Chatguru"}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
                           onClick={() => handleAction("chamar_zap", lead)}
                           className="cursor-pointer"
                         >
                           <MessageCircle className="mr-2 h-4 w-4" />
-                          Chamar no Zap
+                          Chamar no WhatsApp
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -1051,138 +834,15 @@ export const ClientsTable: React.FC<ClientsTableProps> = ({
         onClose={handleCloseModal}
       />
 
-      {/* Modal de Ações em Lote */}
-      <Dialog
-        open={isBatchActionModalOpen}
-        onOpenChange={handleCloseBatchModal}
-      >
-        <DialogContent className="max-w-md border-0 shadow-2xl">
-          <DialogHeader className="bg-primary text-primary-foreground rounded-t-lg -m-6 mb-6 p-6">
-            <DialogTitle className="flex items-center gap-3 text-xl font-semibold">
-              <div className="p-2 bg-white/20 rounded-lg">
-                <Users className="h-6 w-6" />
-              </div>
-              {batchAction === "vincular_consultor" && "Vincular Consultor"}
-              {batchAction === "vincular_vendedor" && "Vincular Vendedor"}
-            </DialogTitle>
-            <p className="text-muted-foreground text-sm mt-2">
-              {batchAction === "vincular_consultor" &&
-                "Vincular consultor aos clientes selecionados"}
-              {batchAction === "vincular_vendedor" &&
-                "Vincular vendedor aos clientes selecionados"}
-            </p>
-          </DialogHeader>
-
-          <div className="space-y-6">
-            <div className="p-4 bg-accent border border-border rounded-lg">
-              <p className="text-sm text-foreground font-medium">
-                {batchAction === "vincular_consultor" &&
-                  `Vincular consultor a ${selectedLeads.size} cliente(s) selecionado(s)`}
-                {batchAction === "vincular_vendedor" &&
-                  `Vincular vendedor a ${selectedLeads.size} cliente(s) selecionado(s)`}
-              </p>
-            </div>
-
-            {batchAction === "vincular_consultor" && (
-              <div className="space-y-3">
-                <label className="text-sm font-semibold text-foreground">
-                  Selecionar Consultor
-                </label>
-                <Select
-                  value={selectedConsultor?.toString() || ""}
-                  onValueChange={(value) =>
-                    setSelectedConsultor(parseInt(value))
-                  }
-                >
-                  <SelectTrigger className="border-input focus:border-ring focus:ring-ring">
-                    <SelectValue placeholder="Escolha um consultor" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {dropdownsLoading ? (
-                      <SelectItem value="" disabled>
-                        Carregando consultores...
-                      </SelectItem>
-                    ) : (
-                      consultores.map((consultor) => (
-                        <SelectItem
-                          key={consultor.codigo}
-                          value={consultor.codigo.toString()}
-                        >
-                          {consultor.nome}
-                        </SelectItem>
-                      ))
-                    )}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-
-            {batchAction === "vincular_vendedor" && (
-              <div className="space-y-3">
-                <label className="text-sm font-semibold text-foreground">
-                  Selecionar Vendedor
-                </label>
-                <Select
-                  value={selectedVendedor?.toString() || ""}
-                  onValueChange={(value) =>
-                    setSelectedVendedor(parseInt(value))
-                  }
-                >
-                  <SelectTrigger className="border-input focus:border-ring focus:ring-ring">
-                    <SelectValue placeholder="Escolha um vendedor" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {dropdownsLoading ? (
-                      <SelectItem value="" disabled>
-                        Carregando vendedores...
-                      </SelectItem>
-                    ) : (
-                      vendedores.map((vendedor) => (
-                        <SelectItem
-                          key={vendedor.codigo}
-                          value={vendedor.codigo.toString()}
-                        >
-                          {vendedor.nome}
-                        </SelectItem>
-                      ))
-                    )}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-
-            <div className="flex justify-end gap-3 pt-6 border-t border-border">
-              <Button
-                variant="outline"
-                onClick={handleCloseBatchModal}
-                className="border-input text-primary hover:bg-accent hover:border-ring"
-              >
-                Cancelar
-              </Button>
-              <Button
-                onClick={handleExecuteBatchAction}
-                disabled={
-                  dropdownsLoading ||
-                  (batchAction === "vincular_consultor" &&
-                    !selectedConsultor) ||
-                  (batchAction === "vincular_vendedor" && !selectedVendedor)
-                }
-                className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg"
-              >
-                Confirmar
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Modal de Criação de Lead */}
-      <CreateLeadModal
-        isOpen={isCreateModalOpen}
-        onClose={() => setIsCreateModalOpen(false)}
-        onSubmit={handleCreateLead}
-        loading={isCreatingLead}
+      {/* Modal de Pedidos por Cliente */}
+      <PedidosClienteModal
+        idCliente={clientePedidosContext.idCliente || undefined}
+        clienteNome={clientePedidosContext.nome || undefined}
+        isOpen={isPedidosModalOpen}
+        onClose={() => setIsPedidosModalOpen(false)}
       />
+
+      {/* Removidos: Modal de Ações em Lote e Criação de Lead */}
 
       {/* Modal de Atualização de Status */}
       <UpdateLeadStatusModal

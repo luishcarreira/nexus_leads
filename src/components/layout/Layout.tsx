@@ -9,9 +9,14 @@ import { useAuth } from "@/contexts/AuthContext";
 interface LayoutProps {
   children: React.ReactNode;
   className?: string;
+  sidebar?: boolean;
 }
 
-export const Layout: React.FC<LayoutProps> = ({ children, className }) => {
+export const Layout: React.FC<LayoutProps> = ({
+  children,
+  className,
+  sidebar = true,
+}) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { isAuthenticated } = useAuth();
 
@@ -23,42 +28,50 @@ export const Layout: React.FC<LayoutProps> = ({ children, className }) => {
   return (
     <div className="flex h-screen bg-background">
       {/* Desktop Sidebar */}
-      <div className="hidden md:flex md:w-64 md:flex-col">
-        <Sidebar />
-      </div>
+      {sidebar && (
+        <div className="hidden md:flex md:w-64 md:flex-col">
+          <Sidebar />
+        </div>
+      )}
 
       {/* Mobile Sidebar */}
-      <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
-        <SheetContent side="left" className="p-0 w-64">
-          <Sidebar />
-        </SheetContent>
-      </Sheet>
+      {sidebar && (
+        <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
+          <SheetContent side="left" className="p-0 w-64">
+            <Sidebar />
+          </SheetContent>
+        </Sheet>
+      )}
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className={cn("flex-1 flex flex-col min-w-0", !sidebar && "w-full")}>
         {/* Mobile Header */}
-        <header className="md:hidden h-16 border-b border-border bg-background flex items-center justify-between px-4">
-          <div className="flex items-center space-x-4">
-            <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
-              <SheetTrigger asChild>
-                <Button variant="outline" size="icon">
-                  <Menu className="h-4 w-4" />
-                </Button>
-              </SheetTrigger>
-            </Sheet>
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                <span className="text-primary-foreground font-bold text-sm">
-                  N
-                </span>
+        {sidebar && (
+          <header className="md:hidden h-16 border-b border-border bg-background flex items-center justify-between px-4">
+            <div className="flex items-center space-x-4">
+              <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
+                <SheetTrigger asChild>
+                  <Button variant="outline" size="icon">
+                    <Menu className="h-4 w-4" />
+                  </Button>
+                </SheetTrigger>
+              </Sheet>
+              <div className="flex items-center space-x-2">
+                <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                  <span className="text-primary-foreground font-bold text-sm">
+                    N
+                  </span>
+                </div>
+                <h1 className="font-semibold text-lg">Nexus Leads</h1>
               </div>
-              <h1 className="font-semibold text-lg">Nexus Leads</h1>
             </div>
-          </div>
-        </header>
+          </header>
+        )}
 
         {/* Page Content */}
-        <main className={cn("flex-1 overflow-auto", className)}>
+        <main
+          className={cn("flex-1 overflow-auto", className, !sidebar && "p-0")}
+        >
           {children}
         </main>
       </div>

@@ -379,6 +379,41 @@ export class LeadsService {
     return httpClient.get("/leads/nao-transferidos", { params: filters });
   }
 
+  // Pedidos por cliente
+  async getPedidos(
+    params: {
+      empresa?: number;
+      filial?: number;
+      id_cliente?: number;
+      inicio?: string; // YYYY-MM-DD
+      fim?: string; // YYYY-MM-DD
+      codigo?: number;
+      pagina?: number;
+      limite?: number;
+    } = {}
+  ): Promise<{
+    data: Array<{
+      pedido: number;
+      status?: string | null;
+      status_fiscal?: string | null;
+      data_cadastro?: string | null;
+      tipo_operacao?: string | null;
+      numero_ecommerce?: string | null;
+      total_pedido?: number | null;
+      libera_comercial?: string | null;
+      pedido_liberado_controle_documento?: string | null;
+      liberacao_financeiro?: string | null;
+      empresa?: number | null;
+      vendedor?: string | null;
+      id_tipo_operacao?: number | null;
+      filial?: number | null;
+      id_cliente?: number | null;
+    }>;
+    total: number;
+  }> {
+    return httpClient.get("/pedidos", { params });
+  }
+
   // Incluir lead no Chatguru
   async incluirLeadNoChatguru(idLead: number): Promise<any> {
     try {

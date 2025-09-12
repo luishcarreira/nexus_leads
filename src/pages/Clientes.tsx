@@ -136,23 +136,12 @@ const Clientes: React.FC = () => {
           somente_leads_convertidos: true,
         });
 
-        console.log("response.data", response.data);
-        setConvertedLeads(response.data.filter((l) => !!l.id_cliente) || []);
-        setConvertedTotal(
-          response.data.filter((l) => !!l.id_cliente).length || 0
-        );
-        console.log(
-          "response.data.filter((l) => !!l.id_cliente).length",
-          response.data.filter((l) => !!l.id_cliente).length
-        );
+        // Confiar no backend para retornar apenas convertidos e o total correto
+        setConvertedLeads(response.data || []);
+        setConvertedTotal(response.total ?? 0);
         setConvertedCurrentPage(page);
         setConvertedTotalPages(
-          Math.max(
-            1,
-            Math.ceil(
-              (response.data.filter((l) => !!l.id_cliente).length || 0) / limite
-            )
-          )
+          Math.max(1, Math.ceil(((response.total ?? 0) as number) / limite))
         );
         lastConvertedFiltersRef.current = {
           ...filters,
@@ -167,7 +156,7 @@ const Clientes: React.FC = () => {
 
   const applyGridFilters = React.useCallback(
     (base: ILeadsFilters, overrides?: Partial<ILeadsFilters>) => {
-      const merged: ILeadsFilters = { ...base };
+      const merged: ILeadsFilters = { ...base, ...overrides };
       if (selectedVendorId) merged.id_vendedor = selectedVendorId;
       if (statusSelected) merged.situacao = statusSelected;
       // Buscar apenas convertidos na grid de Clientes
@@ -183,6 +172,12 @@ const Clientes: React.FC = () => {
   const handleFiltersChange = React.useCallback(
     async (newFilters: UIFilters) => {
       const api = convertFiltersToAPI(newFilters);
+
+      // Reset seleções quando filtros mudam
+      setSelectedVendorId(null);
+      setStatusSelected(null);
+      setStatusTotais([]);
+
       await Promise.all([
         (async () => applyGridFilters(api))(),
         (async () => fetchTotais(api))(),
@@ -196,7 +191,7 @@ const Clientes: React.FC = () => {
       ]);
       setCurrentFilters(newFilters);
     },
-    [applyGridFilters, fetchTotais, isAdmin]
+    [applyGridFilters, fetchTotais]
   );
 
   React.useEffect(() => {
@@ -208,26 +203,43 @@ const Clientes: React.FC = () => {
     };
     const api = convertFiltersToAPI(defaultFilters);
 
-    (async () => {
-      await applyGridFilters(api);
-      await fetchTotais(api);
-      const res = await leadsService.getVendedoresTotais({
-        ...api,
-        transferido: true,
-      });
-      setVendedoresTotais(res.totais_por_vendedor || []);
-      setCurrentFilters(defaultFilters);
-    })();
-  }, []);
+    const initializeData = async () => {
+      try {
+        await Promise.all([
+          applyGridFilters(api),
+          fetchTotais(api),
+          (async () => {
+            const res = await leadsService.getVendedoresTotais({
+              ...api,
+              transferido: true,
+            });
+            setVendedoresTotais(res.totais_por_vendedor || []);
+          })(),
+        ]);
+        setCurrentFilters(defaultFilters);
+      } catch (error) {
+        console.error("Erro ao inicializar dados:", error);
+      }
+    };
+
+    initializeData();
+  }, [applyGridFilters, fetchTotais]);
 
   const [initialLoading, setInitialLoading] = React.useState(true);
   React.useEffect(() => {
     if (!convertedLoading && !totaisLoading) setInitialLoading(false);
   }, [convertedLoading, totaisLoading]);
 
+  // Sincronizar filtros quando selectedVendorId ou statusSelected mudam
+  React.useEffect(() => {
+    if (currentFilters && Object.keys(currentFilters).length > 0) {
+      const api = convertFiltersToAPI(currentFilters);
+      applyGridFilters(api);
+    }
+  }, [selectedVendorId, statusSelected, currentFilters, applyGridFilters]);
+
   // Charts data
   const barData = React.useMemo(() => {
-    console.log(vendedoresTotais);
     return vendedoresTotais.map((v) => ({
       id_vendedor: v.id_vendedor,
       name: v.vendedor,
@@ -272,7 +284,7 @@ const Clientes: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background p-6">
-      <div className="container mx-auto">
+      <div className="container mx-auto max-w-none">
         <FilterSection
           onFiltersChange={handleFiltersChange}
           currentFilters={currentFilters}
@@ -304,26 +316,236 @@ const Clientes: React.FC = () => {
 
         {showTotais && (
           <>
+            {/* Gráficos em Tabs */}
+            <div className="mb-6">
+              <Tabs defaultValue="vendedores" className="w-full">
+                <div className="flex flex-col lg:flex-row gap-4">
+                  {/* Tabs laterais */}
+                  <TabsList className="flex flex-col lg:flex-col h-auto lg:w-40 bg-muted/50 p-1">
+                    <TabsTrigger
+                      value="vendedores"
+                      className="w-full justify-start data-[state=active]:bg-background data-[state=active]:shadow-sm"
+                    >
+                      <BarChart3 className="h-4 w-4 mr-2" />
+                      Por Vendedor
+                    </TabsTrigger>
+                    <TabsTrigger
+                      value="status"
+                      className="w-full justify-start data-[state=active]:bg-background data-[state=active]:shadow-sm"
+                    >
+                      <PieChartIcon className="h-4 w-4 mr-2" />
+                      Por Status
+                    </TabsTrigger>
+                  </TabsList>
+
+                  {/* Conteúdo das tabs */}
+                  <div className="flex-1">
+                    <TabsContent value="vendedores" className="mt-0">
+                      <div className="p-4 rounded-lg border border-border bg-card shadow">
+                        <h3 className="text-sm font-semibold mb-3">
+                          Total de leads por vendedor
+                        </h3>
+                        <ChartContainer
+                          config={{
+                            total: {
+                              label: "Leads",
+                              color: "hsl(var(--primary))",
+                            },
+                            valor: {
+                              label: "Cotações (R$)",
+                              color: "hsl(var(--muted-foreground))",
+                            },
+                          }}
+                          className="h-[500px] w-full"
+                        >
+                          <BarChart
+                            data={barData}
+                            margin={{
+                              top: 20,
+                              right: 30,
+                              left: 20,
+                              bottom: 60,
+                            }}
+                          >
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis
+                              dataKey="name"
+                              angle={-45}
+                              textAnchor="end"
+                              height={80}
+                              interval={0}
+                              fontSize={12}
+                            />
+                            <YAxis yAxisId="left" />
+                            <YAxis yAxisId="right" orientation="right" />
+                            <ChartTooltip
+                              content={
+                                <ChartTooltipContent
+                                  formatter={(value, name) => (
+                                    <>
+                                      <span className="text-muted-foreground">
+                                        {name}
+                                      </span>
+                                      <span className="font-mono font-medium tabular-nums text-foreground ml-2">
+                                        {typeof value === "number" &&
+                                        name === "Cotações (R$)"
+                                          ? value.toLocaleString("pt-BR", {
+                                              minimumFractionDigits: 2,
+                                            })
+                                          : Number(value).toLocaleString()}
+                                      </span>
+                                    </>
+                                  )}
+                                />
+                              }
+                            />
+                            <Legend />
+                            <Bar
+                              yAxisId="left"
+                              dataKey="total"
+                              name="Leads"
+                              fill="var(--color-total)"
+                              onClick={(data) => {
+                                if (
+                                  !data ||
+                                  typeof (data as any).payload?.id_vendedor !==
+                                    "number"
+                                )
+                                  return;
+
+                                const api = convertFiltersToAPI(currentFilters);
+                                const vendorId = (data as any).payload
+                                  .id_vendedor;
+
+                                // Se já está selecionado, deseleciona
+                                if (selectedVendorId === vendorId) {
+                                  setSelectedVendorId(null);
+                                  setStatusSelected(null);
+                                  setStatusTotais([]);
+                                  applyGridFilters(api);
+                                } else {
+                                  // Seleciona o vendedor
+                                  setSelectedVendorId(vendorId);
+                                  setStatusSelected(null);
+                                  setStatusTotais([]);
+                                  applyGridFilters(api);
+
+                                  // Buscar drill-down por status
+                                  (async () => {
+                                    try {
+                                      const s =
+                                        await leadsService.getTotaisStatusPorVendedor(
+                                          vendorId,
+                                          { ...api, transferido: true }
+                                        );
+                                      setStatusTotais(
+                                        s.totais_por_situacao || []
+                                      );
+                                    } catch (error) {
+                                      console.error(
+                                        "Erro ao buscar status do vendedor:",
+                                        error
+                                      );
+                                    }
+                                  })();
+                                }
+                              }}
+                            />
+                            <Bar
+                              yAxisId="right"
+                              dataKey="valor"
+                              name="Cotações (R$)"
+                              fill="var(--color-valor)"
+                            />
+                          </BarChart>
+                        </ChartContainer>
+                      </div>
+                    </TabsContent>
+
+                    <TabsContent value="status" className="mt-0">
+                      <div className="p-4 rounded-lg border border-border bg-card shadow">
+                        <h3 className="text-sm font-semibold mb-3">
+                          Distribuição por status
+                        </h3>
+                        <ChartContainer
+                          config={{
+                            value: {
+                              label: "Leads",
+                              color: "hsl(var(--primary))",
+                            },
+                          }}
+                          className="h-[500px] w-full"
+                        >
+                          <PieChart>
+                            <ChartTooltip content={<ChartTooltipContent />} />
+                            <Legend />
+                            <Pie
+                              data={pieData}
+                              dataKey="value"
+                              nameKey="name"
+                              outerRadius={140}
+                              label
+                            >
+                              {pieData.map((_, idx) => (
+                                <Cell
+                                  key={idx}
+                                  fill={`hsl(${(idx * 57) % 360}, 70%, 55%)`}
+                                />
+                              ))}
+                            </Pie>
+                          </PieChart>
+                        </ChartContainer>
+                      </div>
+                    </TabsContent>
+                  </div>
+                </div>
+              </Tabs>
+            </div>
+
             {/* Cards de vendedores */}
             {!selectedVendorId && (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
                 {vendedoresTotais.map((v) => (
                   <Card
                     key={v.id_vendedor}
-                    className="border-0 shadow-lg hover:shadow-xl cursor-pointer"
+                    className={`border-0 shadow-lg hover:shadow-xl cursor-pointer transition-all ${
+                      selectedVendorId === v.id_vendedor
+                        ? "ring-2 ring-primary"
+                        : ""
+                    }`}
                     onClick={() => {
-                      setSelectedVendorId(v.id_vendedor);
-                      setStatusSelected(null);
                       const api = convertFiltersToAPI(currentFilters);
-                      applyGridFilters(api);
-                      // Buscar drill-down por status
-                      (async () => {
-                        const s = await leadsService.getTotaisStatusPorVendedor(
-                          v.id_vendedor,
-                          { ...api, transferido: true }
-                        );
-                        setStatusTotais(s.totais_por_situacao || []);
-                      })();
+
+                      // Se já está selecionado, deseleciona
+                      if (selectedVendorId === v.id_vendedor) {
+                        setSelectedVendorId(null);
+                        setStatusSelected(null);
+                        setStatusTotais([]);
+                        applyGridFilters(api);
+                      } else {
+                        // Seleciona o vendedor
+                        setSelectedVendorId(v.id_vendedor);
+                        setStatusSelected(null);
+                        setStatusTotais([]);
+                        applyGridFilters(api);
+
+                        // Buscar drill-down por status
+                        (async () => {
+                          try {
+                            const s =
+                              await leadsService.getTotaisStatusPorVendedor(
+                                v.id_vendedor,
+                                { ...api, transferido: true }
+                              );
+                            setStatusTotais(s.totais_por_situacao || []);
+                          } catch (error) {
+                            console.error(
+                              "Erro ao buscar status do vendedor:",
+                              error
+                            );
+                          }
+                        })();
+                      }
                     }}
                   >
                     <CardHeader className="pb-3">
@@ -443,6 +665,13 @@ const Clientes: React.FC = () => {
                     }`}
                     onClick={() => {
                       const api = convertFiltersToAPI(currentFilters);
+
+                      // Se já está selecionado (null), não faz nada
+                      if (statusSelected === null) {
+                        return;
+                      }
+
+                      // Deseleciona o status
                       setStatusSelected(null);
                       applyGridFilters({ ...api, situacao: undefined });
                     }}
@@ -469,15 +698,17 @@ const Clientes: React.FC = () => {
                             : ""
                         }`}
                         onClick={() => {
-                          const newStatus =
-                            statusSelected === situacao ? null : situacao;
-                          setStatusSelected(newStatus);
                           const api = convertFiltersToAPI(currentFilters);
-                          const filters: ILeadsFilters = {
-                            ...api,
-                            situacao: newStatus || undefined,
-                          };
-                          applyGridFilters(filters);
+
+                          // Se já está selecionado, deseleciona
+                          if (statusSelected === situacao) {
+                            setStatusSelected(null);
+                            applyGridFilters({ ...api, situacao: undefined });
+                          } else {
+                            // Seleciona o status
+                            setStatusSelected(situacao);
+                            applyGridFilters({ ...api, situacao });
+                          }
                         }}
                       >
                         <CardHeader className="pb-3">
@@ -489,14 +720,6 @@ const Clientes: React.FC = () => {
                           <div className="text-3xl font-bold">
                             {(total ?? 0).toLocaleString()}
                           </div>
-                          <div className="text-sm font-medium mt-1">
-                            R{"$ "}
-                            {(
-                              Number(valor_cotacoes_abertas ?? 0) / 100
-                            ).toLocaleString("pt-BR", {
-                              minimumFractionDigits: 2,
-                            })}
-                          </div>
                           <p className="text-xs text-muted-foreground">Leads</p>
                         </CardContent>
                       </Card>
@@ -505,169 +728,6 @@ const Clientes: React.FC = () => {
                 </div>
               </>
             )}
-
-            {/* Gráficos em Tabs */}
-            <div className="mb-6">
-              <Tabs defaultValue="vendedores" className="w-full">
-                <div className="flex flex-col lg:flex-row gap-4">
-                  {/* Tabs laterais */}
-                  <TabsList className="flex flex-col lg:flex-col h-auto lg:w-40 bg-muted/50 p-1">
-                    <TabsTrigger
-                      value="vendedores"
-                      className="w-full justify-start data-[state=active]:bg-background data-[state=active]:shadow-sm"
-                    >
-                      <BarChart3 className="h-4 w-4 mr-2" />
-                      Por Vendedor
-                    </TabsTrigger>
-                    <TabsTrigger
-                      value="status"
-                      className="w-full justify-start data-[state=active]:bg-background data-[state=active]:shadow-sm"
-                    >
-                      <PieChartIcon className="h-4 w-4 mr-2" />
-                      Por Status
-                    </TabsTrigger>
-                  </TabsList>
-
-                  {/* Conteúdo das tabs */}
-                  <div className="flex-1">
-                    <TabsContent value="vendedores" className="mt-0">
-                      <div className="p-4 rounded-lg border border-border bg-card shadow">
-                        <h3 className="text-sm font-semibold mb-3">
-                          Total de leads por vendedor
-                        </h3>
-                        <ChartContainer
-                          config={{
-                            total: {
-                              label: "Leads",
-                              color: "hsl(var(--primary))",
-                            },
-                            valor: {
-                              label: "Cotações (R$)",
-                              color: "hsl(var(--muted-foreground))",
-                            },
-                          }}
-                          className="h-[500px] w-full"
-                        >
-                          <BarChart
-                            data={barData}
-                            margin={{
-                              top: 20,
-                              right: 30,
-                              left: 20,
-                              bottom: 60,
-                            }}
-                          >
-                            <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis
-                              dataKey="name"
-                              angle={-45}
-                              textAnchor="end"
-                              height={80}
-                              interval={0}
-                              fontSize={12}
-                            />
-                            <YAxis yAxisId="left" />
-                            <YAxis yAxisId="right" orientation="right" />
-                            <ChartTooltip
-                              content={
-                                <ChartTooltipContent
-                                  formatter={(value, name) => (
-                                    <>
-                                      <span className="text-muted-foreground">
-                                        {name}
-                                      </span>
-                                      <span className="font-mono font-medium tabular-nums text-foreground ml-2">
-                                        {typeof value === "number" &&
-                                        name === "Cotações (R$)"
-                                          ? value.toLocaleString("pt-BR", {
-                                              minimumFractionDigits: 2,
-                                            })
-                                          : Number(value).toLocaleString()}
-                                      </span>
-                                    </>
-                                  )}
-                                />
-                              }
-                            />
-                            <Legend />
-                            <Bar
-                              yAxisId="left"
-                              dataKey="total"
-                              name="Leads"
-                              fill="var(--color-total)"
-                              onClick={(data) => {
-                                if (
-                                  !data ||
-                                  typeof (data as any).payload?.id_vendedor !==
-                                    "number"
-                                )
-                                  return;
-                                const api = convertFiltersToAPI(currentFilters);
-                                setSelectedVendorId(
-                                  (data as any).payload.id_vendedor
-                                );
-                                setStatusSelected(null);
-                                applyGridFilters(api);
-                                (async () => {
-                                  const s =
-                                    await leadsService.getTotaisStatusPorVendedor(
-                                      (data as any).payload.id_vendedor,
-                                      { ...api, transferido: true }
-                                    );
-                                  setStatusTotais(s.totais_por_situacao || []);
-                                })();
-                              }}
-                            />
-                            <Bar
-                              yAxisId="right"
-                              dataKey="valor"
-                              name="Cotações (R$)"
-                              fill="var(--color-valor)"
-                            />
-                          </BarChart>
-                        </ChartContainer>
-                      </div>
-                    </TabsContent>
-
-                    <TabsContent value="status" className="mt-0">
-                      <div className="p-4 rounded-lg border border-border bg-card shadow">
-                        <h3 className="text-sm font-semibold mb-3">
-                          Distribuição por status
-                        </h3>
-                        <ChartContainer
-                          config={{
-                            value: {
-                              label: "Leads",
-                              color: "hsl(var(--primary))",
-                            },
-                          }}
-                          className="h-[500px] w-full"
-                        >
-                          <PieChart>
-                            <ChartTooltip content={<ChartTooltipContent />} />
-                            <Legend />
-                            <Pie
-                              data={pieData}
-                              dataKey="value"
-                              nameKey="name"
-                              outerRadius={140}
-                              label
-                            >
-                              {pieData.map((_, idx) => (
-                                <Cell
-                                  key={idx}
-                                  fill={`hsl(${(idx * 57) % 360}, 70%, 55%)`}
-                                />
-                              ))}
-                            </Pie>
-                          </PieChart>
-                        </ChartContainer>
-                      </div>
-                    </TabsContent>
-                  </div>
-                </div>
-              </Tabs>
-            </div>
           </>
         )}
 
@@ -678,6 +738,10 @@ const Clientes: React.FC = () => {
           currentPage={convertedCurrentPage}
           totalPages={convertedTotalPages}
           loading={convertedLoading}
+          currentFilters={{
+            vendorId: selectedVendorId,
+            status: statusSelected,
+          }}
           onPageChange={(page) => {
             setConvertedCurrentPage(page);
             const last = lastConvertedFiltersRef.current || {};
