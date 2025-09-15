@@ -4,6 +4,8 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useNavigation } from "@/hooks/use-navigation";
+import { useAuth } from "@/hooks/use-auth";
+import { UserInfo } from "@/components/auth/UserInfo";
 import {
   ChevronDown,
   ChevronRight,
@@ -213,7 +215,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ className }) => {
       </ScrollArea>
 
       {/* Footer */}
-      <div className="p-4 border-t border-border">
+      <div className="p-4 border-t border-border space-y-4">
+        {/* User Info */}
+        <UserInfo variant="sidebar" showLogout={true} />
+
+        {/* Copyright */}
         <div className="text-xs text-muted-foreground text-center">
           <p>© 2024 Nexus Leads</p>
           <p className="mt-1">v1.0.0</p>
