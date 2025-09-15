@@ -205,5 +205,5 @@ class AuthService {
 }
 
 export const authService = new AuthService(
-  import.meta.env.VITE_API_URL || "https://api.nexusvitally.com.br"
+  import.meta.env.VITE_API_URL || "https://apihomol.nexusvitally.com.br"
 );
