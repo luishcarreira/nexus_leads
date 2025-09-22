@@ -41,7 +41,6 @@ import {
   Check,
   ChevronsUpDown,
 } from "lucide-react";
-import { httpClient } from "@/services/httpClient";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -52,6 +51,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { leadsService } from "@/services/LeadsService";
 
 interface ConvertLeadToClientData {
   tipo: "fisica" | "juridica";
