@@ -54,6 +54,8 @@ export const FilterSection: React.FC<FilterProps> = ({
   const [filters, setFilters] = useState({
     origem: "",
     tipoProcura: "",
+    campanha: "",
+    anuncio: "",
     nome: "",
     email: "",
     telefone: "",
@@ -162,6 +164,8 @@ export const FilterSection: React.FC<FilterProps> = ({
     setFilters({
       origem: currentFilters.origem || "",
       tipoProcura: currentFilters.tipoProcura || "",
+      campanha: (currentFilters as any).campanha || "",
+      anuncio: (currentFilters as any).anuncio || "",
       nome: currentFilters.nome || "",
       email: currentFilters.email || "",
       telefone: currentFilters.telefone || "",
@@ -537,6 +541,8 @@ export const FilterSection: React.FC<FilterProps> = ({
                   ufs: [],
                   origem: "",
                   tipoProcura: "",
+                  campanha: "",
+                  anuncio: "",
                   nome: "",
                   email: "",
                   telefone: "",
@@ -555,6 +561,8 @@ export const FilterSection: React.FC<FilterProps> = ({
                 setFilters({
                   origem: "",
                   tipoProcura: "",
+                  campanha: "",
+                  anuncio: "",
                   nome: "",
                   email: "",
                   telefone: "",
@@ -607,6 +615,30 @@ export const FilterSection: React.FC<FilterProps> = ({
                   </SelectContent>
                 </Select>
               )}
+            </div>
+            <div className="space-y-2">
+              <Label className="text-blue-800 font-medium">Campanha</Label>
+              <Input
+                placeholder="Buscar por campanha"
+                value={filters.campanha}
+                onChange={(e) =>
+                  setFilters((prev) => ({ ...prev, campanha: e.target.value }))
+                }
+                className="border-blue-200 focus:border-blue-500 focus:ring-blue-500"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-blue-800 font-medium">
+                Conjunto/Anúncio
+              </Label>
+              <Input
+                placeholder="Buscar por conjunto/anúncio"
+                value={filters.anuncio}
+                onChange={(e) =>
+                  setFilters((prev) => ({ ...prev, anuncio: e.target.value }))
+                }
+                className="border-blue-200 focus:border-blue-500 focus:ring-blue-500"
+              />
             </div>
             <div className="space-y-2">
               <Label className="text-blue-800 font-medium">Nome</Label>

@@ -98,9 +98,17 @@ export const useLeadsTotais = (): UseLeadsTotaisReturn => {
       setCurrentFilters(mergedFilters);
 
       // Buscar dados de cada endpoint em paralelo (novos endpoints)
-      const [origensTotais, tiposTotais, transferidos] = await Promise.all([
+      const [
+        origensTotais,
+        tiposTotais,
+        campanhasTotais,
+        anunciosTotais,
+        transferidos,
+      ] = await Promise.all([
         httpClient.getOrigensTotais(mergedFilters),
         httpClient.getTiposProcuraTotais(mergedFilters),
+        httpClient.getCampanhasTotais(mergedFilters),
+        httpClient.getAnunciosTotais(mergedFilters),
         httpClient.getLeadsTotaisTransferidos({
           ...mergedFilters,
           transferido: null, // Buscar totais (transferidos + não transferidos)
@@ -131,6 +139,28 @@ export const useLeadsTotais = (): UseLeadsTotaisReturn => {
         total_por_tipo_procura: tiposTotais.map((t) => ({
           tipo_procura: t.tipo_procura,
           total: t.total,
+          leads: {
+            total: 0,
+            pagina: 1,
+            limite: 10,
+            total_paginas: 0,
+            dados: [],
+          },
+        })),
+        total_por_campanha: campanhasTotais.map((c) => ({
+          campanha: c.campanha,
+          total: c.total,
+          leads: {
+            total: 0,
+            pagina: 1,
+            limite: 10,
+            total_paginas: 0,
+            dados: [],
+          },
+        })),
+        total_por_anuncio: anunciosTotais.map((a) => ({
+          anuncio: a.anuncio,
+          total: a.total,
           leads: {
             total: 0,
             pagina: 1,

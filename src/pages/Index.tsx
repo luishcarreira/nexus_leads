@@ -20,6 +20,8 @@ interface UIFilters {
   etapas?: string[];
   origem?: string;
   tipoProcura?: string;
+  campanha?: string;
+  anuncio?: string;
   nome?: string;
   email?: string;
   telefone?: string;
@@ -99,6 +101,14 @@ const Index = () => {
     // Filtro por tipo de procura
     if (filters.tipoProcura) {
       apiFilters.tipo_procura = filters.tipoProcura;
+    }
+
+    // Filtros por campanha e anúncio
+    if (filters.campanha) {
+      apiFilters.campanha = filters.campanha;
+    }
+    if (filters.anuncio) {
+      apiFilters.anuncio = filters.anuncio;
     }
 
     // Filtro por nome

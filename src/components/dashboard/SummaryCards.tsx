@@ -10,12 +10,15 @@ import {
   Target,
   Clock,
   CheckCircle,
+  Layers,
 } from "lucide-react";
 import { LeadsTotaisDetailsModal } from "./LeadsTotaisDetailsModal";
 import { LeadsPorOrigemModal } from "./LeadsPorOrigemModal";
 import { LeadsPorTipoProcuraModal } from "./LeadsPorTipoProcuraModal";
 import { LeadsPorVendedorModal } from "./LeadsPorVendedorModal";
 import { LeadsNaoTransferidosPorSituacaoModal } from "./LeadsNaoTransferidosPorSituacaoModal";
+import { LeadsPorCampanhaModal } from "./LeadsPorCampanhaModal";
+import { LeadsPorAnuncioModal } from "./LeadsPorAnuncioModal";
 import {
   ILeadTotal,
   ILeadsTotaisDetalhados,
@@ -51,7 +54,13 @@ export const SummaryCards: React.FC<SummaryCardsProps> = ({
     title: string;
     total: number;
     leads: PaginacaoOutput<ILeadTotal>;
-    type: "origem" | "tipoProcura" | "transferidos" | "naoTransferidos";
+    type:
+      | "origem"
+      | "tipoProcura"
+      | "transferidos"
+      | "naoTransferidos"
+      | "campanhas"
+      | "anuncios";
     identifier?: string;
   }>({
     isOpen: false,
@@ -85,8 +94,25 @@ export const SummaryCards: React.FC<SummaryCardsProps> = ({
     isOpen: false,
   });
 
+  const [campanhaModalConfig, setCampanhaModalConfig] = useState<{
+    isOpen: boolean;
+  }>({
+    isOpen: false,
+  });
+  const [anuncioModalConfig, setAnuncioModalConfig] = useState<{
+    isOpen: boolean;
+  }>({
+    isOpen: false,
+  });
+
   const handleCardClick = (
-    type: "origem" | "tipoProcura" | "transferidos" | "naoTransferidos",
+    type:
+      | "origem"
+      | "tipoProcura"
+      | "transferidos"
+      | "naoTransferidos"
+      | "campanhas"
+      | "anuncios",
     title: string,
     identifier?: string
   ) => {
@@ -105,6 +131,18 @@ export const SummaryCards: React.FC<SummaryCardsProps> = ({
       setTipoProcuraModalConfig({
         isOpen: true,
       });
+      return;
+    }
+
+    // Campanhas
+    if (type === "campanhas") {
+      setCampanhaModalConfig({ isOpen: true });
+      return;
+    }
+
+    // Anúncios
+    if (type === "anuncios") {
+      setAnuncioModalConfig({ isOpen: true });
       return;
     }
 
@@ -282,6 +320,44 @@ export const SummaryCards: React.FC<SummaryCardsProps> = ({
       onClick: () =>
         handleCardClick("naoTransferidos", "Leads Não Transferidos"),
     },
+    {
+      title: "Campanhas",
+      value:
+        data?.total_por_campanha?.length > 0
+          ? data.total_por_campanha.reduce(
+              (sum, campanha) => sum + campanha.total,
+              0
+            )
+          : 0,
+      icon: Target,
+      description: "Totais por campanha",
+      gradient: "from-cyan-500 to-cyan-600",
+      iconBg: "bg-cyan-500/10",
+      iconColor: "text-cyan-600",
+      textColor: "text-cyan-700",
+      borderColor: "border-cyan-200",
+      shadowColor: "shadow-lg",
+      onClick: () => handleCardClick("campanhas", "Leads por Campanha"),
+    },
+    {
+      title: "Anúncios",
+      value:
+        data?.total_por_anuncio?.length > 0
+          ? data.total_por_anuncio.reduce(
+              (sum, anuncio) => sum + anuncio.total,
+              0
+            )
+          : 0,
+      icon: Layers,
+      description: "Totais por anúncio",
+      gradient: "from-amber-500 to-amber-600",
+      iconBg: "bg-amber-500/10",
+      iconColor: "text-amber-600",
+      textColor: "text-amber-700",
+      borderColor: "border-amber-200",
+      shadowColor: "shadow-lg",
+      onClick: () => handleCardClick("anuncios", "Leads por Anúncio"),
+    },
   ];
 
   return (
@@ -371,6 +447,22 @@ export const SummaryCards: React.FC<SummaryCardsProps> = ({
         isOpen={vendedorModalConfig.isOpen}
         onClose={() =>
           setVendedorModalConfig((prev) => ({ ...prev, isOpen: false }))
+        }
+        currentFilters={currentFilters}
+      />
+
+      <LeadsPorCampanhaModal
+        isOpen={campanhaModalConfig.isOpen}
+        onClose={() =>
+          setCampanhaModalConfig((prev) => ({ ...prev, isOpen: false }))
+        }
+        currentFilters={currentFilters}
+      />
+
+      <LeadsPorAnuncioModal
+        isOpen={anuncioModalConfig.isOpen}
+        onClose={() =>
+          setAnuncioModalConfig((prev) => ({ ...prev, isOpen: false }))
         }
         currentFilters={currentFilters}
       />
@@ -590,26 +682,7 @@ export const DetailedSummary: React.FC<{
         </Card>
       </div>
 
-      <LeadsTotaisDetailsModal
-        isOpen={detailsModalConfig.isOpen}
-        onClose={() =>
-          setDetailsModalConfig((prev) => ({ ...prev, isOpen: false }))
-        }
-        title={detailsModalConfig.title}
-        total={detailsModalConfig.total}
-        leads={detailsModalConfig.leads}
-        onPageChange={handlePageChange}
-        loading={loading}
-      />
-
-      <LeadsNaoTransferidosPorSituacaoModal
-        isOpen={naoTransferidosModalConfig.isOpen}
-        onClose={() =>
-          setNaoTransferidosModalConfig((prev) => ({ ...prev, isOpen: false }))
-        }
-        loading={loading}
-        currentFilters={currentFilters}
-      />
+      {/* Removed duplicate modals (already rendered above) */}
     </>
   );
 };

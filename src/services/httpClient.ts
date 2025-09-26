@@ -89,9 +89,10 @@ export class HttpClient {
     endpoint: string,
     options: RequestInit = {}
   ): Promise<T> {
-    const url = `${this.baseURL}${endpoint}${
-      endpoint.includes("?") ? "&" : "?"
-    }${this.defaultParams}`;
+    const suffix = this.defaultParams
+      ? `${endpoint.includes("?") ? "&" : "?"}${this.defaultParams}`
+      : "";
+    const url = `${this.baseURL}${endpoint}${suffix}`;
 
     const headers = {
       "Content-Type": "application/json",
@@ -444,6 +445,82 @@ export class HttpClient {
     );
   }
 
+  // Totais por campanha
+  async getCampanhasTotais(
+    filters: ILeadsFilters = {}
+  ): Promise<Array<{ campanha: string; total: number }>> {
+    const queryParams = this.buildQueryParams(filters);
+    const raw = await this.request<
+      Array<{ CAMPANHA?: string; campanha?: string; TOTAL: number }>
+    >(
+      `/leads/campanhas/totais${
+        queryParams.toString() ? `?${queryParams.toString()}` : ""
+      }`
+    );
+    return raw.map((item) => ({
+      campanha: (item as any).campanha ?? (item as any).CAMPANHA ?? "",
+      total: item.TOTAL,
+    }));
+  }
+
+  // Listar leads por campanha com filtros
+  async getLeadsPorCampanha(
+    campanha: string,
+    filters: ILeadsFilters = {}
+  ): Promise<{
+    total: number;
+    pagina: number;
+    limite: number;
+    total_paginas: number;
+    dados: ILead[] | any[];
+  }> {
+    const { campanha: _omit, ...rest } = filters;
+    const queryParams = this.buildQueryParams(rest);
+    return this.request(
+      `/leads/campanhas/${encodeURIComponent(campanha)}${
+        queryParams.toString() ? `?${queryParams.toString()}` : ""
+      }`
+    );
+  }
+
+  // Totais por anúncio (conjunto)
+  async getAnunciosTotais(
+    filters: ILeadsFilters = {}
+  ): Promise<Array<{ anuncio: string; total: number }>> {
+    const queryParams = this.buildQueryParams(filters);
+    const raw = await this.request<
+      Array<{ ANUNCIO?: string; anuncio?: string; TOTAL: number }>
+    >(
+      `/leads/anuncios/totais${
+        queryParams.toString() ? `?${queryParams.toString()}` : ""
+      }`
+    );
+    return raw.map((item) => ({
+      anuncio: (item as any).anuncio ?? (item as any).ANUNCIO ?? "",
+      total: item.TOTAL,
+    }));
+  }
+
+  // Listar leads por anúncio com filtros
+  async getLeadsPorAnuncio(
+    anuncio: string,
+    filters: ILeadsFilters = {}
+  ): Promise<{
+    total: number;
+    pagina: number;
+    limite: number;
+    total_paginas: number;
+    dados: ILead[] | any[];
+  }> {
+    const { anuncio: _omit, ...rest } = filters;
+    const queryParams = this.buildQueryParams(rest);
+    return this.request(
+      `/leads/anuncios/${encodeURIComponent(anuncio)}${
+        queryParams.toString() ? `?${queryParams.toString()}` : ""
+      }`
+    );
+  }
+
   async getLeadsTransferidos(filters: ILeadsFilters = {}): Promise<{
     total: number;
     pagina: number;
@@ -519,4 +596,5 @@ export class HttpClient {
 
 export const httpClient = new HttpClient(
   import.meta.env.VITE_API_URL || "https://api.nexusvitally.com.br"
+  // import.meta.env.VITE_API_URL || "http://localhost:8001"
 );

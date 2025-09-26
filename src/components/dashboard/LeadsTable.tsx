@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, {
+  useState,
+  useEffect,
+  useMemo,
+  useRef,
+  useLayoutEffect,
+} from "react";
 import {
   Table,
   TableBody,
@@ -115,6 +121,13 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
   );
   const [selectedVendedor, setSelectedVendedor] = useState<number | null>(null);
 
+  // Refs e estados para scrollbar horizontal superior sincronizada com a tabela
+  const topScrollRef = useRef<HTMLDivElement | null>(null);
+  const bottomScrollRef = useRef<HTMLDivElement | null>(null);
+  const tableInnerRef = useRef<HTMLDivElement | null>(null);
+  const isSyncingScrollRef = useRef(false);
+  const [contentWidth, setContentWidth] = useState<number>(0);
+
   // Estados para criação de lead
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isCreatingLead, setIsCreatingLead] = useState(false);
@@ -205,6 +218,74 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
       setSortDirection("asc");
     }
   };
+
+  // Sincronização das barras de rolagem horizontal (topo <-> tabela)
+  const handleTopScroll = () => {
+    if (!topScrollRef.current || !bottomScrollRef.current) return;
+    if (isSyncingScrollRef.current) return;
+    isSyncingScrollRef.current = true;
+    bottomScrollRef.current.scrollLeft = topScrollRef.current.scrollLeft;
+    isSyncingScrollRef.current = false;
+  };
+
+  const handleBottomScroll = () => {
+    if (!topScrollRef.current || !bottomScrollRef.current) return;
+    if (isSyncingScrollRef.current) return;
+    isSyncingScrollRef.current = true;
+    topScrollRef.current.scrollLeft = bottomScrollRef.current.scrollLeft;
+    isSyncingScrollRef.current = false;
+  };
+
+  // Ajuste dinâmico da largura do conteúdo para a barra superior
+  useLayoutEffect(() => {
+    const updateWidth = () => {
+      const tableWidth = tableInnerRef.current?.scrollWidth || 0;
+      const containerWidth = bottomScrollRef.current?.clientWidth || 0;
+      const finalWidth = Math.max(tableWidth, containerWidth);
+      setContentWidth(finalWidth);
+    };
+
+    // Medição após o próximo frame para garantir DOM atualizado
+    const rafMeasure = () => {
+      requestAnimationFrame(() => {
+        updateWidth();
+      });
+    };
+
+    rafMeasure();
+
+    // Observa mudanças de tamanho do conteúdo da tabela e do container inferior
+    let tableObserver: ResizeObserver | null = null;
+    let containerObserver: ResizeObserver | null = null;
+    if (typeof ResizeObserver !== "undefined") {
+      if (tableInnerRef.current) {
+        tableObserver = new ResizeObserver(() => {
+          updateWidth();
+        });
+        tableObserver.observe(tableInnerRef.current);
+      }
+      if (bottomScrollRef.current) {
+        containerObserver = new ResizeObserver(() => {
+          updateWidth();
+        });
+        containerObserver.observe(bottomScrollRef.current);
+      }
+    }
+
+    const onResize = () => updateWidth();
+    window.addEventListener("resize", onResize);
+    return () => {
+      window.removeEventListener("resize", onResize);
+      if (tableObserver) tableObserver.disconnect();
+      if (containerObserver) containerObserver.disconnect();
+    };
+  }, [leads, sortedLeads.length]);
+
+  // Garante sincronização inicial da posição do scroll
+  useEffect(() => {
+    if (!topScrollRef.current || !bottomScrollRef.current) return;
+    topScrollRef.current.scrollLeft = bottomScrollRef.current.scrollLeft;
+  }, [contentWidth, leads]);
 
   const getSortIcon = (column: keyof ILead) => {
     if (sortColumn !== column) return <ArrowUpDown className="ml-2 h-4 w-4" />;
@@ -633,243 +714,299 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
           </div>
         </div>
 
-        {/* Tabela */}
-        <div className="rounded-lg border border-blue-200 overflow-hidden shadow-sm">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-gradient-to-r from-blue-600 to-blue-700 text-white">
-                <TableHead className="w-12 text-white">
-                  <Checkbox
-                    checked={
-                      selectedLeads.size === sortedLeads.length &&
-                      sortedLeads.length > 0
-                    }
-                    onCheckedChange={handleSelectAll}
-                    aria-label="Selecionar todos"
-                    className="text-white border-white"
-                  />
-                </TableHead>
-                <TableHead className="text-white font-semibold">
-                  Ações
-                </TableHead>
-                <TableHead className="text-white">
-                  <Button
-                    variant="ghost"
-                    onClick={() => handleSort("nome")}
-                    className="h-auto p-0 font-semibold text-white hover:bg-blue-600"
-                  >
-                    Nome
-                    {getSortIcon("nome")}
-                  </Button>
-                </TableHead>
-                <TableHead className="text-white">
-                  <Button
-                    variant="ghost"
-                    onClick={() => handleSort("email")}
-                    className="h-auto p-0 font-semibold text-white hover:bg-blue-600"
-                  >
-                    Email
-                    {getSortIcon("email")}
-                  </Button>
-                </TableHead>
-                <TableHead className="text-white font-semibold">
-                  Telefone
-                </TableHead>
-                <TableHead className="text-white">
-                  <Button
-                    variant="ghost"
-                    onClick={() => handleSort("origem")}
-                    className="h-auto p-0 font-semibold text-white hover:bg-blue-600"
-                  >
-                    Origem
-                    {getSortIcon("origem")}
-                  </Button>
-                </TableHead>
-                <TableHead className="text-white">
-                  <Button
-                    variant="ghost"
-                    onClick={() => handleSort("situacao")}
-                    className="h-auto p-0 font-semibold text-white hover:bg-blue-600"
-                  >
-                    Situação
-                    {getSortIcon("situacao")}
-                  </Button>
-                </TableHead>
-                <TableHead className="text-white font-semibold">
-                  Procura Para
-                </TableHead>
-                <TableHead className="text-white font-semibold">
-                  Consultor
-                </TableHead>
-                <TableHead className="text-white">
-                  <Button
-                    variant="ghost"
-                    onClick={() => handleSort("vendedor")}
-                    className="h-auto p-0 font-semibold text-white hover:bg-blue-600"
-                  >
-                    Vendedor
-                    {getSortIcon("vendedor")}
-                  </Button>
-                </TableHead>
+        {/* Scroll horizontal no topo */}
+        <div className="mb-3">
+          <div
+            ref={topScrollRef}
+            className="h-6 overflow-x-auto overflow-y-hidden rounded border border-blue-200 bg-blue-50/30"
+            onScroll={handleTopScroll}
+          >
+            <div style={{ width: contentWidth }} />
+          </div>
+        </div>
 
-                <TableHead className="text-white font-semibold">UF</TableHead>
-                <TableHead className="text-white">
-                  <Button
-                    variant="ghost"
-                    onClick={() => handleSort("etapa")}
-                    className="h-auto p-0 font-semibold text-white hover:bg-blue-600"
-                  >
-                    Etapa
-                    {getSortIcon("etapa")}
-                  </Button>
-                </TableHead>
-                <TableHead className="text-white">
-                  <Button
-                    variant="ghost"
-                    onClick={() => handleSort("id_cliente")}
-                    className="h-auto p-0 font-semibold text-white hover:bg-blue-600"
-                  >
-                    ID Cliente
-                    {getSortIcon("id_cliente")}
-                  </Button>
-                </TableHead>
-                <TableHead className="text-white">
-                  <Button
-                    variant="ghost"
-                    onClick={() => handleSort("data_criacao")}
-                    className="h-auto p-0 font-semibold text-white hover:bg-blue-600"
-                  >
-                    Data Criação
-                    {getSortIcon("data_criacao")}
-                  </Button>
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {sortedLeads.map((lead, index) => (
-                <TableRow
-                  key={lead.id}
-                  className={`hover:bg-blue-50 transition-colors ${
-                    index % 2 === 0 ? "bg-white" : "bg-blue-50/30"
-                  }`}
-                >
-                  <TableCell>
-                    <Checkbox
-                      checked={selectedLeads.has(lead.id)}
-                      onCheckedChange={() => handleSelectLead(lead.id)}
-                      aria-label={`Selecionar ${lead.nome}`}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="h-8 w-8 p-0">
-                          <span className="sr-only">Abrir menu</span>
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Ações</DropdownMenuLabel>
-                        <DropdownMenuItem
-                          onClick={() => handleAction("view", lead)}
-                          className="cursor-pointer"
-                        >
-                          <Eye className="mr-2 h-4 w-4" />
-                          Visualizar
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => handleAction("edit", lead)}
-                          className="cursor-pointer"
-                        >
-                          <Edit className="mr-2 h-4 w-4" />
-                          Editar
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => handleAction("update_status", lead)}
-                          className="cursor-pointer"
-                        >
-                          <Target className="mr-2 h-4 w-4" />
-                          Atualizar Status
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => handleAction("atividades", lead)}
-                          className="cursor-pointer"
-                        >
-                          <FileText className="mr-2 h-4 w-4" />
-                          Ver Atividades
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          onClick={() =>
-                            handleAction("convert_to_client", lead)
-                          }
-                          className="cursor-pointer"
-                          disabled={lead.vendedor !== null}
-                        >
-                          <UserCheck className="mr-2 h-4 w-4" />
-                          Converter em Cliente
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                  <TableCell className="font-medium">{lead.nome}</TableCell>
-                  <TableCell>{lead.email}</TableCell>
-                  <TableCell>{lead.telefone}</TableCell>
-                  <TableCell>{lead.origem}</TableCell>
-                  <TableCell>{getSituacaoBadge(lead.situacao)}</TableCell>
-                  <TableCell>
-                    {lead.procura_para ? (
-                      <Badge
-                        variant="outline"
-                        className="border-blue-300 text-blue-700 bg-blue-50 font-medium"
+        {/* Tabela */}
+        <div className="rounded-lg border border-blue-200 shadow-sm">
+          <div
+            ref={bottomScrollRef}
+            className="overflow-x-auto"
+            onScroll={handleBottomScroll}
+          >
+            <div ref={tableInnerRef} className="inline-block min-w-max">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-gradient-to-r from-blue-600 to-blue-700 text-white">
+                    <TableHead className="w-12 text-white">
+                      <Checkbox
+                        checked={
+                          selectedLeads.size === sortedLeads.length &&
+                          sortedLeads.length > 0
+                        }
+                        onCheckedChange={handleSelectAll}
+                        aria-label="Selecionar todos"
+                        className="text-white border-white"
+                      />
+                    </TableHead>
+                    <TableHead className="text-white font-semibold">
+                      Ações
+                    </TableHead>
+                    <TableHead className="text-white">
+                      <Button
+                        variant="ghost"
+                        onClick={() => handleSort("nome")}
+                        className="h-auto p-0 font-semibold text-white hover:bg-blue-600"
                       >
-                        {lead.procura_para}
-                      </Badge>
-                    ) : (
-                      <span className="text-sm text-muted-foreground">
-                        Não informado
-                      </span>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    {lead.consultor ? (
-                      <span className="text-sm">{lead.consultor}</span>
-                    ) : (
-                      <span className="text-sm text-muted-foreground">
-                        Não atribuído
-                      </span>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    {lead.vendedor ? (
-                      <span className="text-sm">{lead.vendedor}</span>
-                    ) : (
-                      <span className="text-sm text-muted-foreground">
-                        Não atribuído
-                      </span>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <span className="text-sm">{lead.uf}</span>
-                  </TableCell>
-                  <TableCell>
-                    <Badge
-                      variant="outline"
-                      className="border-green-300 text-green-700 bg-green-50 font-medium"
+                        Nome
+                        {getSortIcon("nome")}
+                      </Button>
+                    </TableHead>
+                    <TableHead className="text-white">
+                      <Button
+                        variant="ghost"
+                        onClick={() => handleSort("email")}
+                        className="h-auto p-0 font-semibold text-white hover:bg-blue-600"
+                      >
+                        Email
+                        {getSortIcon("email")}
+                      </Button>
+                    </TableHead>
+                    <TableHead className="text-white font-semibold">
+                      Telefone
+                    </TableHead>
+                    <TableHead className="text-white">
+                      <Button
+                        variant="ghost"
+                        onClick={() => handleSort("origem")}
+                        className="h-auto p-0 font-semibold text-white hover:bg-blue-600"
+                      >
+                        Origem
+                        {getSortIcon("origem")}
+                      </Button>
+                    </TableHead>
+                    <TableHead className="text-white">
+                      <Button
+                        variant="ghost"
+                        onClick={() => handleSort("situacao")}
+                        className="h-auto p-0 font-semibold text-white hover:bg-blue-600"
+                      >
+                        Situação
+                        {getSortIcon("situacao")}
+                      </Button>
+                    </TableHead>
+                    <TableHead className="text-white font-semibold">
+                      Procura Para
+                    </TableHead>
+                    <TableHead className="text-white font-semibold">
+                      Consultor
+                    </TableHead>
+                    <TableHead className="text-white">
+                      <Button
+                        variant="ghost"
+                        onClick={() => handleSort("vendedor")}
+                        className="h-auto p-0 font-semibold text-white hover:bg-blue-600"
+                      >
+                        Vendedor
+                        {getSortIcon("vendedor")}
+                      </Button>
+                    </TableHead>
+
+                    <TableHead className="text-white font-semibold">
+                      UF
+                    </TableHead>
+                    <TableHead className="text-white">
+                      <Button
+                        variant="ghost"
+                        onClick={() => handleSort("etapa")}
+                        className="h-auto p-0 font-semibold text-white hover:bg-blue-600"
+                      >
+                        Etapa
+                        {getSortIcon("etapa")}
+                      </Button>
+                    </TableHead>
+                    <TableHead className="text-white">
+                      <Button
+                        variant="ghost"
+                        onClick={() => handleSort("id_cliente")}
+                        className="h-auto p-0 font-semibold text-white hover:bg-blue-600"
+                      >
+                        ID Cliente
+                        {getSortIcon("id_cliente")}
+                      </Button>
+                    </TableHead>
+                    <TableHead className="text-white">
+                      <Button
+                        variant="ghost"
+                        onClick={() => handleSort("data_criacao")}
+                        className="h-auto p-0 font-semibold text-white hover:bg-blue-600"
+                      >
+                        Data Criação
+                        {getSortIcon("data_criacao")}
+                      </Button>
+                    </TableHead>
+                    <TableHead className="text-white">
+                      <Button
+                        variant="ghost"
+                        // onClick={() => handleSort("data_criacao")}
+                        className="h-auto p-0 font-semibold text-white hover:bg-blue-600"
+                      >
+                        Anuncio
+                        {/* {getSortIcon("data_criacao")} */}
+                      </Button>
+                    </TableHead>
+                    <TableHead className="text-white">
+                      <Button
+                        variant="ghost"
+                        // onClick={() => handleSort("data_criacao")}
+                        className="h-auto p-0 font-semibold text-white hover:bg-blue-600"
+                      >
+                        Campanha
+                        {/* {getSortIcon("data_criacao")} */}
+                      </Button>
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+
+                <TableBody>
+                  {sortedLeads.map((lead, index) => (
+                    <TableRow
+                      key={lead.id}
+                      className={`hover:bg-blue-50 transition-colors ${
+                        index % 2 === 0 ? "bg-white" : "bg-blue-50/30"
+                      }`}
                     >
-                      {lead.etapa || "Não informado"}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <span className="text-sm font-mono">
-                      {lead.id_cliente ? lead.id_cliente : "Não atribuído"}
-                    </span>
-                  </TableCell>
-                  <TableCell>{formatDate(lead.data_criacao)}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+                      <TableCell>
+                        <Checkbox
+                          checked={selectedLeads.has(lead.id)}
+                          onCheckedChange={() => handleSelectLead(lead.id)}
+                          aria-label={`Selecionar ${lead.nome}`}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" className="h-8 w-8 p-0">
+                              <span className="sr-only">Abrir menu</span>
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuLabel>Ações</DropdownMenuLabel>
+                            <DropdownMenuItem
+                              onClick={() => handleAction("view", lead)}
+                              className="cursor-pointer"
+                            >
+                              <Eye className="mr-2 h-4 w-4" />
+                              Visualizar
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => handleAction("edit", lead)}
+                              className="cursor-pointer"
+                            >
+                              <Edit className="mr-2 h-4 w-4" />
+                              Editar
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() =>
+                                handleAction("update_status", lead)
+                              }
+                              className="cursor-pointer"
+                            >
+                              <Target className="mr-2 h-4 w-4" />
+                              Atualizar Status
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => handleAction("atividades", lead)}
+                              className="cursor-pointer"
+                            >
+                              <FileText className="mr-2 h-4 w-4" />
+                              Ver Atividades
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              onClick={() =>
+                                handleAction("convert_to_client", lead)
+                              }
+                              className="cursor-pointer"
+                              disabled={lead.vendedor !== null}
+                            >
+                              <UserCheck className="mr-2 h-4 w-4" />
+                              Converter em Cliente
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                      <TableCell className="font-medium">{lead.nome}</TableCell>
+                      <TableCell>{lead.email}</TableCell>
+                      <TableCell>{lead.telefone}</TableCell>
+                      <TableCell>{lead.origem}</TableCell>
+                      <TableCell>{getSituacaoBadge(lead.situacao)}</TableCell>
+                      <TableCell>
+                        {lead.procura_para ? (
+                          <Badge
+                            variant="outline"
+                            className="border-blue-300 text-blue-700 bg-blue-50 font-medium"
+                          >
+                            {lead.procura_para}
+                          </Badge>
+                        ) : (
+                          <span className="text-sm text-muted-foreground">
+                            Não informado
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {lead.consultor ? (
+                          <span className="text-sm">{lead.consultor}</span>
+                        ) : (
+                          <span className="text-sm text-muted-foreground">
+                            Não atribuído
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {lead.vendedor ? (
+                          <span className="text-sm">{lead.vendedor}</span>
+                        ) : (
+                          <span className="text-sm text-muted-foreground">
+                            Não atribuído
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-sm">{lead.uf}</span>
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant="outline"
+                          className="border-green-300 text-green-700 bg-green-50 font-medium"
+                        >
+                          {lead.etapa || "Não informado"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-sm font-mono">
+                          {lead.id_cliente ? lead.id_cliente : "Não atribuído"}
+                        </span>
+                      </TableCell>
+                      <TableCell>{formatDate(lead.data_criacao)}</TableCell>
+                      <TableCell>
+                        <span className="text-sm font-mono">
+                          {lead.conjunto_anuncio
+                            ? lead.conjunto_anuncio
+                            : "Não atribuído"}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-sm font-mono">
+                          {lead.campanha ? lead.campanha : "Não atribuído"}
+                        </span>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </div>
         </div>
 
         {/* Paginação */}

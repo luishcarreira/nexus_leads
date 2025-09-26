@@ -44,6 +44,8 @@ export interface ILeadsFilters {
   situacao?: string;
   origem?: string;
   tipo_procura?: string;
+  campanha?: string; // novo filtro por campanha
+  anuncio?: string; // novo filtro por conjunto/anúncio
   uf?: string; // filtro por UF
   etapa?: string;
   id_consultor?: number;
@@ -66,10 +68,22 @@ export interface ITotalPorTipoProcura {
   total: number;
 }
 
+export interface ITotalPorCampanha {
+  campanha: string;
+  total: number;
+}
+
+export interface ITotalPorAnuncio {
+  anuncio: string;
+  total: number;
+}
+
 export interface ILeadsTotais {
   total_leads: number;
   total_por_origem: ITotalPorOrigem[];
   total_por_tipo_procura: ITotalPorTipoProcura[];
+  total_por_campanha: ITotalPorCampanha[];
+  total_por_anuncio: ITotalPorAnuncio[];
   total_transferidos: number;
   total_nao_transferidos: number;
 }
@@ -99,10 +113,36 @@ export interface ITotalPorTipoProcuraDetalhado {
   };
 }
 
+export interface ITotalPorCampanhaDetalhado {
+  campanha: string;
+  total: number;
+  leads: {
+    total: number;
+    pagina: number;
+    limite: number;
+    total_paginas: number;
+    dados: ILeadTotal[];
+  };
+}
+
+export interface ITotalPorAnuncioDetalhado {
+  anuncio: string;
+  total: number;
+  leads: {
+    total: number;
+    pagina: number;
+    limite: number;
+    total_paginas: number;
+    dados: ILeadTotal[];
+  };
+}
+
 export interface ILeadsTotaisDetalhados {
   total_leads: number;
   totais_por_origem: ITotalPorOrigemDetalhado[];
   total_por_tipo_procura: ITotalPorTipoProcuraDetalhado[];
+  total_por_campanha: ITotalPorCampanhaDetalhado[];
+  total_por_anuncio: ITotalPorAnuncioDetalhado[];
   transferidos: {
     total: number;
     pagina: number;
