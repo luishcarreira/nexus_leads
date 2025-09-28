@@ -9,6 +9,7 @@ import {
   IConsultor,
   ILeadAtividade,
 } from "./interfaces/ILead";
+import { authService } from "./authService";
 
 interface PaginacaoLeads {
   total: number;
@@ -61,6 +62,8 @@ interface TotaisTransferidos {
 export class HttpClient {
   private baseURL: string;
   private defaultParams: string;
+  private isRefreshing: boolean = false;
+  private refreshQueue: Array<() => void> = [];
 
   constructor(baseURL: string) {
     this.baseURL = baseURL;
@@ -85,24 +88,104 @@ export class HttpClient {
     return queryParams;
   }
 
+  private async handleTokenRefresh<T>(
+    url: string,
+    options: RequestInit & { _retry?: boolean },
+    headers: Record<string, string>
+  ): Promise<T> {
+    if (!this.isRefreshing) {
+      this.isRefreshing = true;
+      try {
+        await authService.refreshAccessToken();
+
+        // Processar fila de requisições aguardando
+        this.refreshQueue.forEach((resolve) => resolve());
+        this.refreshQueue = [];
+
+        // Tentar a requisição novamente com o novo token
+        const newAccessToken = authService.getAccessToken();
+        if (newAccessToken) {
+          headers.Authorization = `Bearer ${newAccessToken}`;
+          options._retry = true;
+
+          const retryResponse = await fetch(url, {
+            ...options,
+            headers,
+          });
+
+          if (!retryResponse.ok) {
+            throw new Error(`HTTP error! status: ${retryResponse.status}`);
+          }
+
+          return retryResponse.json();
+        }
+      } catch (refreshError) {
+        console.error("Erro ao fazer refresh do token:", refreshError);
+        // Se o refresh falhar, o authService já fez logout
+        throw new Error("Authentication failed");
+      } finally {
+        this.isRefreshing = false;
+      }
+    }
+
+    // Enquanto está fazendo refresh, aguardar na fila
+    return new Promise((resolve) => {
+      this.refreshQueue.push(() => {
+        const newAccessToken = authService.getAccessToken();
+        if (newAccessToken) {
+          headers.Authorization = `Bearer ${newAccessToken}`;
+          options._retry = true;
+
+          fetch(url, {
+            ...options,
+            headers,
+          })
+            .then((response) => {
+              if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+              }
+              return response.json();
+            })
+            .then(resolve)
+            .catch((error) => {
+              console.error("Erro na requisição após refresh:", error);
+              throw error;
+            });
+        } else {
+          throw new Error("No access token available after refresh");
+        }
+      });
+    });
+  }
+
   private async request<T>(
     endpoint: string,
-    options: RequestInit = {}
+    options: RequestInit & { _retry?: boolean } = {}
   ): Promise<T> {
-    const suffix = this.defaultParams
-      ? `${endpoint.includes("?") ? "&" : "?"}${this.defaultParams}`
-      : "";
-    const url = `${this.baseURL}${endpoint}${suffix}`;
+    const url = `${this.baseURL}${endpoint}${
+      endpoint.includes("?") ? "&" : "?"
+    }${this.defaultParams}`;
 
-    const headers = {
+    // Adicionar Bearer token se disponível
+    const accessToken = authService.getAccessToken();
+    const headers: Record<string, string> = {
       "Content-Type": "application/json",
-      ...options.headers,
+      ...(options.headers as Record<string, string>),
     };
+
+    if (accessToken) {
+      headers.Authorization = `Bearer ${accessToken}`;
+    }
 
     const response = await fetch(url, {
       ...options,
       headers,
     });
+
+    // Se receber 401, tentar refresh do token
+    if (response.status === 401 && accessToken && !options._retry) {
+      return this.handleTokenRefresh(url, options, headers);
+    }
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
