@@ -190,12 +190,20 @@ const Clientes: React.FC = () => {
           : convertFiltersToAPI(currentFilters);
 
       // Aplicar filtros diretamente sem usar fetchClients para evitar loop
-      const merged = { ...api };
-      if (selectedVendorId && !merged.hasOwnProperty("id_vendedor")) {
+      const merged: any = { ...api };
+
+      // Forçar sincronização do vendedor selecionado
+      if (selectedVendorId != null) {
         merged.id_vendedor = selectedVendorId;
+      } else {
+        delete merged.id_vendedor;
       }
-      if (statusSelected && !merged.hasOwnProperty("situacao")) {
+
+      // Forçar sincronização do status selecionado
+      if (statusSelected != null) {
         merged.situacao = statusSelected;
+      } else {
+        delete merged.situacao;
       }
 
       fetchClients({
