@@ -797,7 +797,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                       Procura Para
                     </TableHead>
                     <TableHead className="text-white font-semibold">
-                      Consultor
+                      Criado por
                     </TableHead>
                     <TableHead className="text-white">
                       <Button
@@ -955,8 +955,8 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                         )}
                       </TableCell>
                       <TableCell>
-                        {lead.consultor ? (
-                          <span className="text-sm">{lead.consultor}</span>
+                        {lead.usuario ? (
+                          <span className="text-sm">{lead.usuario}</span>
                         ) : (
                           <span className="text-sm text-muted-foreground">
                             Não atribuído

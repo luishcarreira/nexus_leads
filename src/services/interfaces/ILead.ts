@@ -26,6 +26,7 @@ export interface ILead {
   vendedor: string | null;
   origem: string;
   etapa: string;
+  usuario: string | null;
 }
 
 export interface ILeadsResponse {
