@@ -809,7 +809,16 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                         {getSortIcon("vendedor")}
                       </Button>
                     </TableHead>
-
+                    <TableHead className="text-white">
+                      <Button
+                        variant="ghost"
+                        // onClick={() => handleSort("etapa")}
+                        className="h-auto p-0 font-semibold text-white hover:bg-blue-600"
+                      >
+                        Gestor
+                        {/* {getSortIcon("gestor")} */}
+                      </Button>
+                    </TableHead>
                     <TableHead className="text-white font-semibold">
                       UF
                     </TableHead>
@@ -826,7 +835,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                     <TableHead className="text-white">
                       <Button
                         variant="ghost"
-                        onClick={() => handleSort("id_cliente")}
+                        onClick={() => handleSort("gestor")}
                         className="h-auto p-0 font-semibold text-white hover:bg-blue-600"
                       >
                         ID Cliente
@@ -846,11 +855,11 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                     <TableHead className="text-white">
                       <Button
                         variant="ghost"
-                        // onClick={() => handleSort("data_criacao")}
+                        // onClick={() => handleSort("anuncio")}
                         className="h-auto p-0 font-semibold text-white hover:bg-blue-600"
                       >
                         Anuncio
-                        {/* {getSortIcon("data_criacao")} */}
+                        {/* {getSortIcon("anuncio")} */}
                       </Button>
                     </TableHead>
                     <TableHead className="text-white">
@@ -966,6 +975,15 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                       <TableCell>
                         {lead.vendedor ? (
                           <span className="text-sm">{lead.vendedor}</span>
+                        ) : (
+                          <span className="text-sm text-muted-foreground">
+                            Não atribuído
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {lead.gestor ? (
+                          <span className="text-sm">{lead.gestor}</span>
                         ) : (
                           <span className="text-sm text-muted-foreground">
                             Não atribuído

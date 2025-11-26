@@ -678,6 +678,6 @@ export class HttpClient {
 }
 
 export const httpClient = new HttpClient(
-  import.meta.env.VITE_API_URL || "https://api.nexusvitally.com.br"
-  // import.meta.env.VITE_API_URL || "http://localhost:8001"
+  // import.meta.env.VITE_API_URL || "https://api.nexusvitally.com.br"
+  import.meta.env.VITE_API_URL || "http://localhost:8001"
 );

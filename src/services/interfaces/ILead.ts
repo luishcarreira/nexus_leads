@@ -27,6 +27,8 @@ export interface ILead {
   origem: string;
   etapa: string;
   usuario: string | null;
+  landing_page: string | null;
+  gestor: string | null;
 }
 
 export interface ILeadsResponse {
