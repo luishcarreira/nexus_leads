@@ -62,6 +62,7 @@ import {
   FileText,
   ChevronLeft,
   ChevronRight,
+  Download,
 } from "lucide-react";
 import { ILead } from "@/services/interfaces/ILead";
 import { httpClient } from "@/services/httpClient";
@@ -82,6 +83,8 @@ interface LeadsTableProps {
   onPageChange?: (page: number) => void; // Callback para mudança de página
   onLeadCreated?: () => void; // Callback para recarregar dados após criar lead
   onDataChanged?: () => void; // Callback para recarregar dados após qualquer modificação
+  onExport?: () => void; // Callback para exportar dados
+  exporting?: boolean; // Estado de carregamento da exportação
 }
 
 type SortDirection = "asc" | "desc" | null;
@@ -95,6 +98,8 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
   onPageChange,
   onLeadCreated,
   onDataChanged,
+  onExport,
+  exporting = false,
 }) => {
   const { toast } = useToast();
   const {
@@ -654,6 +659,24 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
               Novo Lead
             </Button>
 
+            {/* Botão Exportar */}
+            <Button
+              variant="outline"
+              onClick={onExport}
+              disabled={exporting}
+              className="flex items-center gap-2 border-green-600 text-green-700 hover:bg-green-50 hover:border-green-700 shadow-sm"
+              title="Exportar para Excel"
+            >
+              {exporting ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Download className="h-4 w-4" />
+              )}
+              <span className="hidden sm:inline">
+                {exporting ? "Exportando..." : "Exportar"}
+              </span>
+            </Button>
+
             {/* Ações em lote */}
             {selectedLeads.size > 0 && (
               <DropdownMenu>
@@ -835,7 +858,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                     <TableHead className="text-white">
                       <Button
                         variant="ghost"
-                        onClick={() => handleSort("gestor")}
+                        onClick={() => handleSort("id_cliente")}
                         className="h-auto p-0 font-semibold text-white hover:bg-blue-600"
                       >
                         ID Cliente
@@ -986,7 +1009,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                           <span className="text-sm">{lead.gestor}</span>
                         ) : (
                           <span className="text-sm text-muted-foreground">
-                            Não atribuído
+                            
                           </span>
                         )}
                       </TableCell>

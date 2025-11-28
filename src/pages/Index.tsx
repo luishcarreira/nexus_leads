@@ -11,6 +11,8 @@ import {
 import { format } from "date-fns";
 import { ChevronDown, ChevronUp, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { httpClient } from "@/services/httpClient";
+import { useToast } from "@/hooks/use-toast";
 
 // Interface para os filtros da interface
 interface UIFilters {
@@ -34,6 +36,8 @@ interface UIFilters {
 const Index = () => {
   const [currentFilters, setCurrentFilters] = useState<UIFilters>({});
   const [showTotais, setShowTotais] = useState(true);
+  const [isExporting, setIsExporting] = useState(false);
+  const { toast } = useToast();
   const {
     leads,
     total,
@@ -200,6 +204,40 @@ const Index = () => {
     );
   }
 
+  const handleExport = async () => {
+    setIsExporting(true);
+    try {
+      const apiFilters = convertFiltersToAPI(currentFilters);
+      const blob = await httpClient.exportarLeadsExcel(apiFilters);
+
+      // Create download link
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      const timestamp = format(new Date(), "yyyyMMdd_HHmmss");
+      a.download = `leads_export_${timestamp}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      toast({
+        title: "Exportação concluída",
+        description: "O arquivo Excel foi baixado com sucesso.",
+        variant: "default",
+      });
+    } catch (error) {
+      console.error("Erro ao exportar:", error);
+      toast({
+        title: "Erro na exportação",
+        description: "Não foi possível exportar os leads. Tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-dashboard-bg p-6">
       <div className="container mx-auto">
@@ -267,6 +305,8 @@ const Index = () => {
             fetchLeads(apiFilters);
             fetchTotais(apiFilters);
           }}
+          onExport={handleExport}
+          exporting={isExporting}
         />
       </div>
     </div>
