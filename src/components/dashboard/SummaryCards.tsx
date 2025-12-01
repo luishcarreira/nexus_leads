@@ -24,6 +24,8 @@ import {
   ILeadsTotaisDetalhados,
   ILeadsFilters,
 } from "@/services/interfaces/ILead";
+import { httpClient } from "@/services/httpClient";
+import { LeadsPorGestorModal } from "./LeadsPorGestorModal";
 
 interface PaginacaoOutput<T> {
   total: number;
@@ -49,6 +51,39 @@ export const SummaryCards: React.FC<SummaryCardsProps> = ({
   onPageChange,
   currentFilters,
 }) => {
+  const [gestoresTotais, setGestoresTotais] = useState<
+    Array<{ gestor: string; total: number }>
+  >([]);
+  const [gestoresLoading, setGestoresLoading] = useState(false);
+  const [gestoresError, setGestoresError] = useState<string | null>(null);
+  const [gestorModalConfig, setGestorModalConfig] = useState<{
+    isOpen: boolean;
+  }>({ isOpen: false });
+
+  React.useEffect(() => {
+    let cancelled = false;
+    const run = async () => {
+      try {
+        setGestoresLoading(true);
+        setGestoresError(null);
+        const filtros = (currentFilters ?? {}) as ILeadsFilters;
+        const res = await httpClient.getGestoresTotais(filtros);
+        if (!cancelled) setGestoresTotais(res || []);
+      } catch (e) {
+        if (!cancelled)
+          setGestoresError(
+            e instanceof Error ? e.message : "Erro ao carregar gestores"
+          );
+      } finally {
+        if (!cancelled) setGestoresLoading(false);
+      }
+    };
+    run();
+    return () => {
+      cancelled = true;
+    };
+  }, [currentFilters]);
+
   const [detailsModalConfig, setDetailsModalConfig] = useState<{
     isOpen: boolean;
     title: string;
@@ -294,6 +329,25 @@ export const SummaryCards: React.FC<SummaryCardsProps> = ({
         handleCardClick("tipoProcura", "Leads por Tipo de Procura"),
     },
     {
+      title: "Por Gestor",
+      value:
+        gestoresTotais && gestoresTotais.length > 0
+          ? gestoresTotais.reduce((sum, g) => sum + (g.total || 0), 0)
+          : 0,
+      icon: Users,
+      description:
+        gestoresTotais && gestoresTotais.length > 0
+          ? `${gestoresTotais.length} gestores`
+          : "Sem dados",
+      gradient: "from-sky-500 to-sky-600",
+      iconBg: "bg-sky-500/10",
+      iconColor: "text-sky-600",
+      textColor: "text-sky-700",
+      borderColor: "border-sky-200",
+      shadowColor: "shadow-lg",
+      onClick: () => setGestorModalConfig({ isOpen: true }),
+    },
+    {
       title: "Transferidos",
       value: data?.transferidos?.total ?? 0,
       icon: UserCheck,
@@ -440,6 +494,12 @@ export const SummaryCards: React.FC<SummaryCardsProps> = ({
         }
         totaisPorTipoProcura={data?.total_por_tipo_procura || []}
         loading={loading}
+        currentFilters={currentFilters}
+      />
+
+      <LeadsPorGestorModal
+        isOpen={gestorModalConfig.isOpen}
+        onClose={() => setGestorModalConfig({ isOpen: false })}
         currentFilters={currentFilters}
       />
 

@@ -604,6 +604,40 @@ export class HttpClient {
     );
   }
 
+  // Totais por gestor
+  async getGestoresTotais(
+    filters: ILeadsFilters = {}
+  ): Promise<Array<{ gestor: string; total: number }>> {
+    const queryParams = this.buildQueryParams(filters);
+    const raw = await this.request<
+      Array<{ GESTOR: string; TOTAL: number }>
+    >(`/leads/gestores/totais?${queryParams.toString()}`);
+    return raw.map((item) => ({
+      gestor: (item as any).GESTOR ?? "DESCONHECIDO",
+      total: item.TOTAL,
+    }));
+    }
+
+  // Listar leads por gestor com filtros
+  async getLeadsPorGestor(
+    gestor: string,
+    filters: ILeadsFilters = {}
+  ): Promise<{
+    total: number;
+    pagina: number;
+    limite: number;
+    total_paginas: number;
+    dados: ILead[] | any[];
+  }> {
+    const { gestor: _omit, ...rest } = filters as any;
+    const queryParams = this.buildQueryParams(rest);
+    return this.request(
+      `/leads/gestores/${encodeURIComponent(gestor)}${
+        queryParams.toString() ? `?${queryParams.toString()}` : ""
+      }`
+    );
+  }
+
   async getLeadsTransferidos(filters: ILeadsFilters = {}): Promise<{
     total: number;
     pagina: number;
