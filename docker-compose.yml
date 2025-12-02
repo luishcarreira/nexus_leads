@@ -3,7 +3,7 @@ services:
     build: .
     container_name: nexus_leads
     ports:
-      - "3009:80"
+      - "3005:80"
     networks:
       - nexusnet
 
