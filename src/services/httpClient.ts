@@ -609,14 +609,14 @@ export class HttpClient {
     filters: ILeadsFilters = {}
   ): Promise<Array<{ gestor: string; total: number }>> {
     const queryParams = this.buildQueryParams(filters);
-    const raw = await this.request<
-      Array<{ GESTOR: string; TOTAL: number }>
-    >(`/leads/gestores/totais?${queryParams.toString()}`);
+    const raw = await this.request<Array<{ GESTOR: string; TOTAL: number }>>(
+      `/leads/gestores/totais?${queryParams.toString()}`
+    );
     return raw.map((item) => ({
       gestor: (item as any).GESTOR ?? "DESCONHECIDO",
       total: item.TOTAL,
     }));
-    }
+  }
 
   // Listar leads por gestor com filtros
   async getLeadsPorGestor(
@@ -740,9 +740,37 @@ export class HttpClient {
 
     return response.blob();
   }
+
+  // Método para exportar logs do ChatGuru para Excel
+  async exportarLogsChatGuruExcel(): Promise<Blob> {
+    const endpoint = `/leads/exportar-logs-chatguru-excel`;
+    const url = `${this.baseURL}${endpoint}`;
+
+    const accessToken = authService.getAccessToken();
+    const headers: Record<string, string> = {};
+
+    if (accessToken) {
+      headers.Authorization = `Bearer ${accessToken}`;
+    }
+
+    const response = await fetch(url, {
+      method: "GET",
+      headers,
+    });
+
+    if (response.status === 401 && accessToken) {
+      // Tentar refresh se necessário
+    }
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return response.blob();
+  }
 }
 
 export const httpClient = new HttpClient(
-  // import.meta.env.VITE_API_URL || "https://api.nexusvitally.com.br"
-  import.meta.env.VITE_API_URL || "http://localhost:8001"
+  import.meta.env.VITE_API_URL || "https://api.nexusvitally.com.br"
+  // import.meta.env.VITE_API_URL || "http://localhost:8001"
 );
