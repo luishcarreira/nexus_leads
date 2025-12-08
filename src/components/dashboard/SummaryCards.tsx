@@ -59,6 +59,7 @@ export const SummaryCards: React.FC<SummaryCardsProps> = ({
   const [gestorModalConfig, setGestorModalConfig] = useState<{
     isOpen: boolean;
   }>({ isOpen: false });
+  const [totalLeads, setTotalLeads] = useState<number | null>(null);
 
   React.useEffect(() => {
     let cancelled = false;
@@ -76,6 +77,28 @@ export const SummaryCards: React.FC<SummaryCardsProps> = ({
           );
       } finally {
         if (!cancelled) setGestoresLoading(false);
+      }
+    };
+    run();
+    return () => {
+      cancelled = true;
+    };
+  }, [currentFilters]);
+
+  // Buscar total geral de leads diretamente do endpoint de leads
+  React.useEffect(() => {
+    let cancelled = false;
+    const run = async () => {
+      try {
+        const filtros = (currentFilters ?? {}) as ILeadsFilters;
+        const res = await httpClient.getLeads({
+          ...filtros,
+          pagina: 1,
+          limite: 1, // reduzir payload; só precisamos do total
+        });
+        if (!cancelled) setTotalLeads(res.total ?? 0);
+      } catch {
+        if (!cancelled) setTotalLeads(null);
       }
     };
     run();
@@ -270,7 +293,8 @@ export const SummaryCards: React.FC<SummaryCardsProps> = ({
   const cards = [
     {
       title: "Total de Leads",
-      value: data.total_leads,
+      value:
+        typeof totalLeads === "number" ? totalLeads : data?.total_leads ?? 0,
       icon: Users,
       description: "Total geral de leads",
       gradient: "from-blue-500 to-blue-600",

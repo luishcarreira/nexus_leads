@@ -155,6 +155,9 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
     useState<ILead | null>(null);
   const [isConvertingToClient, setIsConvertingToClient] = useState(false);
 
+  // Estados para exportação
+  const [isExportingChatGuru, setIsExportingChatGuru] = useState(false);
+
   // Debounce para o termo de busca
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -609,6 +612,44 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
     }
   };
 
+  // Handler para exportar logs do ChatGuru
+  const handleExportChatGuruLogs = async () => {
+    setIsExportingChatGuru(true);
+    try {
+      const blob = await httpClient.exportarLogsChatGuruExcel();
+
+      // Criar link de download
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      const timestamp = new Date()
+        .toISOString()
+        .replace(/[:.]/g, "-")
+        .slice(0, -5);
+      a.download = `logs_chatguru_export_${timestamp}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      toast({
+        title: "Exportação concluída",
+        description: "Os logs do ChatGuru foram exportados com sucesso.",
+        variant: "default",
+      });
+    } catch (error) {
+      console.error("Erro ao exportar logs do ChatGuru:", error);
+      toast({
+        title: "Erro na exportação",
+        description:
+          "Não foi possível exportar os logs do ChatGuru. Tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsExportingChatGuru(false);
+    }
+  };
+
   if (loading) {
     return (
       <Card className="p-6">
@@ -659,23 +700,49 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
               Novo Lead
             </Button>
 
-            {/* Botão Exportar */}
-            <Button
-              variant="outline"
-              onClick={onExport}
-              disabled={exporting}
-              className="flex items-center gap-2 border-green-600 text-green-700 hover:bg-green-50 hover:border-green-700 shadow-sm"
-              title="Exportar para Excel"
-            >
-              {exporting ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Download className="h-4 w-4" />
-              )}
-              <span className="hidden sm:inline">
-                {exporting ? "Exportando..." : "Exportar"}
-              </span>
-            </Button>
+            {/* Botão Exportar com Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  disabled={exporting || isExportingChatGuru}
+                  className="flex items-center gap-2 border-green-600 text-green-700 hover:bg-green-50 hover:border-green-700 shadow-sm"
+                  title="Exportar dados"
+                >
+                  {exporting || isExportingChatGuru ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Download className="h-4 w-4" />
+                  )}
+                  <span className="hidden sm:inline">
+                    {exporting || isExportingChatGuru
+                      ? "Exportando..."
+                      : "Exportar"}
+                  </span>
+                  <ChevronDown className="h-4 w-4 ml-1" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>Opções de Exportação</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={onExport}
+                  disabled={exporting || isExportingChatGuru}
+                  className="cursor-pointer"
+                >
+                  <Download className="mr-2 h-4 w-4" />
+                  Exportar Leads
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={handleExportChatGuruLogs}
+                  disabled={exporting || isExportingChatGuru}
+                  className="cursor-pointer"
+                >
+                  <FileText className="mr-2 h-4 w-4" />
+                  Exportar Logs ChatGuru
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
 
             {/* Ações em lote */}
             {selectedLeads.size > 0 && (
@@ -1008,9 +1075,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                         {lead.gestor ? (
                           <span className="text-sm">{lead.gestor}</span>
                         ) : (
-                          <span className="text-sm text-muted-foreground">
-                            
-                          </span>
+                          <span className="text-sm text-muted-foreground"></span>
                         )}
                       </TableCell>
                       <TableCell>
