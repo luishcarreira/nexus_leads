@@ -157,6 +157,13 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
 
   // Estados para exportação
   const [isExportingChatGuru, setIsExportingChatGuru] = useState(false);
+  const [isExportFiltersModalOpen, setIsExportFiltersModalOpen] = useState(false);
+  const [exportFilters, setExportFilters] = useState<{
+    filtro_data?: string;
+    id_lead?: number;
+    sucesso?: boolean;
+    mensagem_confirmada?: boolean;
+  }>({});
 
   // Debounce para o termo de busca
   useEffect(() => {
@@ -612,11 +619,17 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
     }
   };
 
+  // Handler para abrir modal de filtros de exportação
+  const handleOpenExportFilters = () => {
+    setIsExportFiltersModalOpen(true);
+  };
+
   // Handler para exportar logs do ChatGuru
   const handleExportChatGuruLogs = async () => {
     setIsExportingChatGuru(true);
+    setIsExportFiltersModalOpen(false);
     try {
-      const blob = await httpClient.exportarLogsChatGuruExcel();
+      const blob = await httpClient.exportarLogsChatGuruExcel(exportFilters);
 
       // Criar link de download
       const url = window.URL.createObjectURL(blob);
@@ -626,7 +639,8 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
         .toISOString()
         .replace(/[:.]/g, "-")
         .slice(0, -5);
-      a.download = `logs_chatguru_export_${timestamp}.xlsx`;
+      const filtroSuffix = exportFilters.filtro_data ? `_${exportFilters.filtro_data}` : "";
+      a.download = `logs_chatguru_export${filtroSuffix}_${timestamp}.xlsx`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
@@ -637,6 +651,9 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
         description: "Os logs do ChatGuru foram exportados com sucesso.",
         variant: "default",
       });
+
+      // Limpar filtros após exportação
+      setExportFilters({});
     } catch (error) {
       console.error("Erro ao exportar logs do ChatGuru:", error);
       toast({
@@ -734,7 +751,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                   Exportar Leads
                 </DropdownMenuItem>
                 <DropdownMenuItem
-                  onClick={handleExportChatGuruLogs}
+                  onClick={handleOpenExportFilters}
                   disabled={exporting || isExportingChatGuru}
                   className="cursor-pointer"
                 >
@@ -1347,6 +1364,163 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
         onSubmit={handleConvertToClient}
         loading={isConvertingToClient}
       />
+
+      {/* Modal de Filtros para Exportação de Logs ChatGuru */}
+      <Dialog
+        open={isExportFiltersModalOpen}
+        onOpenChange={setIsExportFiltersModalOpen}
+      >
+        <DialogContent className="max-w-md border-0 shadow-2xl">
+          <DialogHeader className="bg-gradient-to-r from-green-600 to-green-700 text-white rounded-t-lg -m-6 mb-6 p-6">
+            <DialogTitle className="flex items-center gap-3 text-xl font-semibold">
+              <div className="p-2 bg-white/20 rounded-lg">
+                <FileText className="h-6 w-6" />
+              </div>
+              Filtros de Exportação - Logs ChatGuru
+            </DialogTitle>
+            <p className="text-green-100 text-sm mt-2">
+              Selecione os filtros para exportar os logs do ChatGuru
+            </p>
+          </DialogHeader>
+
+          <div className="space-y-6">
+            {/* Filtro de Data */}
+            <div className="space-y-3">
+              <Label className="text-sm font-semibold text-gray-700">
+                Filtro de Data
+              </Label>
+              <Select
+                value={exportFilters.filtro_data || "tudo"}
+                onValueChange={(value) =>
+                  setExportFilters({
+                    ...exportFilters,
+                    filtro_data: value === "tudo" ? undefined : value,
+                  })
+                }
+              >
+                <SelectTrigger className="border-gray-200 focus:border-green-500 focus:ring-green-500">
+                  <SelectValue placeholder="Selecione o filtro de data" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="tudo">Todos os logs</SelectItem>
+                  <SelectItem value="hoje">Apenas hoje</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Filtro de ID do Lead */}
+            <div className="space-y-3">
+              <Label className="text-sm font-semibold text-gray-700">
+                ID do Lead (opcional)
+              </Label>
+              <Input
+                type="number"
+                placeholder="Digite o ID do lead"
+                value={exportFilters.id_lead || ""}
+                onChange={(e) =>
+                  setExportFilters({
+                    ...exportFilters,
+                    id_lead: e.target.value
+                      ? parseInt(e.target.value)
+                      : undefined,
+                  })
+                }
+                className="border-gray-200 focus:border-green-500 focus:ring-green-500"
+              />
+            </div>
+
+            {/* Filtro de Sucesso */}
+            <div className="space-y-3">
+              <Label className="text-sm font-semibold text-gray-700">
+                Filtrar por Sucesso
+              </Label>
+              <Select
+                value={
+                  exportFilters.sucesso === undefined
+                    ? "all"
+                    : exportFilters.sucesso.toString()
+                }
+                onValueChange={(value) =>
+                  setExportFilters({
+                    ...exportFilters,
+                    sucesso:
+                      value === "all" ? undefined : value === "true",
+                  })
+                }
+              >
+                <SelectTrigger className="border-gray-200 focus:border-green-500 focus:ring-green-500">
+                  <SelectValue placeholder="Selecione o filtro de sucesso" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos</SelectItem>
+                  <SelectItem value="true">Apenas sucessos</SelectItem>
+                  <SelectItem value="false">Apenas falhas</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Filtro de Mensagem Confirmada */}
+            <div className="space-y-3">
+              <Label className="text-sm font-semibold text-gray-700">
+                Filtrar por Mensagem Confirmada
+              </Label>
+              <Select
+                value={
+                  exportFilters.mensagem_confirmada === undefined
+                    ? "all"
+                    : exportFilters.mensagem_confirmada.toString()
+                }
+                onValueChange={(value) =>
+                  setExportFilters({
+                    ...exportFilters,
+                    mensagem_confirmada:
+                      value === "all" ? undefined : value === "true",
+                  })
+                }
+              >
+                <SelectTrigger className="border-gray-200 focus:border-green-500 focus:ring-green-500">
+                  <SelectValue placeholder="Selecione o filtro de mensagem confirmada" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos</SelectItem>
+                  <SelectItem value="true">Apenas confirmadas</SelectItem>
+                  <SelectItem value="false">Apenas não confirmadas</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex justify-end gap-3 pt-6 border-t border-gray-100">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setIsExportFiltersModalOpen(false);
+                  setExportFilters({});
+                }}
+                className="border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400"
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={handleExportChatGuruLogs}
+                disabled={isExportingChatGuru}
+                className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white shadow-lg"
+              >
+                {isExportingChatGuru ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Exportando...
+                  </>
+                ) : (
+                  <>
+                    <Download className="mr-2 h-4 w-4" />
+                    Exportar
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 };

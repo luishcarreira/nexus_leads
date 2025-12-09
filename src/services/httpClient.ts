@@ -742,8 +742,33 @@ export class HttpClient {
   }
 
   // Método para exportar logs do ChatGuru para Excel
-  async exportarLogsChatGuruExcel(): Promise<Blob> {
-    const endpoint = `/leads/exportar-logs-chatguru-excel`;
+  async exportarLogsChatGuruExcel(filters?: {
+    filtro_data?: string;
+    id_lead?: number;
+    sucesso?: boolean;
+    mensagem_confirmada?: boolean;
+  }): Promise<Blob> {
+    const queryParams = new URLSearchParams();
+
+    if (filters?.filtro_data) {
+      queryParams.append("filtro_data", filters.filtro_data);
+    }
+    if (filters?.id_lead !== undefined) {
+      queryParams.append("id_lead", filters.id_lead.toString());
+    }
+    if (filters?.sucesso !== undefined) {
+      queryParams.append("sucesso", filters.sucesso.toString());
+    }
+    if (filters?.mensagem_confirmada !== undefined) {
+      queryParams.append(
+        "mensagem_confirmada",
+        filters.mensagem_confirmada.toString()
+      );
+    }
+
+    const endpoint = `/leads/exportar-logs-chatguru-excel${
+      queryParams.toString() ? `?${queryParams.toString()}` : ""
+    }`;
     const url = `${this.baseURL}${endpoint}`;
 
     const accessToken = authService.getAccessToken();
