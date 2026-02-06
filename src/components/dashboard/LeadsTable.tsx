@@ -906,6 +906,12 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                     <TableHead className="text-white font-semibold">
                       Criado por
                     </TableHead>
+                    <TableHead className="text-white font-semibold">
+                      Usuário Distribuição
+                    </TableHead>
+                    <TableHead className="text-white font-semibold">
+                      Data Distribuição
+                    </TableHead>
                     <TableHead className="text-white">
                       <Button
                         variant="ghost"
@@ -1076,6 +1082,24 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                         ) : (
                           <span className="text-sm text-muted-foreground">
                             Não atribuído
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {lead.usuario_distribuicao ? (
+                          <span className="text-sm">{lead.usuario_distribuicao}</span>
+                        ) : (
+                          <span className="text-sm text-muted-foreground">
+                            Não distribuído
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {lead.data_distribuicao ? (
+                          <span className="text-sm">{lead.data_distribuicao}</span>
+                        ) : (
+                          <span className="text-sm text-muted-foreground">
+                            Não distribuído
                           </span>
                         )}
                       </TableCell>

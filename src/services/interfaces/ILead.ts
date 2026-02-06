@@ -29,6 +29,8 @@ export interface ILead {
   usuario: string | null;
   landing_page: string | null;
   gestor: string | null;
+  usuario_distribuicao: string | null;
+  data_distribuicao: string | null;
 }
 
 export interface ILeadsResponse {
