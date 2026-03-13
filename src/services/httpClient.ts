@@ -162,9 +162,8 @@ export class HttpClient {
     endpoint: string,
     options: RequestInit & { _retry?: boolean } = {}
   ): Promise<T> {
-    const url = `${this.baseURL}${endpoint}${
-      endpoint.includes("?") ? "&" : "?"
-    }${this.defaultParams}`;
+    const url = `${this.baseURL}${endpoint}${endpoint.includes("?") ? "&" : "?"
+      }${this.defaultParams}`;
 
     // Adicionar Bearer token se disponível
     const accessToken = authService.getAccessToken();
@@ -536,8 +535,7 @@ export class HttpClient {
     const raw = await this.request<
       Array<{ CAMPANHA?: string; campanha?: string; TOTAL: number }>
     >(
-      `/leads/campanhas/totais${
-        queryParams.toString() ? `?${queryParams.toString()}` : ""
+      `/leads/campanhas/totais${queryParams.toString() ? `?${queryParams.toString()}` : ""
       }`
     );
     return raw.map((item) => ({
@@ -560,8 +558,7 @@ export class HttpClient {
     const { campanha: _omit, ...rest } = filters;
     const queryParams = this.buildQueryParams(rest);
     return this.request(
-      `/leads/campanhas/${encodeURIComponent(campanha)}${
-        queryParams.toString() ? `?${queryParams.toString()}` : ""
+      `/leads/campanhas/${encodeURIComponent(campanha)}${queryParams.toString() ? `?${queryParams.toString()}` : ""
       }`
     );
   }
@@ -574,8 +571,7 @@ export class HttpClient {
     const raw = await this.request<
       Array<{ ANUNCIO?: string; anuncio?: string; TOTAL: number }>
     >(
-      `/leads/anuncios/totais${
-        queryParams.toString() ? `?${queryParams.toString()}` : ""
+      `/leads/anuncios/totais${queryParams.toString() ? `?${queryParams.toString()}` : ""
       }`
     );
     return raw.map((item) => ({
@@ -598,8 +594,7 @@ export class HttpClient {
     const { anuncio: _omit, ...rest } = filters;
     const queryParams = this.buildQueryParams(rest);
     return this.request(
-      `/leads/anuncios/${encodeURIComponent(anuncio)}${
-        queryParams.toString() ? `?${queryParams.toString()}` : ""
+      `/leads/anuncios/${encodeURIComponent(anuncio)}${queryParams.toString() ? `?${queryParams.toString()}` : ""
       }`
     );
   }
@@ -632,8 +627,7 @@ export class HttpClient {
     const { gestor: _omit, ...rest } = filters as any;
     const queryParams = this.buildQueryParams(rest);
     return this.request(
-      `/leads/gestores/${encodeURIComponent(gestor)}${
-        queryParams.toString() ? `?${queryParams.toString()}` : ""
+      `/leads/gestores/${encodeURIComponent(gestor)}${queryParams.toString() ? `?${queryParams.toString()}` : ""
       }`
     );
   }
@@ -766,9 +760,8 @@ export class HttpClient {
       );
     }
 
-    const endpoint = `/leads/exportar-logs-chatguru-excel${
-      queryParams.toString() ? `?${queryParams.toString()}` : ""
-    }`;
+    const endpoint = `/leads/exportar-logs-chatguru-excel${queryParams.toString() ? `?${queryParams.toString()}` : ""
+      }`;
     const url = `${this.baseURL}${endpoint}`;
 
     const accessToken = authService.getAccessToken();

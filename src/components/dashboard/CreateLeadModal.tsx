@@ -36,6 +36,7 @@ export interface CreateLeadData {
   tem_ponto: boolean;
   situacao: number;
   etapa: number;
+  gestor: string;
 }
 
 // Interface para o endpoint de criação rápida
@@ -48,6 +49,7 @@ export interface CriarLeadRapidoData {
   tem_ponto: boolean;
   email?: string | null;
   origem?: string;
+  gestor?: string;
 }
 
 export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({
@@ -67,6 +69,7 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({
     tem_ponto: false,
     situacao: 1, // Novo Lead
     etapa: 1, // Triagem
+    gestor: "",
   });
 
   const [errors, setErrors] = useState<Partial<CreateLeadData>>({});
@@ -189,6 +192,7 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({
       tem_ponto: false,
       situacao: 1,
       etapa: 1,
+      gestor: "",
     });
     setErrors({});
     onClose();
@@ -260,6 +264,7 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({
       tem_ponto: temPontoApi === "S" ? true : false,
       email: formData.email?.trim() ? formData.email.trim() : null,
       origem: formData.origem?.trim() ? formData.origem.trim() : undefined,
+      gestor: formData.gestor?.trim() ? formData.gestor.trim() : undefined,
     };
   };
 
@@ -360,6 +365,16 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({
               value={formData.origem}
               onChange={(e) => handleInputChange("origem", e.target.value)}
               placeholder="Ex: Google, Instagram, Indicação..."
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="gestor">Gestor (opcional)</Label>
+            <Input
+              id="gestor"
+              value={formData.gestor}
+              onChange={(e) => handleInputChange("gestor", e.target.value)}
+              placeholder="Nome do gestor"
             />
           </div>
 
