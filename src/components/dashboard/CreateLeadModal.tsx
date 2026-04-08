@@ -37,6 +37,7 @@ export interface CreateLeadData {
   situacao: number;
   etapa: number;
   gestor: string;
+  anuncio: string;
 }
 
 // Interface para o endpoint de criação rápida
@@ -50,6 +51,7 @@ export interface CriarLeadRapidoData {
   email?: string | null;
   origem?: string;
   gestor?: string;
+  anuncio?: string;
 }
 
 export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({
@@ -70,6 +72,7 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({
     situacao: 1, // Novo Lead
     etapa: 1, // Triagem
     gestor: "",
+    anuncio: "",
   });
 
   const [errors, setErrors] = useState<Partial<CreateLeadData>>({});
@@ -103,11 +106,16 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({
     "SE",
     "TO",
   ];
-  const origens = ["Whatsapp", "Google", "Facebook"];
+  const origens = [
+    "Whatsapp",
+    "Whatsapp Vitally Orgânico",
+    "Google",
+    "Facebook",
+  ];
 
   const handleInputChange = (
     field: keyof CreateLeadData,
-    value: string | number | boolean
+    value: string | number | boolean,
   ) => {
     setFormData((prev) => ({
       ...prev,
@@ -162,7 +170,7 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({
         formData.valor_investimento_previsto
           .replace(/[R$\s]/g, "")
           .replace(/\./g, "")
-          .replace(",", ".")
+          .replace(",", "."),
       );
       if (isNaN(valorNumerico) || valorNumerico <= 0) {
         newErrors.valor_investimento_previsto =
@@ -198,6 +206,7 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({
       situacao: 1,
       etapa: 1,
       gestor: "",
+      anuncio: "",
     });
     setErrors({});
     onClose();
@@ -214,12 +223,12 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({
       return `(${numbers.slice(0, 2)}) ${numbers.slice(2)}`;
     } else if (numbers.length <= 10) {
       return `(${numbers.slice(0, 2)}) ${numbers.slice(2, 6)}-${numbers.slice(
-        6
+        6,
       )}`;
     } else {
       return `(${numbers.slice(0, 2)}) ${numbers.slice(2, 7)}-${numbers.slice(
         7,
-        11
+        11,
       )}`;
     }
   };
@@ -242,7 +251,7 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({
 
   // Converter dados do formulário para o formato do endpoint
   const convertToApiFormat = (
-    formData: CreateLeadData
+    formData: CreateLeadData,
   ): CriarLeadRapidoData => {
     // Converter valor de investimento de string para number
     // Se não preenchido, enviar null
@@ -253,7 +262,7 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({
           formData.valor_investimento_previsto
             .replace(/[R$\s]/g, "")
             .replace(/\./g, "")
-            .replace(",", ".")
+            .replace(",", "."),
         ) || 0;
     }
 
@@ -270,6 +279,7 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({
       email: formData.email?.trim() ? formData.email.trim() : null,
       origem: formData.origem.trim(),
       gestor: formData.gestor?.trim() ? formData.gestor.trim() : undefined,
+      anuncio: formData.anuncio?.trim() ? formData.anuncio.trim() : undefined,
     };
   };
 
@@ -396,6 +406,16 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({
           </div>
 
           <div className="space-y-2">
+            <Label htmlFor="anuncio">Anúncio (opcional)</Label>
+            <Input
+              id="anuncio"
+              value={formData.anuncio}
+              onChange={(e) => handleInputChange("anuncio", e.target.value)}
+              placeholder="Nome do anúncio"
+            />
+          </div>
+
+          <div className="space-y-2">
             <Label htmlFor="valor_investimento_previsto">
               Valor de Investimento Previsto (opcional)
             </Label>
@@ -405,7 +425,7 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({
               onChange={(e) =>
                 handleInputChange(
                   "valor_investimento_previsto",
-                  formatCurrency(e.target.value)
+                  formatCurrency(e.target.value),
                 )
               }
               placeholder="Ex: R$ 50.000,00"
