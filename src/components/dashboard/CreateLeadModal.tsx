@@ -103,6 +103,7 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({
     "SE",
     "TO",
   ];
+  const origens = ["Whatsapp", "Google", "Facebook"];
 
   const handleInputChange = (
     field: keyof CreateLeadData,
@@ -149,6 +150,10 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({
 
     if (!formData.uf) {
       newErrors.uf = "UF é obrigatória";
+    }
+
+    if (!formData.origem) {
+      newErrors.origem = "Origem é obrigatória";
     }
 
     // Valor de investimento é opcional; se preenchido, valida formato
@@ -263,7 +268,7 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({
       valor_investimento: valorNumerico,
       tem_ponto: temPontoApi === "S" ? true : false,
       email: formData.email?.trim() ? formData.email.trim() : null,
-      origem: formData.origem?.trim() ? formData.origem.trim() : undefined,
+      origem: formData.origem.trim(),
       gestor: formData.gestor?.trim() ? formData.gestor.trim() : undefined,
     };
   };
@@ -359,13 +364,25 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="origem">Origem (opcional)</Label>
-            <Input
-              id="origem"
+            <Label htmlFor="origem">Origem *</Label>
+            <Select
               value={formData.origem}
-              onChange={(e) => handleInputChange("origem", e.target.value)}
-              placeholder="Ex: Google, Instagram, Indicação..."
-            />
+              onValueChange={(value) => handleInputChange("origem", value)}
+            >
+              <SelectTrigger className={errors.origem ? "border-red-500" : ""}>
+                <SelectValue placeholder="Selecione a origem" />
+              </SelectTrigger>
+              <SelectContent>
+                {origens.map((origem) => (
+                  <SelectItem key={origem} value={origem}>
+                    {origem}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {errors.origem && (
+              <p className="text-sm text-red-500">{errors.origem}</p>
+            )}
           </div>
 
           <div className="space-y-2">

@@ -91,7 +91,7 @@ export class HttpClient {
   private async handleTokenRefresh<T>(
     url: string,
     options: RequestInit & { _retry?: boolean },
-    headers: Record<string, string>
+    headers: Record<string, string>,
   ): Promise<T> {
     if (!this.isRefreshing) {
       this.isRefreshing = true;
@@ -160,10 +160,11 @@ export class HttpClient {
 
   private async request<T>(
     endpoint: string,
-    options: RequestInit & { _retry?: boolean } = {}
+    options: RequestInit & { _retry?: boolean } = {},
   ): Promise<T> {
-    const url = `${this.baseURL}${endpoint}${endpoint.includes("?") ? "&" : "?"
-      }${this.defaultParams}`;
+    const url = `${this.baseURL}${endpoint}${
+      endpoint.includes("?") ? "&" : "?"
+    }${this.defaultParams}`;
 
     // Adicionar Bearer token se disponível
     const accessToken = authService.getAccessToken();
@@ -201,7 +202,7 @@ export class HttpClient {
       order_by?: string;
       order_header?: string;
       nome?: string;
-    } = {}
+    } = {},
   ): Promise<{ total: number; data: { id: string; descricao: string }[] }> {
     const query = new URLSearchParams();
     if (params.pagina) query.append("pagina", params.pagina.toString());
@@ -222,7 +223,7 @@ export class HttpClient {
       const queryParams = this.buildQueryParams(filters);
 
       const response = await this.request<ILeadsResponse>(
-        `/leads?${queryParams.toString()}`
+        `/leads?${queryParams.toString()}`,
       );
       return response;
     } catch (error) {
@@ -236,7 +237,7 @@ export class HttpClient {
       const queryParams = this.buildQueryParams(filters);
 
       const response = await this.request<ILeadsTotais>(
-        `/leads/totais?${queryParams.toString()}`
+        `/leads/totais?${queryParams.toString()}`,
       );
       return response;
     } catch (error) {
@@ -267,7 +268,7 @@ export class HttpClient {
   async getDropdownOrigem(): Promise<{ origem: string; total: number }[]> {
     // Usar endpoint dedicado com cache no backend
     return this.request<{ origem: string; total: number }[]>(
-      `/leads/dropdown/origem`
+      `/leads/dropdown/origem`,
     );
   }
 
@@ -277,21 +278,21 @@ export class HttpClient {
   > {
     // Usar endpoint dedicado com cache no backend
     return this.request<{ tipo_procura: string; total: number }[]>(
-      `/leads/dropdown/tipo-procura`
+      `/leads/dropdown/tipo-procura`,
     );
   }
 
   // Método para vincular consultor ao lead
   async vincularConsultorAoLead(
     idLead: number,
-    idConsultor: number
+    idConsultor: number,
   ): Promise<any> {
     try {
       const response = await this.request<any>(
         `/leads/${idLead}/vincular-consultor?id_consultor=${idConsultor}`,
         {
           method: "GET",
-        }
+        },
       );
       return response;
     } catch (error) {
@@ -302,14 +303,14 @@ export class HttpClient {
   // Método para vincular vendedor ao lead
   async vincularVendedorAoLead(
     idLead: number,
-    idVendedor: number
+    idVendedor: number,
   ): Promise<any> {
     try {
       const response = await this.request<any>(
         `/leads/${idLead}/vincular-vendedor?id_vendedor=${idVendedor}`,
         {
           method: "GET",
-        }
+        },
       );
       return response;
     } catch (error) {
@@ -320,14 +321,14 @@ export class HttpClient {
   async atualizarEtapaSituacaoLead(
     idLead: number,
     idEtapa: number,
-    idSituacao: number
+    idSituacao: number,
   ): Promise<any> {
     try {
       const response = await this.request<any>(
         `/leads/${idLead}/atualizar-etapa-situacao?id_etapa=${idEtapa}&id_situacao=${idSituacao}`,
         {
           method: "PUT",
-        }
+        },
       );
       return response;
     } catch (error) {
@@ -339,7 +340,7 @@ export class HttpClient {
   async getLeadAtividades(idLead: number): Promise<ILeadAtividade[]> {
     try {
       const response = await this.request<ILeadAtividade[]>(
-        `/leads/${idLead}/atividades`
+        `/leads/${idLead}/atividades`,
       );
       return response;
     } catch (error) {
@@ -350,7 +351,7 @@ export class HttpClient {
   // Método para buscar ramos de atividade
   async getRamosAtividade(): Promise<{ codigo: string; descricao: string }[]> {
     return this.request<{ codigo: string; descricao: string }[]>(
-      "/ramo-atividade/dropdown"
+      "/ramo-atividade/dropdown",
     );
   }
 
@@ -407,7 +408,7 @@ export class HttpClient {
 
   // Método para buscar totais por origem
   async getLeadsTotaisPorOrigem(
-    filters: ILeadsFilters = {}
+    filters: ILeadsFilters = {},
   ): Promise<TotaisPorOrigem> {
     // Deprecated old combined endpoint. Reconstructed using new endpoints for backward compatibility.
     const origens = await this.getOrigensTotais(filters);
@@ -430,7 +431,7 @@ export class HttpClient {
 
   // Método para buscar totais por tipo de procura
   async getLeadsTotaisPorTipoProcura(
-    filters: ILeadsFilters = {}
+    filters: ILeadsFilters = {},
   ): Promise<TotaisPorTipoProcura> {
     // Deprecated old combined endpoint. Reconstructed using new endpoints for backward compatibility.
     const tipos = await this.getTiposProcuraTotais(filters);
@@ -452,7 +453,7 @@ export class HttpClient {
 
   // Método para buscar totais de transferidos
   async getLeadsTotaisTransferidos(
-    filters: ILeadsFilters = {}
+    filters: ILeadsFilters = {},
   ): Promise<TotaisTransferidos> {
     // Deprecated old combined endpoint. Reconstructed using new endpoints for backward compatibility.
     const [transferidos, nao_transferidos] = await Promise.all([
@@ -468,11 +469,11 @@ export class HttpClient {
 
   // Novos endpoints conforme especificação
   async getOrigensTotais(
-    filters: ILeadsFilters = {}
+    filters: ILeadsFilters = {},
   ): Promise<{ origem: string; total: number }[]> {
     const queryParams = this.buildQueryParams(filters);
     const raw = await this.request<Array<{ ORIGEM: string; TOTAL: number }>>(
-      `/leads/origens/totais?${queryParams.toString()}`
+      `/leads/origens/totais?${queryParams.toString()}`,
     );
     // Normalizar para chaves minúsculas esperadas no front
     return raw.map((item) => ({ origem: item.ORIGEM, total: item.TOTAL }));
@@ -480,7 +481,7 @@ export class HttpClient {
 
   async getLeadsPorOrigem(
     origem: string,
-    filters: ILeadsFilters = {}
+    filters: ILeadsFilters = {},
   ): Promise<{
     total: number;
     pagina: number;
@@ -491,12 +492,12 @@ export class HttpClient {
     const { origem: _omit, ...rest } = filters;
     const queryParams = this.buildQueryParams(rest);
     return this.request(
-      `/leads/origens/${encodeURIComponent(origem)}?${queryParams.toString()}`
+      `/leads/origens/${encodeURIComponent(origem)}?${queryParams.toString()}`,
     );
   }
 
   async getTiposProcuraTotais(
-    filters: ILeadsFilters = {}
+    filters: ILeadsFilters = {},
   ): Promise<{ tipo_procura: string; total: number }[]> {
     const queryParams = this.buildQueryParams(filters);
     const raw = await this.request<
@@ -510,7 +511,7 @@ export class HttpClient {
 
   async getLeadsPorTipoProcura(
     tipoProcura: string,
-    filters: ILeadsFilters = {}
+    filters: ILeadsFilters = {},
   ): Promise<{
     total: number;
     pagina: number;
@@ -522,21 +523,22 @@ export class HttpClient {
     const queryParams = this.buildQueryParams(rest);
     return this.request(
       `/leads/tipos-procura/${encodeURIComponent(
-        tipoProcura
-      )}?${queryParams.toString()}`
+        tipoProcura,
+      )}?${queryParams.toString()}`,
     );
   }
 
   // Totais por campanha
   async getCampanhasTotais(
-    filters: ILeadsFilters = {}
+    filters: ILeadsFilters = {},
   ): Promise<Array<{ campanha: string; total: number }>> {
     const queryParams = this.buildQueryParams(filters);
     const raw = await this.request<
       Array<{ CAMPANHA?: string; campanha?: string; TOTAL: number }>
     >(
-      `/leads/campanhas/totais${queryParams.toString() ? `?${queryParams.toString()}` : ""
-      }`
+      `/leads/campanhas/totais${
+        queryParams.toString() ? `?${queryParams.toString()}` : ""
+      }`,
     );
     return raw.map((item) => ({
       campanha: (item as any).campanha ?? (item as any).CAMPANHA ?? "",
@@ -547,7 +549,7 @@ export class HttpClient {
   // Listar leads por campanha com filtros
   async getLeadsPorCampanha(
     campanha: string,
-    filters: ILeadsFilters = {}
+    filters: ILeadsFilters = {},
   ): Promise<{
     total: number;
     pagina: number;
@@ -558,21 +560,23 @@ export class HttpClient {
     const { campanha: _omit, ...rest } = filters;
     const queryParams = this.buildQueryParams(rest);
     return this.request(
-      `/leads/campanhas/${encodeURIComponent(campanha)}${queryParams.toString() ? `?${queryParams.toString()}` : ""
-      }`
+      `/leads/campanhas/${encodeURIComponent(campanha)}${
+        queryParams.toString() ? `?${queryParams.toString()}` : ""
+      }`,
     );
   }
 
   // Totais por anúncio (conjunto)
   async getAnunciosTotais(
-    filters: ILeadsFilters = {}
+    filters: ILeadsFilters = {},
   ): Promise<Array<{ anuncio: string; total: number }>> {
     const queryParams = this.buildQueryParams(filters);
     const raw = await this.request<
       Array<{ ANUNCIO?: string; anuncio?: string; TOTAL: number }>
     >(
-      `/leads/anuncios/totais${queryParams.toString() ? `?${queryParams.toString()}` : ""
-      }`
+      `/leads/anuncios/totais${
+        queryParams.toString() ? `?${queryParams.toString()}` : ""
+      }`,
     );
     return raw.map((item) => ({
       anuncio: (item as any).anuncio ?? (item as any).ANUNCIO ?? "",
@@ -583,7 +587,7 @@ export class HttpClient {
   // Listar leads por anúncio com filtros
   async getLeadsPorAnuncio(
     anuncio: string,
-    filters: ILeadsFilters = {}
+    filters: ILeadsFilters = {},
   ): Promise<{
     total: number;
     pagina: number;
@@ -594,18 +598,19 @@ export class HttpClient {
     const { anuncio: _omit, ...rest } = filters;
     const queryParams = this.buildQueryParams(rest);
     return this.request(
-      `/leads/anuncios/${encodeURIComponent(anuncio)}${queryParams.toString() ? `?${queryParams.toString()}` : ""
-      }`
+      `/leads/anuncios/${encodeURIComponent(anuncio)}${
+        queryParams.toString() ? `?${queryParams.toString()}` : ""
+      }`,
     );
   }
 
   // Totais por gestor
   async getGestoresTotais(
-    filters: ILeadsFilters = {}
+    filters: ILeadsFilters = {},
   ): Promise<Array<{ gestor: string; total: number }>> {
     const queryParams = this.buildQueryParams(filters);
     const raw = await this.request<Array<{ GESTOR: string; TOTAL: number }>>(
-      `/leads/gestores/totais?${queryParams.toString()}`
+      `/leads/gestores/totais?${queryParams.toString()}`,
     );
     return raw.map((item) => ({
       gestor: (item as any).GESTOR ?? "DESCONHECIDO",
@@ -616,7 +621,7 @@ export class HttpClient {
   // Listar leads por gestor com filtros
   async getLeadsPorGestor(
     gestor: string,
-    filters: ILeadsFilters = {}
+    filters: ILeadsFilters = {},
   ): Promise<{
     total: number;
     pagina: number;
@@ -627,8 +632,9 @@ export class HttpClient {
     const { gestor: _omit, ...rest } = filters as any;
     const queryParams = this.buildQueryParams(rest);
     return this.request(
-      `/leads/gestores/${encodeURIComponent(gestor)}${queryParams.toString() ? `?${queryParams.toString()}` : ""
-      }`
+      `/leads/gestores/${encodeURIComponent(gestor)}${
+        queryParams.toString() ? `?${queryParams.toString()}` : ""
+      }`,
     );
   }
 
@@ -670,13 +676,13 @@ export class HttpClient {
   // Totais de tipos de procura por vendedor específico
   async getTotaisTiposProcuraPorVendedor(
     idVendedor: number,
-    filters: ILeadsFilters = {}
+    filters: ILeadsFilters = {},
   ): Promise<{ tipo_procura: string; total: number }[]> {
     const queryParams = this.buildQueryParams(filters);
     const raw = await this.request<
       Array<{ TIPO_PROCURA: string; TOTAL: number }>
     >(
-      `/leads/vendedores/${idVendedor}/tipos-procura/totais?${queryParams.toString()}`
+      `/leads/vendedores/${idVendedor}/tipos-procura/totais?${queryParams.toString()}`,
     );
     return raw.map((item) => ({
       tipo_procura: item.TIPO_PROCURA,
@@ -687,7 +693,7 @@ export class HttpClient {
   // Listar leads por vendedor com filtros (inclui tipo_procura)
   async getLeadsPorVendedor(
     idVendedor: number,
-    filters: ILeadsFilters = {}
+    filters: ILeadsFilters = {},
   ): Promise<{
     total: number;
     pagina: number;
@@ -699,8 +705,8 @@ export class HttpClient {
     const queryParams = this.buildQueryParams(rest);
     return this.request(
       `/leads/vendedores/${encodeURIComponent(
-        idVendedor
-      )}?${queryParams.toString()}`
+        idVendedor,
+      )}?${queryParams.toString()}`,
     );
   }
 
@@ -756,12 +762,13 @@ export class HttpClient {
     if (filters?.mensagem_confirmada !== undefined) {
       queryParams.append(
         "mensagem_confirmada",
-        filters.mensagem_confirmada.toString()
+        filters.mensagem_confirmada.toString(),
       );
     }
 
-    const endpoint = `/leads/exportar-logs-chatguru-excel${queryParams.toString() ? `?${queryParams.toString()}` : ""
-      }`;
+    const endpoint = `/leads/exportar-logs-chatguru-excel${
+      queryParams.toString() ? `?${queryParams.toString()}` : ""
+    }`;
     const url = `${this.baseURL}${endpoint}`;
 
     const accessToken = authService.getAccessToken();
@@ -789,6 +796,6 @@ export class HttpClient {
 }
 
 export const httpClient = new HttpClient(
-  import.meta.env.VITE_API_URL || "https://api.nexusvitally.com.br"
-  // import.meta.env.VITE_API_URL || "http://localhost:8001"
+  // import.meta.env.VITE_API_URL || "https://api.nexusvitally.com.br"
+  import.meta.env.VITE_API_URL || "http://localhost:8001",
 );

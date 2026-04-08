@@ -56,6 +56,7 @@ export const FilterSection: React.FC<FilterProps> = ({
     tipoProcura: "",
     campanha: "",
     anuncio: "",
+    gestor: "",
     nome: "",
     email: "",
     telefone: "",
@@ -166,6 +167,7 @@ export const FilterSection: React.FC<FilterProps> = ({
       tipoProcura: currentFilters.tipoProcura || "",
       campanha: (currentFilters as any).campanha || "",
       anuncio: (currentFilters as any).anuncio || "",
+      gestor: (currentFilters as any).gestor || "",
       nome: currentFilters.nome || "",
       email: currentFilters.email || "",
       telefone: currentFilters.telefone || "",
@@ -543,6 +545,7 @@ export const FilterSection: React.FC<FilterProps> = ({
                   tipoProcura: "",
                   campanha: "",
                   anuncio: "",
+                  gestor: "",
                   nome: "",
                   email: "",
                   telefone: "",
@@ -563,6 +566,7 @@ export const FilterSection: React.FC<FilterProps> = ({
                   tipoProcura: "",
                   campanha: "",
                   anuncio: "",
+                  gestor: "",
                   nome: "",
                   email: "",
                   telefone: "",
@@ -636,6 +640,17 @@ export const FilterSection: React.FC<FilterProps> = ({
                 value={filters.anuncio}
                 onChange={(e) =>
                   setFilters((prev) => ({ ...prev, anuncio: e.target.value }))
+                }
+                className="border-blue-200 focus:border-blue-500 focus:ring-blue-500"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-blue-800 font-medium">Gestor</Label>
+              <Input
+                placeholder="Buscar por gestor"
+                value={filters.gestor}
+                onChange={(e) =>
+                  setFilters((prev) => ({ ...prev, gestor: e.target.value }))
                 }
                 className="border-blue-200 focus:border-blue-500 focus:ring-blue-500"
               />

@@ -1,10 +1,4 @@
-import React, {
-  useState,
-  useEffect,
-  useMemo,
-  useRef,
-  useLayoutEffect,
-} from "react";
+import React, { useState, useEffect, useRef, useLayoutEffect } from "react";
 import {
   Table,
   TableBody,
@@ -42,15 +36,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   ChevronDown,
-  ChevronUp,
   MoreHorizontal,
   Plus,
   Users,
   UserCheck,
-  UserX,
   Edit,
-  Activity,
-  UserPlus,
   Loader2,
   ArrowUpDown,
   ArrowUp,
@@ -122,7 +112,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
   const [isBatchActionModalOpen, setIsBatchActionModalOpen] = useState(false);
   const [batchAction, setBatchAction] = useState<string>("");
   const [selectedConsultor, setSelectedConsultor] = useState<number | null>(
-    null
+    null,
   );
   const [selectedVendedor, setSelectedVendedor] = useState<number | null>(null);
 
@@ -157,7 +147,8 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
 
   // Estados para exportação
   const [isExportingChatGuru, setIsExportingChatGuru] = useState(false);
-  const [isExportFiltersModalOpen, setIsExportFiltersModalOpen] = useState(false);
+  const [isExportFiltersModalOpen, setIsExportFiltersModalOpen] =
+    useState(false);
   const [exportFilters, setExportFilters] = useState<{
     filtro_data?: string;
     id_lead?: number;
@@ -422,7 +413,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
           if (selectedConsultor) {
             // Vincular consultor a todos os leads selecionados
             const promises = Array.from(selectedLeads).map((leadId) =>
-              httpClient.vincularConsultorAoLead(leadId, selectedConsultor)
+              httpClient.vincularConsultorAoLead(leadId, selectedConsultor),
             );
             await Promise.all(promises);
 
@@ -441,7 +432,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
           if (selectedVendedor) {
             // Vincular vendedor a todos os leads selecionados
             const promises = Array.from(selectedLeads).map((leadId) =>
-              httpClient.vincularVendedorAoLead(leadId, selectedVendedor)
+              httpClient.vincularVendedorAoLead(leadId, selectedVendedor),
             );
             await Promise.all(promises);
 
@@ -521,7 +512,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
 
   const handleUpdateLeadStatus = async (
     idEtapa: number,
-    idSituacao: number
+    idSituacao: number,
   ) => {
     if (!selectedLeadForUpdate) return;
 
@@ -530,7 +521,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
       await httpClient.atualizarEtapaSituacaoLead(
         selectedLeadForUpdate.id,
         idEtapa,
-        idSituacao
+        idSituacao,
       );
 
       // Fechar modal e limpar estado
@@ -639,7 +630,9 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
         .toISOString()
         .replace(/[:.]/g, "-")
         .slice(0, -5);
-      const filtroSuffix = exportFilters.filtro_data ? `_${exportFilters.filtro_data}` : "";
+      const filtroSuffix = exportFilters.filtro_data
+        ? `_${exportFilters.filtro_data}`
+        : "";
       a.download = `logs_chatguru_export${filtroSuffix}_${timestamp}.xlsx`;
       document.body.appendChild(a);
       a.click();
@@ -1087,7 +1080,9 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                       </TableCell>
                       <TableCell>
                         {lead.usuario_distribuicao ? (
-                          <span className="text-sm">{lead.usuario_distribuicao}</span>
+                          <span className="text-sm">
+                            {lead.usuario_distribuicao}
+                          </span>
                         ) : (
                           <span className="text-sm text-muted-foreground">
                             Não distribuído
@@ -1095,8 +1090,10 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                         )}
                       </TableCell>
                       <TableCell>
-                        {lead.data_distribuicao ? (
-                          <span className="text-sm">{lead.data_distribuicao}</span>
+                        {lead.data_hora_distribuicao ? (
+                          <span className="text-sm">
+                            {formatDate(lead.data_hora_distribuicao)}
+                          </span>
                         ) : (
                           <span className="text-sm text-muted-foreground">
                             Não distribuído
@@ -1467,8 +1464,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                 onValueChange={(value) =>
                   setExportFilters({
                     ...exportFilters,
-                    sucesso:
-                      value === "all" ? undefined : value === "true",
+                    sucesso: value === "all" ? undefined : value === "true",
                   })
                 }
               >

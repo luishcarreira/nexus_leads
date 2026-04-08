@@ -30,7 +30,7 @@ export interface ILead {
   landing_page: string | null;
   gestor: string | null;
   usuario_distribuicao: string | null;
-  data_distribuicao: string | null;
+  data_hora_distribuicao: string | null;
 }
 
 export interface ILeadsResponse {
