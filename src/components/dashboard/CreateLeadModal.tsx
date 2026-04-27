@@ -111,6 +111,7 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({
     "Whatsapp Vitally Orgânico",
     "Google",
     "Facebook",
+    "Feira"
   ];
 
   const handleInputChange = (
