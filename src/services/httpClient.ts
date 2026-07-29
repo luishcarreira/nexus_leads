@@ -741,58 +741,6 @@ export class HttpClient {
     return response.blob();
   }
 
-  // Método para exportar logs do ChatGuru para Excel
-  async exportarLogsChatGuruExcel(filters?: {
-    filtro_data?: string;
-    id_lead?: number;
-    sucesso?: boolean;
-    mensagem_confirmada?: boolean;
-  }): Promise<Blob> {
-    const queryParams = new URLSearchParams();
-
-    if (filters?.filtro_data) {
-      queryParams.append("filtro_data", filters.filtro_data);
-    }
-    if (filters?.id_lead !== undefined) {
-      queryParams.append("id_lead", filters.id_lead.toString());
-    }
-    if (filters?.sucesso !== undefined) {
-      queryParams.append("sucesso", filters.sucesso.toString());
-    }
-    if (filters?.mensagem_confirmada !== undefined) {
-      queryParams.append(
-        "mensagem_confirmada",
-        filters.mensagem_confirmada.toString(),
-      );
-    }
-
-    const endpoint = `/leads/exportar-logs-chatguru-excel${
-      queryParams.toString() ? `?${queryParams.toString()}` : ""
-    }`;
-    const url = `${this.baseURL}${endpoint}`;
-
-    const accessToken = authService.getAccessToken();
-    const headers: Record<string, string> = {};
-
-    if (accessToken) {
-      headers.Authorization = `Bearer ${accessToken}`;
-    }
-
-    const response = await fetch(url, {
-      method: "GET",
-      headers,
-    });
-
-    if (response.status === 401 && accessToken) {
-      // Tentar refresh se necessário
-    }
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    return response.blob();
-  }
 }
 
 export const httpClient = new HttpClient(
